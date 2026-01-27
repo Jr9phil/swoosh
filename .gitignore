@@ -1,1 +1,11 @@
 /.idea/
+bin/
+obj/
+
+*.user
+*.suo
+*.usercache
+*.sln.docstates
+
+appsettings.Development.json
+appsettings.Local.json
