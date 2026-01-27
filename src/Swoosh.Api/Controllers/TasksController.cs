@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
+using Swoosh.Api.Dtos;
 
 namespace Swoosh.Api.Controllers;
 
@@ -20,7 +21,18 @@ public class TasksController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var tasks = await _db.Tasks.ToListAsync();
+        var tasks = await _db.Tasks
+            .Select( t => new TaskDto
+            {
+                Id = t.Id,
+                UserId = t.UserId,
+                Title = t.EncryptedTitle,
+                Notes = t.EncryptedNotes,
+                Deadline = t.Deadline,
+                IsCompleted = t.IsCompleted,
+                CreatedAt = t.CreatedAt
+            })
+            .ToListAsync();
         return Ok(tasks);
     }
     
@@ -30,16 +42,51 @@ public class TasksController : ControllerBase
     {
         var task = await _db.Tasks.FindAsync(id);
         if (task == null) return NotFound();
-        return  Ok(task);
+
+        var taskDto = new TaskDto
+        {
+            Id = task.Id,
+            UserId = task.UserId,
+            Title = task.EncryptedTitle,
+            Notes = task.EncryptedNotes,
+            Deadline = task.Deadline,
+            IsCompleted = task.IsCompleted,
+            CreatedAt = task.CreatedAt
+        };
+        return  Ok(taskDto);
     }
     
     // POST: api/tasks
     [HttpPost]
-    public async Task<IActionResult> Create(TaskItem task)
+    public async Task<IActionResult> Create(CreateTaskDto dto)
     {
+        //TODO: Add encryption
+        var task = new TaskItem
+        {
+            Id = Guid.NewGuid(),
+            UserId = dto.UserId,
+            EncryptedTitle = dto.Title,
+            EncryptedNotes = dto.Notes,
+            Deadline = dto.Deadline,
+            IsCompleted = dto.IsCompleted,
+            CreatedAt = DateTime.UtcNow
+        };
+        
         _db.Tasks.Add(task);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = task.Id }, task);
+
+        var taskDto = new TaskDto
+        {
+            Id = task.Id,
+            UserId = task.UserId,
+            Title = dto.Title,
+            Notes = dto.Notes,
+            Deadline = task.Deadline,
+            IsCompleted = task.IsCompleted,
+            CreatedAt = task.CreatedAt
+        };
+        
+        return CreatedAtAction(nameof(GetById), new { id = task.Id }, taskDto);
     }
     
     // PUT: api/tasks/{id}
