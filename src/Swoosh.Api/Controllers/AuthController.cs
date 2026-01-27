@@ -7,7 +7,7 @@ using Swoosh.Api.Dtos;
 namespace Swoosh.Api.Controllers;
 
 [ApiController]
-[Route("api/auth")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -47,6 +47,8 @@ public class AuthController : ControllerBase
         if (!_auth.Verify(dto.Password, user.PasswordHash))
             return Unauthorized("Invalid credentials");
 
-        return Ok("Login successful");
+        var token = _auth.GenerateToken(user);
+
+        return Ok(new { token });
     }
 }

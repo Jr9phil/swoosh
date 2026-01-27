@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
 using Swoosh.Api.Dtos;
@@ -7,6 +8,7 @@ using Swoosh.Api.Dtos;
 namespace Swoosh.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class TasksController : ControllerBase
 {
