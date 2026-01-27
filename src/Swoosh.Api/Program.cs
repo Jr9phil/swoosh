@@ -4,7 +4,7 @@ using Swoosh.Api.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("SwooshDb")));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
