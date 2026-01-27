@@ -1,0 +1,6 @@
+@Swoosh.Api_HostAddress = http://localhost:5250
+
+GET {{Swoosh.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
