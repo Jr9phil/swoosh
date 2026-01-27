@@ -21,6 +21,7 @@ public class TasksController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+        //This only exists for testing purposes and will be removed
         var tasks = await _db.Tasks
             .Select( t => new TaskDto
             {
@@ -36,8 +37,31 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
     
+    // GET: api/tasks/user/{userId}
+    [HttpGet("/user/{userId:guid}")]
+    public async Task<IActionResult> GetUserTasks(Guid userId)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        if(user == null) return BadRequest("User not found");
+            
+        var tasks = await _db.Tasks
+            .Where(t => t.UserId == userId)
+            .Select(t => new TaskDto
+            {
+                Id = t.Id,
+                UserId = t.UserId,
+                Title = t.EncryptedTitle,
+                Notes = t.EncryptedNotes,
+                Deadline = t.Deadline,
+                IsCompleted = t.IsCompleted,
+                CreatedAt = t.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(tasks);
+    }
+    
     // GET: api/tasks/{id}
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var task = await _db.Tasks.FindAsync(id);
@@ -58,8 +82,13 @@ public class TasksController : ControllerBase
     
     // POST: api/tasks
     [HttpPost]
-    public async Task<IActionResult> Create(CreateTaskDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
     {
+        if(string.IsNullOrWhiteSpace(dto.Title)) return BadRequest("Title is required");
+        
+        var user = await _db.Users.FindAsync(dto.UserId);
+        if(user == null) return BadRequest("User not found");
+        
         //TODO: Add encryption
         var task = new TaskItem
         {
@@ -68,7 +97,7 @@ public class TasksController : ControllerBase
             EncryptedTitle = dto.Title,
             EncryptedNotes = dto.Notes,
             Deadline = dto.Deadline,
-            IsCompleted = dto.IsCompleted,
+            IsCompleted = false,
             CreatedAt = DateTime.UtcNow
         };
         
@@ -90,7 +119,7 @@ public class TasksController : ControllerBase
     }
     
     // PUT: api/tasks/{id}
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, TaskItem updatedTask)
     {
         if (id != updatedTask.Id) return BadRequest();
@@ -110,7 +139,7 @@ public class TasksController : ControllerBase
     }
     
     // DELETE: api/tasks/{id}
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var task = await _db.Tasks.FindAsync(id);
