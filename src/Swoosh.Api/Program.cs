@@ -5,6 +5,7 @@ using System.Text;
 using Swoosh.Api.Data;
 using Swoosh.Api.Interfaces;
 using Swoosh.Api.Services;
+using Swoosh.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
