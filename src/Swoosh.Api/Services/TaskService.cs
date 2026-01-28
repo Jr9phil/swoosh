@@ -26,8 +26,8 @@ public class TaskService : ITaskService
             .Select(t => new TaskDto
             {
                 Id = t.Id,
-                Title = _crypto.Decrypt(t.EncryptedTitle, userId),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId),
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion),
+                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion),
                 Deadline = t.Deadline,
                 IsCompleted = t.IsCompleted,
                 CreatedAt = t.CreatedAt
@@ -42,8 +42,8 @@ public class TaskService : ITaskService
             .Select(t => new TaskDto
             {
                 Id = t.Id,
-                Title = _crypto.Decrypt(t.EncryptedTitle, userId),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId),
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion),
+                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion),
                 Deadline = t.Deadline,
                 IsCompleted = t.IsCompleted,
                 CreatedAt = t.CreatedAt
@@ -53,12 +53,15 @@ public class TaskService : ITaskService
 
     public async Task<TaskDto> CreateAsync(Guid userId, CreateTaskDto dto)
     {
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId);
+        
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            EncryptedTitle = _crypto.Encrypt(dto.Title, userId),
-            EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId),
+            EncryptedTitle = encryptedTitle,
+            EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId).Ciphertext,
+            KeyVersion = keyVersion,
             Deadline = dto.Deadline,
             IsCompleted = false,
             CreatedAt = DateTime.UtcNow
@@ -85,9 +88,12 @@ public class TaskService : ITaskService
 
         if (task == null)
             return false;
+        
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId);
 
-        task.EncryptedTitle = _crypto.Encrypt(dto.Title, userId);
-        task.EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId);
+        task.EncryptedTitle = encryptedTitle;
+        task.EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId).Ciphertext;
+        task.KeyVersion = keyVersion;
         task.Deadline = dto.Deadline;
         task.IsCompleted = dto.IsCompleted;
 

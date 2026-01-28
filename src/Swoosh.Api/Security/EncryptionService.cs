@@ -5,17 +5,19 @@ namespace Swoosh.Api.Security;
 
 public class EncryptionService : IEncryptionService
 {
-    private readonly string _masterKey;
+    private readonly IConfiguration _config;
+    private readonly int _activeVersion;
 
     public EncryptionService(IConfiguration config)
     {
-        _masterKey = config["Encryption:MasterKey"]
-                     ?? throw new Exception("Encryption master key missing");
+        _config = config;
+        _activeVersion = int.Parse(config["Encryption:ActiveKeyVersion"]!);
     }
 
-    public string Encrypt(string plaintext, Guid userId)
+    public (string Ciphertext, int KeyVersion) Encrypt(string plaintext, Guid userId)
     {
-        var key = KeyDerivation.DeriveKey(_masterKey, userId);
+        var masterKey = _config[$"Encryption:Keys:{_activeVersion}"]!;
+        var key = KeyDerivation.DeriveKey(masterKey, userId);
 
         using var aes = new AesGcm(key);
         var nonce = RandomNumberGenerator.GetBytes(12);
@@ -26,21 +28,22 @@ public class EncryptionService : IEncryptionService
 
         aes.Encrypt(nonce, plaintextBytes, ciphertext, tag);
 
-        return Convert.ToBase64String(
-            nonce
-                .Concat(tag)
-                .Concat(ciphertext)
-                .ToArray()
+        var combined = Convert.ToBase64String(
+            nonce.Concat(tag).Concat(ciphertext).ToArray()
         );
+
+        return (combined, _activeVersion);
     }
 
-    public string Decrypt(string encrypted, Guid userId)
+
+    public string Decrypt(string encrypted, Guid userId, int keyVersion)
     {
         try
         {
-            var key = KeyDerivation.DeriveKey(_masterKey, userId);
-            var data = Convert.FromBase64String(encrypted);
+            var masterKey = _config[$"Encryption:Keys:{keyVersion}"]!;
+            var key = KeyDerivation.DeriveKey(masterKey, userId);
 
+            var data = Convert.FromBase64String(encrypted);
             var nonce = data[..12];
             var tag = data[12..28];
             var ciphertext = data[28..];
@@ -49,7 +52,6 @@ public class EncryptionService : IEncryptionService
             var plaintext = new byte[ciphertext.Length];
 
             aes.Decrypt(nonce, ciphertext, tag, plaintext);
-
             return Encoding.UTF8.GetString(plaintext);
         }
         catch (FormatException e)
