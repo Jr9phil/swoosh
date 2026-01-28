@@ -1,9 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using Swoosh.Api.Data;
-using Swoosh.Api.Domain;
+using Microsoft.AspNetCore.Mvc;
 using Swoosh.Api.Dtos;
+using Swoosh.Api.Interfaces;
 using Swoosh.Api.Security;
 
 namespace Swoosh.Api.Controllers;
@@ -13,129 +11,78 @@ namespace Swoosh.Api.Controllers;
 [Route("api/[controller]")]
 public class TasksController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly ITaskService _tasks;
 
-    public TasksController(AppDbContext db)
+    public TasksController(ITaskService tasks)
     {
-        _db = db;
+        _tasks = tasks;
     }
-    
+
     // GET: api/tasks
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var userId = UserContext.GetUserId(User);
-
-        var tasks = await _db.Tasks
-            .Where(t => t.UserId == userId)
-            .Select(t => new TaskDto
-            {
-                Id = t.Id,
-                Title = t.EncryptedTitle,
-                Notes = t.EncryptedNotes,
-                Deadline = t.Deadline,
-                IsCompleted = t.IsCompleted,
-                CreatedAt = t.CreatedAt
-            })
-            .ToListAsync();
-
+        var tasks = await _tasks.GetAllAsync(userId);
         return Ok(tasks);
     }
-    
+
     // GET: api/tasks/{id}
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var userId = UserContext.GetUserId(User);
-
-        var task = await _db.Tasks
-            .Where(t => t.Id == id && t.UserId == userId)
-            .Select(t => new TaskDto
-            {
-                Id = t.Id,
-                Title = t.EncryptedTitle,
-                Notes = t.EncryptedNotes,
-                Deadline = t.Deadline,
-                IsCompleted = t.IsCompleted,
-                CreatedAt = t.CreatedAt
-            })
-            .FirstOrDefaultAsync();
-
-        if (task == null) return NotFound();
-        return Ok(task);
-    }
-    
-    // POST: api/tasks
-    [HttpPost]
-    public async Task<IActionResult> Create(CreateTaskDto dto)
-    {
-        if (string.IsNullOrWhiteSpace(dto.Title))
-            return BadRequest("Title is required");
-
-        var userId = UserContext.GetUserId(User);
-
-        var task = new TaskItem
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            EncryptedTitle = dto.Title, // encryption later
-            EncryptedNotes = dto.Notes,
-            Deadline = dto.Deadline,
-            IsCompleted = false,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _db.Tasks.Add(task);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetById), new { id = task.Id }, new TaskDto
-        {
-            Id = task.Id,
-            Title = dto.Title,
-            Notes = dto.Notes,
-            Deadline = task.Deadline,
-            IsCompleted = task.IsCompleted,
-            CreatedAt = task.CreatedAt
-        });
-    }
-    
-    // PUT: api/tasks/{id}
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UpdateTaskDto dto)
-    {
-        var userId = UserContext.GetUserId(User);
-
-        var task = await _db.Tasks
-            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+        var task = await _tasks.GetByIdAsync(userId, id);
 
         if (task == null)
             return NotFound();
 
-        // TODO: Encrypt before saving once crypto is added
-        task.EncryptedTitle = dto.Title;
-        task.EncryptedNotes = dto.Notes;
-        task.Deadline = dto.Deadline;
-        task.IsCompleted = dto.IsCompleted;
+        return Ok(task);
+    }
 
-        await _db.SaveChangesAsync();
+    // POST: api/tasks
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = UserContext.GetUserId(User);
+        var task = await _tasks.CreateAsync(userId, dto);
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = task.Id },
+            task
+        );
+    }
+
+    // PUT: api/tasks/{id}
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTaskDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = UserContext.GetUserId(User);
+        var updated = await _tasks.UpdateAsync(userId, id, dto);
+
+        if (!updated)
+            return NotFound();
 
         return NoContent();
     }
-    
+
     // DELETE: api/tasks/{id}
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = UserContext.GetUserId(User);
-        
-        var task = await _db.Tasks
-            .Where(t => t.Id == id && t.UserId == userId)
-            .FirstOrDefaultAsync();
-        if (task == null) return NotFound();
-        
-        _db.Tasks.Remove(task);
-        await _db.SaveChangesAsync();
+        var deleted = await _tasks.DeleteAsync(userId, id);
+
+        if (!deleted)
+            return NotFound();
+
         return NoContent();
     }
-        
 }
