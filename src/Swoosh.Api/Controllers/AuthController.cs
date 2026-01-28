@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
 using Swoosh.Api.Services;
@@ -28,7 +29,8 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Email = dto.Email,
-            PasswordHash = _auth.HashPassword(dto.Password)
+            PasswordHash = _auth.HashPassword(dto.Password),
+            EncryptionSalt = RandomNumberGenerator.GetBytes(16)
         };
 
         _db.Users.Add(user);

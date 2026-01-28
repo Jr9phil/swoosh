@@ -18,16 +18,36 @@ public class TaskService : ITaskService
         _crypto = crypto;
     }
 
+    private async Task<byte[]> GetUserSalt(Guid userId)
+    {
+        try
+        {
+            return await _db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.EncryptionSalt)
+                .SingleAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            throw new Exception("Failed while retrieving user salt", e);
+        }
+    }
+
     public async Task<IEnumerable<TaskDto>> GetAllAsync(Guid userId)
     {
+        var salt = await GetUserSalt(userId);
         return await _db.Tasks
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new TaskDto
             {
                 Id = t.Id,
-                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion),
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = t.Deadline,
                 IsCompleted = t.IsCompleted,
                 CreatedAt = t.CreatedAt
@@ -37,13 +57,14 @@ public class TaskService : ITaskService
 
     public async Task<TaskDto?> GetByIdAsync(Guid userId, Guid taskId)
     {
+        var salt = await GetUserSalt(userId);
         return await _db.Tasks
             .Where(t => t.Id == taskId && t.UserId == userId)
             .Select(t => new TaskDto
             {
                 Id = t.Id,
-                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion),
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = t.Deadline,
                 IsCompleted = t.IsCompleted,
                 CreatedAt = t.CreatedAt
@@ -53,14 +74,15 @@ public class TaskService : ITaskService
 
     public async Task<TaskDto> CreateAsync(Guid userId, CreateTaskDto dto)
     {
-        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId);
+        var salt = await GetUserSalt(userId);
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
         
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             EncryptedTitle = encryptedTitle,
-            EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId).Ciphertext,
+            EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId, salt).Ciphertext,
             KeyVersion = keyVersion,
             Deadline = dto.Deadline,
             IsCompleted = false,
@@ -89,10 +111,11 @@ public class TaskService : ITaskService
         if (task == null)
             return false;
         
-        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId);
+        var salt = await GetUserSalt(userId);
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
 
         task.EncryptedTitle = encryptedTitle;
-        task.EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId).Ciphertext;
+        task.EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId, salt).Ciphertext;
         task.KeyVersion = keyVersion;
         task.Deadline = dto.Deadline;
         task.IsCompleted = dto.IsCompleted;

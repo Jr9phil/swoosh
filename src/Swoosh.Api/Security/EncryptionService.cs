@@ -14,10 +14,10 @@ public class EncryptionService : IEncryptionService
         _activeVersion = int.Parse(config["Encryption:ActiveKeyVersion"]!);
     }
 
-    public (string Ciphertext, int KeyVersion) Encrypt(string plaintext, Guid userId)
+    public (string Ciphertext, int KeyVersion) Encrypt(string plaintext, Guid userId, byte[] userSalt)
     {
         var masterKey = _config[$"Encryption:Keys:{_activeVersion}"]!;
-        var key = KeyDerivation.DeriveKey(masterKey, userId);
+        var key = KeyDerivation.DeriveKey(masterKey, userId, userSalt);
 
         using var aes = new AesGcm(key);
         var nonce = RandomNumberGenerator.GetBytes(12);
@@ -36,12 +36,12 @@ public class EncryptionService : IEncryptionService
     }
 
 
-    public string Decrypt(string encrypted, Guid userId, int keyVersion)
+    public string Decrypt(string encrypted, Guid userId, int keyVersion, byte[] userSalt)
     {
         try
         {
             var masterKey = _config[$"Encryption:Keys:{keyVersion}"]!;
-            var key = KeyDerivation.DeriveKey(masterKey, userId);
+            var key = KeyDerivation.DeriveKey(masterKey, userId, userSalt);
 
             var data = Convert.FromBase64String(encrypted);
             var nonce = data[..12];

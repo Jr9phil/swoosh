@@ -10,4 +10,13 @@ public static class KeyDerivation
         using var hmac = new HMACSHA256(Convert.FromBase64String(masterKey));
         return hmac.ComputeHash(Encoding.UTF8.GetBytes(userId.ToString()));
     }
+    
+    public static byte[] DeriveKey(string masterKey, Guid userId, byte[] salt)
+    {
+        using var hmac = new HMACSHA256(Convert.FromBase64String(masterKey));
+        return hmac.ComputeHash(
+            Encoding.UTF8.GetBytes(userId + Convert.ToBase64String(salt))
+        );
+    }
+
 }
