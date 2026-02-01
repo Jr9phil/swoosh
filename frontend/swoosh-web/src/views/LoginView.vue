@@ -2,20 +2,48 @@
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
-const email = ref('')
-const password = ref('')
 const auth = useAuthStore()
 const router = useRouter()
 
+const email = ref('')
+const password = ref('')
+const showPassword = ref(false)
+
+const error = ref<string | null>(null)
+const loading = ref(false)
+
 async function submit() {
-  await auth.login(email.value, password.value)
-  router.push('/')
+  error.value = null
+  loading.value = true
+  
+  try {
+    await auth.login(email.value, password.value)
+    router.push('/')
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const status = err.response?.status
+      if (status === 401) {
+        error.value = 'Invalid email or password'
+      } else if (status === 500) {
+        error.value = 'Internal Server Error'
+      } else {
+        error.value = 'Login Failed'
+      }
+    } else {
+      error.value = 'Unexpected error occurred'
+    }
+  } finally {
+    loading.value = false
+  }
+
 }
 </script>
 
 <template>
-  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4" @submit.prevent="submit">
+  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 mt-2" @submit.prevent="submit">
     <fieldset class="fieldset">
       <label class="label">Email</label>
       <input type="email" class="input validator" placeholder="Email" required v-model="email" />
@@ -24,11 +52,26 @@ async function submit() {
 
     <label class="fieldset">
       <span class="label">Password</span>
-      <input type="password" class="input validator" placeholder="Password" required v-model="password" />
+      <div class="join">
+        <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+        <button
+            type="button"
+            class="btn btn-soft btn-square join-item"
+            @click="showPassword = !showPassword"
+            tabindex="-1"
+        >
+          <Eye v-if="!showPassword" class="w-4 h-4" />
+          <EyeOff v-else class="w-4 h-4" />
+        </button>
+      </div>
       <span class="validator-hint hidden">Required</span>
     </label>
 
-    <button class="btn btn-neutral mt-4" type="submit">Login</button>
-    <a class="btn btn-ghost mt-1" href="/register">Create Account</a>
+    <div v-if="error" class="alert alert-error alert-soft mt-2">
+      {{ error }}
+    </div>
+
+    <button class="btn btn-neutral mt-4" :disabled="loading" type="submit">{{ loading ? 'Logging in...' : 'Login' }}</button>
+    <a class="link link-primary mt-1" href="/register">Create Account</a>
   </form>
 </template>
