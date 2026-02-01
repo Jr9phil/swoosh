@@ -40,35 +40,24 @@ async function submit() {
 </script>
 
 <template>
-  <div id="login">
-    <form @submit.prevent="submit">
-      <h2>Create Task</h2>
-  
-      <div>
-        <input
-            v-model="title"
-            placeholder="Title"
-            required
-        />
-      </div>
-      <div>
-        <textarea
-            v-model="notes"
-            placeholder="Notes (optional)"
-        />
-      </div>
-      <div>
-        <input
-            type="datetime-local"
-            v-model="deadline"
-        />
-      </div>
-      <div v-if="error" style="color: red">
-        {{ error }}
-      </div>
-      <button type="submit" :disabled="loading">
-        {{ loading ? 'Creating…' : 'Add Task' }}
-      </button>
-    </form>
-  </div>
+  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4" @submit.prevent="submit">
+    <h1>New Task</h1>
+    <fieldset class="fieldset">
+      <input type="text" class="input validator" placeholder="Title" required v-model="title" />
+      <p class="validator-hint hidden">Required</p>
+    </fieldset>
+
+    <label class="fieldset">
+      <textarea class="textarea" placeholder="Notes" v-model="notes" />
+      <p class="label">Optional</p>
+    </label>
+    
+    <div v-if="error" style="color: red">
+      {{ error }}
+    </div>
+    
+    <button class="btn btn-neutral mt-4" type="submit" :disabled="loading">
+      {{ loading ? 'Creating…' : 'Add Task' }}
+    </button>
+  </form>
 </template>

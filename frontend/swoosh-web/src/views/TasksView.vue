@@ -24,21 +24,23 @@ onMounted(async () => {
 <template>
   <div>
     <TaskForm />
+    <div class="divider"></div>
     
-    <h1>Your Tasks</h1>
+    <div class="bg-base-200 border-base-300 rounded-box w-lg border p-4">
 
-    <div v-if="tasksStore.loading">Loading…</div>
+      <div v-if="tasksStore.loading"><span class="loading loading-spinner"></span></div>
 
-    <ul v-else>
-      <TaskItem
-          v-for="task in tasksStore.tasks"
-          :key="task.id"
-          :task="task"
-      />
-    </ul>
+      <ul v-else class="list bg-base-100 rounded-box shadow-md">
+        <TaskItem
+            v-for="task in tasksStore.tasks"
+            :key="task.id"
+            :task="task"
+        />
+      </ul>
 
-    <p v-if="!tasksStore.tasks.length">
-      No tasks yet.
-    </p>
+      <p v-if="!tasksStore.tasks.length">
+        No tasks yet.
+      </p>
+    </div>
   </div>
 </template>

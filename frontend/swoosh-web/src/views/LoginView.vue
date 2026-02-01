@@ -15,18 +15,20 @@ async function submit() {
 </script>
 
 <template>
-  <div class="container" id="login">
-      <form @submit.prevent="submit">
-        <div>
-          <input v-model="email" placeholder="Email" />
-        </div>
-        <div>
-          <input v-model="password" type="password" placeholder="Password" />
-        </div>
-        <div>
-          <a href="/register">Create Account</a>
-          <button>Login</button>
-        </div>
-      </form>
-  </div>
+  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4" @submit.prevent="submit">
+    <fieldset class="fieldset">
+      <label class="label">Email</label>
+      <input type="email" class="input validator" placeholder="Email" required v-model="email" />
+      <p class="validator-hint hidden">Required</p>
+    </fieldset>
+
+    <label class="fieldset">
+      <span class="label">Password</span>
+      <input type="password" class="input validator" placeholder="Password" required v-model="password" />
+      <span class="validator-hint hidden">Required</span>
+    </label>
+
+    <button class="btn btn-neutral mt-4" type="submit">Login</button>
+    <a class="btn btn-ghost mt-1" href="/register">Create Account</a>
+  </form>
 </template>

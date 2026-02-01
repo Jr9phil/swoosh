@@ -13,13 +13,13 @@ function logout() {
 
 <template>
   <div>
-    <header style="margin-bottom: 1rem">
-      <button v-if="auth.token" @click="logout">
+    <header>
+      <button class="btn btn-neutral" v-if="auth.token" @click="logout">
         Logout
       </button>
     </header>
 
-    <div class="content">
+    <div class="flex w-full justify-center">
       <router-view />
     </div>
   </div>
@@ -28,6 +28,7 @@ function logout() {
 <style>
   body {
     font-family: system-ui, sans-serif;
+    margin: 0.4em;
   }
   
   button {
@@ -44,12 +45,6 @@ function logout() {
     padding: 0.75rem;
     margin-bottom: 0.5rem;
     border-radius: 4px;
-  }
-  .content {
-    border-radius: 2rem;
-    background-color: #1a1a1a;
-    padding: 2rem;
-    padding-top: 2.5rem;
   }
   
 </style>

@@ -35,34 +35,29 @@ async function remove() {
 </script>
 
 <template>
-  <li>
-    <label>
-      <input
+  <li v-if="editing">
+    <fieldset class="fieldset">
+      <input type="text" class="input validator" placeholder="Title" required v-model="editedTitle" />
+      <p class="validator-hint hidden">Required</p>
+    </fieldset>
+
+    <label class="fieldset">
+      <textarea class="textarea" placeholder="Notes" v-model="editedNotes" />
+    </label>
+
+    <button class="btn btn-outline btn-primary" @click="save">Save</button>
+    <button class="btn btn-outline" @click="editing = false">Cancel</button>
+  </li>
+  <li v-else class="list-row">
+      <div><input
           type="checkbox"
           :checked="task.isCompleted"
           @change="toggleComplete"
-      />
+          class="checkbox checkbox-primary"
+      /></div>
+    
+    <div><h1 @click="editing = true">{{ task.title }}</h1></div>
 
-      <span v-if="editing">
-        <input v-model="editedTitle" />
-        <textarea v-model="editedNotes" />
-
-        <button @click="save">Save</button>
-        <button @click="editing = false">Cancel</button>
-        <button @click="remove" style="margin-left: 0.5rem"> Delete </button>
-      </span>
-      
-      <span v-else>
-        <span>
-          {{ task.title }}
-        </span>
-        <div v-if="task.deadline" style="font-size: 0.8rem; color: gray">
-          Due: {{ formattedDeadline() }}
-        </div>
-        
-        <button @click="editing = true">Edit</button>
-        <button @click="remove" style="margin-left: 0.5rem"> Delete </button>
-      </span>
-    </label>
+    <button class="btn btn-outline btn-secondary" @click="remove" style="margin-left: 0.5rem"> Delete </button>
   </li>
 </template>
