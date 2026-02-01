@@ -36,7 +36,7 @@ async function submit() {
     <label class="fieldset">
       <span class="label">Password</span>
       <div class="join">
-        <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+        <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" minlength="8" />
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -47,8 +47,6 @@ async function submit() {
           <EyeOff v-else class="w-4 h-4" />
         </button>
       </div>
-      
-      <span class="validator-hint hidden">Required</span>
     </label>
 
     <label class="fieldset">
