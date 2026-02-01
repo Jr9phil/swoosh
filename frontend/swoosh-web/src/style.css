@@ -66,13 +66,6 @@ button:focus-visible {
   text-align: center;
 }
 
-#login {
-  border-radius: 2rem;
-  background-color: #1a1a1a;
-  padding: 1rem;
-  padding-top: 1.5rem;
-}
-
 #login button {
   margin: 0.4em;
   background-color: #646cff;
@@ -86,7 +79,7 @@ button:focus-visible {
   margin: 0.4em;
 }
 
-#login input {
+#login input, #login textarea {
   border: 1px solid;
   border-radius: 0.2rem;
   padding: 0.6em 1.2em;

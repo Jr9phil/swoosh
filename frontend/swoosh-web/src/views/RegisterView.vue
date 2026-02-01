@@ -23,6 +23,7 @@ async function submit() {
       <div>
         <input v-model="password" placeholder="Password" />
       </div>
+      <a href="/">Back</a>
       <button>Register</button>
     </form>
   </div>

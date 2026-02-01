@@ -6,3 +6,9 @@ export interface Task {
     isCompleted: boolean
     createdAt: string
 }
+
+export interface CreateTask {
+    title: string
+    notes?: string | null
+    deadline?: string | null
+}

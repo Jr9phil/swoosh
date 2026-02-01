@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import api from '../api/client'
-import type { Task } from '../types/task'
+import type { Task, CreateTask } from '../types/task'
 
 export const useTasksStore = defineStore('tasks', {
     state: () => ({
@@ -17,6 +17,36 @@ export const useTasksStore = defineStore('tasks', {
             } finally {
                 this.loading = false
             }
+        },
+        async createTask(payload: CreateTask) {
+            const res = await api.post('/tasks', payload)
+            this.tasks.unshift(res.data)
+        },
+        async toggleComplete(task: Task) {
+            const updated = {
+                ...task,
+                isCompleted: !task.isCompleted
+            }
+
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].isCompleted = updated.isCompleted
+            }
+        },
+        async editTask(taskId: string, payload: { title: string, notes?: string | null }) {
+            await api.put(`/tasks/${taskId}`, payload)
+            
+            const task = this.tasks.find(t => t.id === taskId)
+            if (task) {
+                task.title = payload.title
+                task.notes = payload.notes ?? null
+            }
+        },
+        async deleteTask(taskId: string) {
+            await api.delete(`/tasks/${taskId}`)
+            this.tasks = this.tasks.filter(t => t.id !== taskId)
         }
     }
 })
