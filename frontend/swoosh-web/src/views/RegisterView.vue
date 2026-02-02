@@ -25,7 +25,7 @@ async function submit() {
 </script>
 
 <template>
-  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 mt-2" @submit.prevent="submit">
+  <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Create Account</legend>
       <label class="label">Email</label>

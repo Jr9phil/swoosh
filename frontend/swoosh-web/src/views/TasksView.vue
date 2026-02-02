@@ -23,9 +23,6 @@ onMounted(async () => {
 
 <template>
   <div>
-    <TaskForm />
-    <div class="divider"></div>
-    
     <div class="bg-base-200 border-base-300 rounded-box w-lg border p-4">
 
       <div v-if="tasksStore.loading"><span class="loading loading-spinner"></span></div>
@@ -42,5 +39,9 @@ onMounted(async () => {
         No tasks yet.
       </p>
     </div>
+
+    <div class="divider"></div>
+
+    <TaskForm />
   </div>
 </template>

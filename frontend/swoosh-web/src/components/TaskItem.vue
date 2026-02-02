@@ -47,17 +47,16 @@ async function remove() {
 
     <button class="btn btn-outline btn-primary" @click="save">Save</button>
     <button class="btn btn-outline" @click="editing = false">Cancel</button>
+    <button class="btn btn-outline btn-secondary" @click="remove"> Delete </button>
   </li>
   <li v-else class="list-row">
       <div><input
           type="checkbox"
           :checked="task.isCompleted"
           @change="toggleComplete"
-          class="checkbox checkbox-primary"
+          :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox'"
       /></div>
     
-    <div><h1 @click="editing = true">{{ task.title }}</h1></div>
-
-    <button class="btn btn-outline btn-secondary" @click="remove" style="margin-left: 0.5rem"> Delete </button>
+    <div><h1 class="text-base font-semibold" @click="editing = true">{{ task.title }}</h1></div>
   </li>
 </template>
