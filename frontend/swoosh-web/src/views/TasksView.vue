@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
-import { CircleCheckBig, Plus } from 'lucide-vue-next'
+import { CircleCheckBig, Plus, List } from 'lucide-vue-next'
 
 
 const tasksStore = useTasksStore()
@@ -32,7 +32,7 @@ onMounted(async () => {
         <h1 class="text-xl text-heading">My Tasks</h1>
       </div>
       
-      <button :disabled = "tasksStore.loading" class="btn btn-sm btn-ghost btn-info mb-2" onclick="create.showModal()">
+      <button :disabled = "tasksStore.loading" class="btn btn-ghost btn-info mb-2" onclick="create.showModal()">
         <Plus /> Add a task
       </button>
       
@@ -47,9 +47,12 @@ onMounted(async () => {
           />
         </ul>
 
-        <p v-if="!tasksStore.tasks.length">
-          No tasks yet.
-        </p>
+        <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center">
+          <div>
+            <List class=" text-base-200 w-24 h-24"/>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

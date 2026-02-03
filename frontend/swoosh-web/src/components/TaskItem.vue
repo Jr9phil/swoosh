@@ -74,7 +74,7 @@ async function remove() {
 </script>
 
 <template>
-  <li v-if="editing" class="list-row">
+  <li v-if="editing" class="list-row" v-click-outside="finishEditing">
     <div><input
         type="checkbox"
         :checked="task.isCompleted"
@@ -87,8 +87,8 @@ async function remove() {
           ref="titleInput"
           type="text"
           class="input input-bordered"
+          maxlength="200"
           v-model="editedTitle"
-          @blur="finishEditing"
           @keydown="onKeydown"
           autofocus
       />
@@ -96,12 +96,12 @@ async function remove() {
       <textarea
           class="textarea textarea-bordered"
           placeholder="Notes"
+          maxlength="1000"
           v-model="editedNotes"
-          @blur="finishEditing"
           @keydown="onKeydown"
       />
     </div>
-    <button class="btn btn-soft btn-square btn-error" @click="remove"><Trash2 /></button>
+    <button class="btn btn-outline btn-circle btn-sm" @click="remove"><Trash2 :size="16"/></button>
   </li>
   <li v-else class="list-row">
       <div><input

@@ -43,11 +43,22 @@ async function submit() {
   <form method="dialog" class="fieldset p-4" @submit="submit">
     <h1>New Task</h1>
     <fieldset class="fieldset">
-      <input type="text" class="input validator" placeholder="Title" required v-model="title" />
+      <input 
+          type="text" 
+          class="input validator" 
+          placeholder="Title"
+          maxlength="200"
+          required 
+          v-model="title" />
+      <p class="validator-hint hidden">Required</p>
     </fieldset>
 
     <label class="fieldset">
-      <textarea class="textarea" placeholder="Notes" v-model="notes" />
+      <textarea 
+          class="textarea" 
+          placeholder="Notes"
+          maxlength="1000"
+          v-model="notes" />
       <p class="label">Optional</p>
     </label>
     

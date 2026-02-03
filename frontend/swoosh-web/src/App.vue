@@ -16,7 +16,7 @@ function logout() {
 
 <template>
   <div id="app" class="min-h-screen grid grid-rows-[auto_1fr_auto]">
-    <header class="flex flex-container p-4">
+    <header class="flex flex-container bg-base-200 p-4">
       <a href="https://github.com/Jr9phil/swoosh" target="_blank">
         <Github class="logo" />
       </a>
