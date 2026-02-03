@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
-import { UserRound, LogOut, Sun, Moon } from 'lucide-vue-next'
+import { UserRound, LogOut, Sun, Moon, Github } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -15,10 +15,10 @@ function logout() {
 </script>
 
 <template>
-  <div id="app">
+  <div id="app" class="min-h-screen grid grid-rows-[auto_1fr_auto]">
     <header class="flex flex-container p-4">
       <a href="https://github.com/Jr9phil/swoosh" target="_blank">
-        <img src="/vite.svg" class="logo" alt="Vite logo" />
+        <Github class="logo" />
       </a>
       <div class="flex-grow"/>
       <label class="toggle text-base-content">
@@ -29,7 +29,7 @@ function logout() {
 
       </label>
     </header>
-    <div class="min-h-screen flex items-center justify-center">
+    <div class="flex items-center justify-center">
       <router-view />
     </div>
     

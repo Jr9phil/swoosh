@@ -40,11 +40,10 @@ async function submit() {
 </script>
 
 <template>
-  <form class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4" @submit.prevent="submit">
+  <form method="dialog" class="fieldset p-4" @submit="submit">
     <h1>New Task</h1>
     <fieldset class="fieldset">
       <input type="text" class="input validator" placeholder="Title" required v-model="title" />
-      <p class="validator-hint hidden">Required</p>
     </fieldset>
 
     <label class="fieldset">

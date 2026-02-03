@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff, CircleAlert } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -16,6 +16,12 @@ const showConfPassword = ref(false)
 const passwordMismatch = computed(() => 
     confirmPassword.value.length > 0 &&
     password.value !== confirmPassword.value
+)
+
+const fieldsEntered = computed(() => 
+    email.value.length > 0 &&
+    password.value.length > 0 &&
+    confirmPassword.value.length > 0
 )
 
 async function submit() {
@@ -81,7 +87,7 @@ async function submit() {
       </span>
     </label>
 
-    <button class="btn btn-primary mt-4" :disabled="passwordMismatch" type="submit">Register</button>
+    <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit">Register</button>
     <a class="link link-primary mt-1" href="/">Back to Login</a>
   </form>
 </template>
