@@ -2,7 +2,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import { ref } from 'vue'
-import { Trash2, GripVertical } from 'lucide-vue-next'
+import { Trash2, GripVertical, EllipsisVertical, ListStart, X } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -75,12 +75,19 @@ async function remove() {
 
 <template>
   <li v-if="editing" class="list-row" v-click-outside="finishEditing">
-    <div><input
+    <div class="flex flex-col">
+      <input
         type="checkbox"
         :checked="task.isCompleted"
         :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
-    /></div>
+      />
+      
+      <div class="flex-1 flex items-center justify-center cursor-grab group">
+        <GripVertical class="opacity-10 group-hover:opacity-50 transition-opacity duration-200" />
+      </div>
+      
+    </div>
 
     <div class="flex flex-col gap-2 w-full">
       <input
@@ -101,9 +108,13 @@ async function remove() {
           @keydown="onKeydown"
       />
     </div>
-    <button class="btn btn-ghost btn-circle btn-sm hover:btn-error" @click="remove"><Trash2 :size="16"/></button>
+    <div class="flex flex-col m-h-full">
+      <button class="btn btn-ghost btn-circle btn-sm" @click="editing = false"><X :size="16"/></button>
+      <div class="flex-grow"></div>
+      <button class="btn btn-ghost btn-circle btn-sm hover:btn-error" @click="remove"><Trash2 :size="16"/></button>
+    </div>
   </li>
-  <li v-else class="list-row group">
+  <li v-else class="list-row">
       <div><input
           type="checkbox"
           :checked="task.isCompleted"
@@ -119,8 +130,20 @@ async function remove() {
       <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
     </div>
     
-    <div class="flex items-center justify-end cursor-grab">
-      <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200"/>
+    <div class="flex items-center justify-end">
+      <div class="dropdown dropdown-right">
+        <button 
+            tabindex="0" 
+            role="button" 
+            class="btn btn-ghost btn-circle btn-sm group">
+          <EllipsisVertical class="opacity-10 group-hover:opacity-60"/>
+        </button>
+        <ul tabindex="-1" class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-36 p-2 shadow-sm">
+          <li v-if="!task.isCompleted"><a><ListStart :size="16"/> Move to top</a></li>
+          <li><a @click="remove"><Trash2 :size="16"/> Delete</a></li>
+        </ul>
+      </div>
+      
     </div>
   </li>
 </template>

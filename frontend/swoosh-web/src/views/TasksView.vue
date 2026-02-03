@@ -32,7 +32,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="bg-base-200 border-base-300 rounded-box w-lg border p-4">
+    <div class="bg-base-200 border-base-300 rounded-box w-xl border p-4">
       
       <div class="flex mb-2 cursor-default">
         <span v-if="tasksStore.loading" class="loading loading-spinner text-primary mr-4" />
