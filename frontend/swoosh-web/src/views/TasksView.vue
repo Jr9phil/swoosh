@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
-import { CircleCheckBig, Plus, List } from 'lucide-vue-next'
+import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
 
 
 const tasksStore = useTasksStore()
+const incompleteTasks = computed(() =>
+    tasksStore.tasks.filter(t => !t.isCompleted)
+)
+
+const completedTasks = computed(() =>
+    tasksStore.tasks.filter(t => t.isCompleted)
+)
+
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -41,18 +49,37 @@ onMounted(async () => {
       <div v-else class="min-h-96">
         <ul class="list bg-base-100 rounded-box shadow-md">
           <TaskItem
-              v-for="task in tasksStore.tasks"
+              v-for="task in incompleteTasks"
               :key="task.id"
               :task="task"
           />
         </ul>
 
         <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center">
-          <div>
-            <List class=" text-base-200 w-24 h-24"/>
+          <div class="opacity-50 flex flex-col items-center text-center gap-2">
+            <Rocket class="w-24 h-24"/>
+            <b>No tasks yet</b>
+            <p class="text-sm">Add a task to get started</p>
           </div>
         </div>
-
+        
+        <div v-else-if="completedTasks.length">
+          
+          <div v-if="!incompleteTasks.length" class="card bg-base-300 rounded-box grid h-24 place-items-center">
+            <div class="flex opacity-50">
+              <ListChecks class="mr-2"/> All tasks completed!
+            </div>
+          </div>
+          
+          <div class="divider">Completed</div>
+          <ul class="list bg-base-100 rounded-box shadow-md">
+            <TaskItem
+                v-for="task in completedTasks"
+                :key="task.id"
+                :task="task"
+            />
+          </ul>
+        </div>
       </div>
     </div>
   </div>

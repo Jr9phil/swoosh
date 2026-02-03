@@ -2,7 +2,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import { ref } from 'vue'
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, GripVertical } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -78,7 +78,7 @@ async function remove() {
     <div><input
         type="checkbox"
         :checked="task.isCompleted"
-        :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox'"
+        :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
     /></div>
 
@@ -86,7 +86,7 @@ async function remove() {
       <input
           ref="titleInput"
           type="text"
-          class="input input-bordered"
+          class="input input-bordered text-base font-semibold"
           maxlength="200"
           v-model="editedTitle"
           @keydown="onKeydown"
@@ -101,20 +101,26 @@ async function remove() {
           @keydown="onKeydown"
       />
     </div>
-    <button class="btn btn-outline btn-circle btn-sm" @click="remove"><Trash2 :size="16"/></button>
+    <button class="btn btn-ghost btn-circle btn-sm hover:btn-error" @click="remove"><Trash2 :size="16"/></button>
   </li>
-  <li v-else class="list-row">
+  <li v-else class="list-row group">
       <div><input
           type="checkbox"
           :checked="task.isCompleted"
           @change="toggleComplete"
-          :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox'"
+          class="checkbox hover:checkbox-primary"
+          :class="{ 'checkbox-primary' : task.isCompleted}"
       /></div>
     
-    <div @click="startEditing" class="cursor-text hover:underline">
-      <h1 class="text-base font-semibold">
+    <div @click="startEditing" class="cursor-text">
+      <h1 class="text-base" :class="task.isCompleted ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
       </h1>
+      <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
+    </div>
+    
+    <div class="flex items-center justify-end cursor-grab">
+      <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200"/>
     </div>
   </li>
 </template>
