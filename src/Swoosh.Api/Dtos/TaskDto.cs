@@ -9,9 +9,11 @@ public class TaskDto
 
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }
-
+    
+    public DateTime? Completed { get; set; }
     public DateTime? Deadline { get; set; }
-    public bool IsCompleted { get; set; }
+    public bool Pinned { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }
 
@@ -24,6 +26,8 @@ public class CreateTaskDto
     [MaxLength(1000)]
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; } = null;
+    public DateTime? Completed { get; set; } = null;
+    public bool Pinned { get; set; } = false;
 }
 
 public class UpdateTaskDto
@@ -31,5 +35,8 @@ public class UpdateTaskDto
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; }
-    public bool IsCompleted { get; set; }
+    
+    public DateTime? Completed { get; set; }
+    
+    public bool Pinned { get; set; }
 }

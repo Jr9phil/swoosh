@@ -47,9 +47,10 @@ public class TaskService : ITaskService
             {
                 Id = t.Id,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion, salt),
-                Deadline = t.Deadline,
-                IsCompleted = t.IsCompleted,
+                Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
+                Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                 CreatedAt = t.CreatedAt
             })
             .ToListAsync();
@@ -64,9 +65,10 @@ public class TaskService : ITaskService
             {
                 Id = t.Id,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
-                Notes = t.EncryptedNotes == null ? null : _crypto.Decrypt(t.EncryptedNotes, userId, t.KeyVersion, salt),
-                Deadline = t.Deadline,
-                IsCompleted = t.IsCompleted,
+                Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
+                Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                 CreatedAt = t.CreatedAt
             })
             .FirstOrDefaultAsync();
@@ -82,10 +84,11 @@ public class TaskService : ITaskService
             Id = Guid.NewGuid(),
             UserId = userId,
             EncryptedTitle = encryptedTitle,
-            EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId, salt).Ciphertext,
+            EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
+            EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext,
+            EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
+            EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
             KeyVersion = keyVersion,
-            Deadline = dto.Deadline,
-            IsCompleted = false,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -97,8 +100,9 @@ public class TaskService : ITaskService
             Id = task.Id,
             Title = dto.Title,
             Notes = dto.Notes,
-            Deadline = task.Deadline,
-            IsCompleted = task.IsCompleted,
+            Completed = dto.Completed,
+            Deadline = dto.Deadline,
+            Pinned = dto.Pinned,
             CreatedAt = task.CreatedAt
         };
     }
@@ -115,10 +119,11 @@ public class TaskService : ITaskService
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
 
         task.EncryptedTitle = encryptedTitle;
-        task.EncryptedNotes = dto.Notes == null ? null : _crypto.Encrypt(dto.Notes, userId, salt).Ciphertext;
+        task.EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext;
+        task.EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext;
+        task.EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext;
+        task.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
         task.KeyVersion = keyVersion;
-        task.Deadline = dto.Deadline;
-        task.IsCompleted = dto.IsCompleted;
 
         await _db.SaveChangesAsync();
         return true;

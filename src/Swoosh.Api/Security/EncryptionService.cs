@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,6 +8,8 @@ public class EncryptionService : IEncryptionService
 {
     private readonly IConfiguration _config;
     private readonly int _activeVersion;
+    
+    private const string NullSentinel = "__NULL__";
 
     public EncryptionService(IConfiguration config)
     {
@@ -35,7 +38,6 @@ public class EncryptionService : IEncryptionService
         return (combined, _activeVersion);
     }
 
-
     public string Decrypt(string encrypted, Guid userId, int keyVersion, byte[] userSalt)
     {
         try
@@ -59,5 +61,70 @@ public class EncryptionService : IEncryptionService
             throw new CryptographicException("Stored data is not valid encrypted content", e);
         }
 
+    }
+    
+    public (string Ciphertext, int KeyVersion) EncryptNullableString(
+        string? value,
+        Guid userId,
+        byte[] userSalt)
+    {
+        return Encrypt(value ?? NullSentinel, userId, userSalt);
+    }
+
+    public string? DecryptNullableString(
+        string encrypted,
+        Guid userId,
+        int keyVersion,
+        byte[] userSalt)
+    {
+        var plaintext = Decrypt(encrypted, userId, keyVersion, userSalt);
+        return plaintext == NullSentinel ? null : plaintext;
+    }
+    
+    public (string Ciphertext, int KeyVersion) EncryptNullableDateTime(
+        DateTime? value,
+        Guid userId,
+        byte[] userSalt)
+    {
+        var plaintext = value == null
+            ? NullSentinel
+            : value.Value.ToString("O"); // ISO 8601 round-trip
+
+        return Encrypt(plaintext, userId, userSalt);
+    }
+
+    public DateTime? DecryptNullableDateTime(
+        string encrypted,
+        Guid userId,
+        int keyVersion,
+        byte[] userSalt)
+    {
+        var plaintext = Decrypt(encrypted, userId, keyVersion, userSalt);
+
+        if (plaintext == NullSentinel)
+            return null;
+
+        return DateTime.Parse(
+            plaintext,
+            null,
+            DateTimeStyles.RoundtripKind
+        );
+    }
+    
+    public (string Ciphertext, int KeyVersion) EncryptBool(
+        bool value,
+        Guid userId,
+        byte[] userSalt)
+    {
+        return Encrypt(value ? "1" : "0", userId, userSalt);
+    }
+
+    public bool DecryptBool(
+        string encrypted,
+        Guid userId,
+        int keyVersion,
+        byte[] userSalt)
+    {
+        return Decrypt(encrypted, userId, keyVersion, userSalt) == "1";
     }
 }

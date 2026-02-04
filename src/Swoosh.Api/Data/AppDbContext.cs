@@ -18,6 +18,6 @@ public class AppDbContext : DbContext
             .IsUnique();
 
         modelBuilder.Entity<TaskItem>()
-            .HasIndex(t => new { t.UserId, t.IsCompleted });
+            .HasIndex(t => new { t.UserId });
     }
 }

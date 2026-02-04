@@ -133,16 +133,16 @@ async function remove() {
       <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
     </div>
 
-    <div v-if="!task.isCompleted" class="flex justify-end">
+    <div v-if="!task.isCompleted" class="flex justify-end group">
       <button 
           id="priority" 
           @click="startEditing"
-          class="btn btn-ghost btn-circle opacity-0 hover:opacity-50"> 
+          class="btn btn-ghost btn-circle opacity-0 group-hover:opacity-50"> 
         <ChessPawn />
       </button>
       <button 
           id="pin" 
-          class="btn btn-ghost btn-circle opacity-0 hover:opacity-50">
+          class="btn btn-ghost btn-circle opacity-0 group-hover:opacity-50">
         <Pin />
       </button>
     </div>

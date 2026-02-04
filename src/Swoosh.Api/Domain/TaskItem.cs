@@ -6,11 +6,11 @@ public class TaskItem
     public Guid UserId { get; set; }
 
     public string EncryptedTitle { get; set; } = null!;
-    public string? EncryptedNotes { get; set; }
+    public string EncryptedNotes { get; set; } = null!;
+    public string EncryptedCompletedAt { get; set; } = null!;
+    public string EncryptedDeadline { get; set; } = null!;
+    public string EncryptedPinned { get; set; } = null!;
     
     public int KeyVersion { get; set; }
-    
-    public DateTime? Deadline { get; set; }
-    public bool IsCompleted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
