@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref } from 'vue'
-import { Trash2, GripVertical, EllipsisVertical, ListStart } from 'lucide-vue-next'
+import { Trash2, GripVertical, EllipsisVertical, ListStart, Pin, ChessPawn } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -133,7 +133,21 @@ async function remove() {
       <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
     </div>
 
-    <div class="flex items-center justify-end">
+    <div v-if="!task.isCompleted" class="flex justify-end">
+      <button 
+          id="priority" 
+          @click="startEditing"
+          class="btn btn-ghost btn-circle opacity-0 hover:opacity-50"> 
+        <ChessPawn />
+      </button>
+      <button 
+          id="pin" 
+          class="btn btn-ghost btn-circle opacity-0 hover:opacity-50">
+        <Pin />
+      </button>
+    </div>
+
+    <div class="flex justify-end">
       <TaskMenu
           :is-completed="task.isCompleted"
           @delete="remove"
