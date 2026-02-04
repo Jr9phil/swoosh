@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
+import TaskMenu from './TaskMenu.vue'
 import { ref } from 'vue'
-import { Trash2, GripVertical, EllipsisVertical, ListStart, X } from 'lucide-vue-next'
+import { Trash2, GripVertical, EllipsisVertical, ListStart } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -108,10 +109,12 @@ async function remove() {
           @keydown="onKeydown"
       />
     </div>
-    <div class="flex flex-col m-h-full">
-      <button class="btn btn-ghost btn-circle btn-sm" @click="editing = false"><X :size="16"/></button>
-      <div class="flex-grow"></div>
-      <button class="btn btn-ghost btn-circle btn-sm hover:btn-error" @click="remove"><Trash2 :size="16"/></button>
+    <div class="flex justify-end">
+      <TaskMenu
+          :is-completed="task.isCompleted"
+          @delete="remove"
+          @move-to-top=""
+      />
     </div>
   </li>
   <li v-else class="list-row">
@@ -129,21 +132,13 @@ async function remove() {
       </h1>
       <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
     </div>
-    
+
     <div class="flex items-center justify-end">
-      <div class="dropdown dropdown-right">
-        <button 
-            tabindex="0" 
-            role="button" 
-            class="btn btn-ghost btn-circle btn-sm group">
-          <EllipsisVertical class="opacity-10 group-hover:opacity-60"/>
-        </button>
-        <ul tabindex="-1" class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-36 p-2 shadow-sm">
-          <li v-if="!task.isCompleted"><a><ListStart :size="16"/> Move to top</a></li>
-          <li><a @click="remove"><Trash2 :size="16"/> Delete</a></li>
-        </ul>
-      </div>
-      
+      <TaskMenu
+          :is-completed="task.isCompleted"
+          @delete="remove"
+          @move-to-top=""
+      />
     </div>
   </li>
 </template>
