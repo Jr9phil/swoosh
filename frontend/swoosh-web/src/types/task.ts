@@ -2,8 +2,9 @@ export interface Task {
     id: string
     title: string
     notes?: string | null
+    completed?: string | null
     deadline?: string | null
-    isCompleted: boolean
+    pinned: boolean
     createdAt: string
 }
 

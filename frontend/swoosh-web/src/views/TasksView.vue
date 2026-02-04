@@ -10,11 +10,11 @@ import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const incompleteTasks = computed(() =>
-    tasksStore.tasks.filter(t => !t.isCompleted)
+    tasksStore.tasks.filter(t => !t.completed)
 )
 
 const completedTasks = computed(() =>
-    tasksStore.tasks.filter(t => t.isCompleted)
+    tasksStore.tasks.filter(t => t.completed)
 )
 
 const auth = useAuthStore()

@@ -22,6 +22,11 @@ function formattedDeadline() {
   if (!props.task.deadline) return null
   return new Date(props.task.deadline).toLocaleDateString()
 }
+
+function formattedCompletionDate() {
+  if (!props.task.completed) return null
+  return new Date(props.task.completed).toLocaleDateString()
+}
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     e.preventDefault()
@@ -79,8 +84,8 @@ async function remove() {
     <div class="flex flex-col">
       <input
         type="checkbox"
-        :checked="task.isCompleted"
-        :class="task.isCompleted ? 'checkbox checkbox-primary' : 'checkbox' "
+        :checked="!!task.completed"
+        :class="task.completed ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
       />
       
@@ -111,7 +116,7 @@ async function remove() {
     </div>
     <div class="flex justify-end">
       <TaskMenu
-          :is-completed="task.isCompleted"
+          :is-completed="!!task.completed"
           @delete="remove"
           @move-to-top=""
       />
@@ -120,20 +125,21 @@ async function remove() {
   <li v-else class="list-row">
       <div><input
           type="checkbox"
-          :checked="task.isCompleted"
+          :checked="!!task.completed"
           @change="toggleComplete"
           class="checkbox hover:checkbox-primary"
-          :class="{ 'checkbox-primary' : task.isCompleted}"
+          :class="{ 'checkbox-primary' : task.completed}"
       /></div>
     
     <div @click="startEditing" class="cursor-text">
-      <h1 class="text-base" :class="task.isCompleted ? 'line-through opacity-70' : 'font-semibold'">
+      <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
       </h1>
-      <p v-if="!task.isCompleted" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
+      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-2"> {{ task.notes }}</p>
+      <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
     </div>
 
-    <div v-if="!task.isCompleted" class="flex justify-end group">
+    <div v-if="!task.completed" class="flex justify-end group">
       <button 
           id="priority" 
           @click="startEditing"
@@ -149,7 +155,7 @@ async function remove() {
 
     <div class="flex justify-end">
       <TaskMenu
-          :is-completed="task.isCompleted"
+          :is-completed="!!task.completed"
           @delete="remove"
           @move-to-top=""
       />

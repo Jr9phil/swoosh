@@ -23,16 +23,20 @@ export const useTasksStore = defineStore('tasks', {
             this.tasks.unshift(res.data)
         },
         async toggleComplete(task: Task) {
+            const completedAt = task.completed 
+                ? null
+                : new Date().toISOString()
+
             const updated = {
                 ...task,
-                isCompleted: !task.isCompleted
+                completed: completedAt
             }
-
+            
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
             if (index !== -1) {
-                this.tasks[index].isCompleted = updated.isCompleted
+                this.tasks[index].completed = completedAt
             }
         },
         async editTask(taskId: string, payload: { title: string, notes?: string | null }) {
