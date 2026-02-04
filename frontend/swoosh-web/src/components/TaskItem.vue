@@ -49,6 +49,9 @@ function startEditing() {
 async function toggleComplete() {
   await tasksStore.toggleComplete(props.task)
 }
+async function togglePinned() {
+  await tasksStore.togglePinned(props.task)
+}
 async function finishEditing() {
   if (!editing.value) return
 
@@ -148,7 +151,9 @@ async function remove() {
       </button>
       <button 
           id="pin" 
-          class="btn btn-ghost btn-circle opacity-0 group-hover:opacity-50">
+          @click="togglePinned"
+          class="btn btn-ghost btn-circle"
+          :class="task.pinned ? '' : 'opacity-0 group-hover:opacity-50'">
         <Pin />
       </button>
     </div>

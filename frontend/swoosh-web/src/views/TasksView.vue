@@ -10,7 +10,11 @@ import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const incompleteTasks = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed)
+    tasksStore.tasks.filter(t => !t.completed && !t.pinned)
+)
+
+const pinnedTasks = computed(() =>
+    tasksStore.tasks.filter(t => !t.completed && t.pinned)
 )
 
 const completedTasks = computed(() =>
@@ -47,6 +51,16 @@ onMounted(async () => {
       <div v-if="tasksStore.loading" class="skeleton w-full h-96" />
 
       <div v-else class="min-h-96">
+        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md">
+          <TaskItem
+              v-for="task in pinnedTasks"
+              :key="task.id"
+              :task="task"
+          />
+        </ul>
+        
+        <div v-if="pinnedTasks.length" class="divider"></div>
+        
         <ul class="list bg-base-100 rounded-box shadow-md">
           <TaskItem
               v-for="task in incompleteTasks"

@@ -18,10 +18,12 @@ export const useTasksStore = defineStore('tasks', {
                 this.loading = false
             }
         },
+        
         async createTask(payload: CreateTask) {
             const res = await api.post('/tasks', payload)
             this.tasks.unshift(res.data)
         },
+        
         async toggleComplete(task: Task) {
             const completedAt = task.completed 
                 ? null
@@ -39,6 +41,21 @@ export const useTasksStore = defineStore('tasks', {
                 this.tasks[index].completed = completedAt
             }
         },
+        
+        async togglePinned(task: Task) {
+            const updated = {
+                ...task,
+                pinned : !task.pinned
+            }
+            
+            await api.put(`/tasks/${task.id}`, updated)
+            
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].pinned = updated.pinned
+            }
+        },
+        
         async editTask(taskId: string, payload: { title: string, notes?: string | null }) {
             await api.put(`/tasks/${taskId}`, payload)
             
@@ -48,6 +65,7 @@ export const useTasksStore = defineStore('tasks', {
                 task.notes = payload.notes ?? null
             }
         },
+        
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)
             this.tasks = this.tasks.filter(t => t.id !== taskId)
