@@ -51,6 +51,11 @@ function startEditing() {
   originalNotes.value = props.task.notes ?? ''
 }
 async function toggleComplete() {
+  if(props.task.completed) {
+    if(!confirm('Mark task as incomplete?')) {
+      return
+    }
+  }
   await tasksStore.toggleComplete(props.task)
 }
 async function togglePinned() {
