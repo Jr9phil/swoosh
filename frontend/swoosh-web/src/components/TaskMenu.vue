@@ -13,7 +13,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="dropdown dropdown-right">
+  <div v-if="!isCompleted" class="dropdown dropdown-right">
     <button
         tabindex="0"
         role="button"
@@ -26,7 +26,7 @@ const emit = defineEmits<{
         tabindex="-1"
         class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-40 p-2 shadow-sm"
     >
-      <li v-if="!isCompleted">
+      <li>
         <a @click="emit('moveToTop')">
           <ListStart :size="16" /> Move to top
         </a>
@@ -38,5 +38,10 @@ const emit = defineEmits<{
         </a>
       </li>
     </ul>
+  </div>
+  <div v-else>
+    <button @click="emit('delete')" class="btn btn-ghost btn-circle btn-sm group">
+      <Trash2 :size="16" class="opacity-10 group-hover:opacity-60" />
+    </button>
   </div>
 </template>
