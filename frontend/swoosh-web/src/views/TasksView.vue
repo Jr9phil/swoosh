@@ -34,7 +34,15 @@ const pinnedTasks = computed(() =>
 )
 
 const completedTasks = computed(() =>
-    tasksStore.tasks.filter(t => t.completed)
+    tasksStore.tasks
+        .filter(t => t.completed)
+        .slice()
+        .sort((a, b) => {
+          return (
+              new Date(b.completed!).getTime() -
+              new Date(a.completed!).getTime()
+          )
+        })
 )
 
 const auth = useAuthStore()
