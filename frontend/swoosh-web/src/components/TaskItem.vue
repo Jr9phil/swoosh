@@ -2,7 +2,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { 
   Trash2, 
   GripVertical, 
@@ -32,7 +32,21 @@ const editedTitle = ref(props.task.title)
 const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
 const editedDeadline = ref(props.task.deadline ?? '')
-const editedPriority = ref(props.task.priority)
+
+const PRIORITIES = [
+  { value: 0, icon: ChessPawn, label: 'Default' },
+  { value: 1, icon: ChessKnight, label: 'Medium' },
+  { value: 2, icon: ChessQueen, label: 'High' },
+  { value: 3, icon: ChessKing, label: 'Top' }
+]
+
+const priorityIndex = ref(
+    PRIORITIES.findIndex(p => p.value === props.task.priority)
+)
+
+const editedPriority = computed(() =>
+    PRIORITIES[priorityIndex.value].value
+)
 
 const tasksStore = useTasksStore()
 
@@ -101,7 +115,8 @@ function startEditing() {
   editedNotes.value = props.task.notes ?? ''
   editPinned.value = props.task.pinned
   editedDeadline.value = props.task.deadline ?? ''
-  editedPriority.value = props.task.priority
+  
+  priorityIndex.value = PRIORITIES.findIndex(p => p.value === props.task.priority)
   
   originalTitle.value = props.task.title
   originalNotes.value = props.task.notes ?? ''
@@ -110,7 +125,8 @@ function startEditing() {
   originalPriority.value = props.task.priority
 }
 function cyclePriority() {
-  editedPriority.value = (editedPriority.value + 1) % 4
+  if(!editing.value) return
+  priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
 }
 async function toggleComplete() {
   if(props.task.completed) {
@@ -214,10 +230,10 @@ async function remove() {
           id="priority"
           @click="cyclePriority"
           class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
-        <ChessKing v-if="editedPriority === 3" />
-        <ChessQueen v-else-if="editedPriority === 2" />
-        <ChessKnight v-else-if="editedPriority === 1" />
-        <ChessPawn v-else />
+        <component
+          :is="PRIORITIES[priorityIndex].icon"
+          class="transition-transform duration-150 active:rotate-12"
+        />
       </button>
       
       <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100">
@@ -258,11 +274,10 @@ async function remove() {
           id="priority" 
           @click="startEditing"
           class="btn btn-circle"
-          :class="task.priority === 0 ? 'btn-ghost opacity-0 group-hover:opacity-50': 'btn-soft btn-info'">
-        <ChessKing v-if="task.priority === 3" />
-        <ChessQueen v-else-if="task.priority === 2" />
-        <ChessKnight v-else-if="task.priority === 1" />
-        <ChessPawn v-else />
+          :class="priorityIndex === 0 ? 'btn-ghost opacity-0 group-hover:opacity-50': 'btn-soft btn-info'">
+        <component
+            :is="PRIORITIES[priorityIndex].icon"
+        />
       </button>
       <button 
           id="pin" 
