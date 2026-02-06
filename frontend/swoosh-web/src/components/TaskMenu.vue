@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, ListStart, ClockFading } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, ListStart } from 'lucide-vue-next'
 
 defineProps<{
   isCompleted: boolean
@@ -8,6 +8,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'delete'): void
   (e: 'moveToTop'): void
+  (e: 'edit'): void
 }>()
 </script>
 
@@ -28,12 +29,6 @@ const emit = defineEmits<{
       <li v-if="!isCompleted">
         <a @click="emit('moveToTop')">
           <ListStart :size="16" /> Move to top
-        </a>
-      </li>
-      
-      <li v-if="!isCompleted">
-        <a>
-          <ClockFading :size="16" /> Add deadline
         </a>
       </li>
       

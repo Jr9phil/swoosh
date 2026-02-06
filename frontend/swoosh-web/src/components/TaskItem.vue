@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref } from 'vue'
-import { Trash2, GripVertical, EllipsisVertical, ListStart, Pin, PinOff, ChessPawn } from 'lucide-vue-next'
+import { Trash2, GripVertical, EllipsisVertical, ListStart, Pin, PinOff, CalendarClock, ChessPawn } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -12,11 +12,13 @@ const props = defineProps<{
 const originalTitle = ref(props.task.title)
 const originalNotes = ref(props.task.notes ?? '')
 const originalPinned = ref(props.task.pinned)
+const originalDeadline = ref(props.task.deadline ?? '')
 
 const editing = ref(false)
 const editedTitle = ref(props.task.title)
 const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
+const editedDeadline = ref(props.task.deadline ?? '')
 
 const tasksStore = useTasksStore()
 
@@ -46,9 +48,12 @@ function startEditing() {
   editedTitle.value = props.task.title
   editedNotes.value = props.task.notes ?? ''
   editPinned.value = props.task.pinned
+  editedDeadline.value = props.task.deadline ?? ''
   
   originalTitle.value = props.task.title
   originalNotes.value = props.task.notes ?? ''
+  originalPinned.value = props.task.pinned
+  originalDeadline.value = props.task.deadline ?? ''
 }
 async function toggleComplete() {
   if(props.task.completed) {
@@ -69,7 +74,8 @@ async function finishEditing() {
   if (
       editedTitle.value === originalTitle.value &&
       editedNotes.value === originalNotes.value &&
-      editedPinned.value === originalPinned.value
+      editedPinned.value === originalPinned.value &&
+      editedDeadline.value === originalDeadline.value
   ) {
     return
   }
@@ -78,13 +84,15 @@ async function finishEditing() {
     editedTitle.value = originalTitle.value
     editedNotes.value = originalNotes.value
     editedPinned.value = originalPinned.value
+    editedDeadline.value = originalDeadline.value
     return
   }
 
   await tasksStore.editTask(props.task.id, {
     title: editedTitle.value.trim(),
     notes: editedNotes.value || null,
-    pinned: editedPinned.value
+    pinned: editedPinned.value,
+    deadline: editedDeadline.value || null
   })
 }
 async function remove() {
@@ -128,6 +136,13 @@ async function remove() {
           v-model="editedNotes"
           @keydown="onKeydown"
       />
+      
+      <input 
+          type="datetime-local" 
+          class="input input-bordered" 
+          v-model="editedDeadline" 
+          @keydown="onKeydown"
+      />
     </div>
     <div v-if="!task.completed" class="flex justify-end">
       <button
@@ -159,12 +174,15 @@ async function remove() {
           :class="{ 'checkbox-primary' : task.completed}"
       /></div>
     
-    <div @click="startEditing" class="cursor-text">
-      <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
-        {{ task.title }}
-      </h1>
-      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
-      <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
+    <div>
+      <div @click="startEditing" class="cursor-text">
+        <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
+          {{ task.title }}
+        </h1>
+        <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
+        <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
+      </div>
+      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-default"><CalendarClock :size="16" /> {{ formattedDeadline() }}</div> 
     </div>
 
     <div v-if="!task.completed" class="flex justify-end group">
