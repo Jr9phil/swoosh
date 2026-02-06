@@ -104,6 +104,11 @@ async function toggleComplete() {
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
+async function resetDeadline() {
+  if (confirm('Remove deadline?')) {
+    await tasksStore.resetDeadline(props.task)
+  }
+}
 async function finishEditing() {
   if (!editing.value) return
 
@@ -198,8 +203,9 @@ async function remove() {
     <div class="flex justify-end">
       <TaskMenu
           :is-completed="!!task.completed"
+          :has-deadline="!!task.deadline"
           @delete="remove"
-          @move-to-top=""
+          @reset-deadline="resetDeadline"
       />
     </div>
   </li>
@@ -241,8 +247,9 @@ async function remove() {
     <div class="flex justify-end">
       <TaskMenu
           :is-completed="!!task.completed"
+          :has-deadline="!!task.deadline"
           @delete="remove"
-          @move-to-top=""
+          @reset-deadline="resetDeadline"
       />
     </div>
   </li>

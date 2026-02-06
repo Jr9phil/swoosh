@@ -56,6 +56,19 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        async resetDeadline(task: Task) {
+            const updated = {
+                ...task,
+                deadline : null
+            }
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].deadline = updated.deadline
+            }
+        },
+        
         async editTask(taskId: string, payload: { title: string, notes?: string | null, pinned?: boolean, deadline?: string | null }) {
             await api.put(`/tasks/${taskId}`, payload)
             

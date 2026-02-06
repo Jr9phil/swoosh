@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, ListStart } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, ListStart, CalendarOff } from 'lucide-vue-next'
 
 defineProps<{
   isCompleted: boolean
+  hasDeadline: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'delete'): void
   (e: 'moveToTop'): void
-  (e: 'edit'): void
+  (e: 'resetDeadline'): void
 }>()
 </script>
 
@@ -24,11 +25,17 @@ const emit = defineEmits<{
 
     <ul
         tabindex="-1"
-        class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-40 p-2 shadow-sm"
+        class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-44 p-2 shadow-sm"
     >
       <li v-if="!isCompleted">
         <a @click="emit('moveToTop')">
           <ListStart :size="16" /> Move to top
+        </a>
+      </li>
+
+      <li v-if="!isCompleted && !!hasDeadline">
+        <a @click="emit('resetDeadline')">
+          <CalendarOff :size="16" /> Remove deadline
         </a>
       </li>
       
