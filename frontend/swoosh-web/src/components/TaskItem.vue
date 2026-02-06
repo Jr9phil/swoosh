@@ -24,7 +24,45 @@ const tasksStore = useTasksStore()
 
 function formattedDeadline() {
   if (!props.task.deadline) return null
-  return new Date(props.task.deadline).toLocaleDateString()
+
+  const deadline = new Date(props.task.deadline)
+  const now = new Date()
+
+  const diffMs = deadline.getTime() - now.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffDays = Math.floor(diffSec / 86400)
+  
+  if (Math.abs(diffDays) > 730) {
+    return deadline.toLocaleDateString()
+  }
+  
+  if (diffSec < 0) {
+    return deadline.toLocaleDateString()
+  }
+  if (diffDays === 0) {
+    return deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  }
+  if (diffDays === 1) {
+    return 'Tomorrow'
+  }
+  if (diffDays < 7) {
+    return deadline.toLocaleDateString('en-US', { weekday: 'long' })
+  }
+  if (diffDays < 30) {
+    return deadline.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+  if (diffDays < 365) {
+    return deadline.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+  
+  return deadline.toLocaleDateString()
 }
 
 function formattedCompletionDate() {
@@ -174,15 +212,14 @@ async function remove() {
           :class="{ 'checkbox-primary' : task.completed}"
       /></div>
     
-    <div>
-      <div @click="startEditing" class="cursor-text">
-        <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
-          {{ task.title }}
-        </h1>
-        <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
-        <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
-      </div>
-      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-default"><CalendarClock :size="16" /> {{ formattedDeadline() }}</div> 
+
+    <div @click="startEditing" class="cursor-text">
+      <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
+        {{ task.title }}
+      </h1>
+      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
+      <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
+      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer"><CalendarClock :size="16" /> {{ formattedDeadline() }}</div> 
     </div>
 
     <div v-if="!task.completed" class="flex justify-end group">
