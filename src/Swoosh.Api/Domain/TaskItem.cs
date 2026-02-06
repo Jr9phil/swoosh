@@ -10,6 +10,7 @@ public class TaskItem
     public string EncryptedCompletedAt { get; set; } = null!;
     public string EncryptedDeadline { get; set; } = null!;
     public string EncryptedPinned { get; set; } = null!;
+    public string EncryptedPriority { get; set; } = null!;
     
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

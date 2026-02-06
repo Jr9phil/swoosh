@@ -63,6 +63,18 @@ public class EncryptionService : IEncryptionService
 
     }
     
+    public (string Ciphertext, int KeyVersion) EncryptInt(int value, Guid userId, byte[] userSalt)
+    {
+        return Encrypt(value.ToString(), userId, userSalt);
+    }
+
+    public int DecryptInt(string encrypted, Guid userId, int keyVersion, byte[] userSalt)
+    {
+        var plaintext = Decrypt(encrypted, userId, keyVersion, userSalt);
+        return int.Parse(plaintext);
+    }
+
+    
     public (string Ciphertext, int KeyVersion) EncryptNullableString(
         string? value,
         Guid userId,

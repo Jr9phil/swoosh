@@ -3,7 +3,19 @@ import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref } from 'vue'
-import { Trash2, GripVertical, EllipsisVertical, ListStart, Pin, PinOff, CalendarClock, ChessPawn } from 'lucide-vue-next'
+import { 
+  Trash2, 
+  GripVertical, 
+  EllipsisVertical, 
+  ListStart, 
+  Pin, 
+  PinOff, 
+  CalendarClock, 
+  ChessPawn,
+  ChessKnight,
+  ChessQueen,
+  ChessKing  
+} from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
@@ -13,12 +25,14 @@ const originalTitle = ref(props.task.title)
 const originalNotes = ref(props.task.notes ?? '')
 const originalPinned = ref(props.task.pinned)
 const originalDeadline = ref(props.task.deadline ?? '')
+const originalPriority = ref(props.task.priority)
 
 const editing = ref(false)
 const editedTitle = ref(props.task.title)
 const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
 const editedDeadline = ref(props.task.deadline ?? '')
+const editedPriority = ref(props.task.priority)
 
 const tasksStore = useTasksStore()
 
@@ -87,11 +101,16 @@ function startEditing() {
   editedNotes.value = props.task.notes ?? ''
   editPinned.value = props.task.pinned
   editedDeadline.value = props.task.deadline ?? ''
+  editedPriority.value = props.task.priority
   
   originalTitle.value = props.task.title
   originalNotes.value = props.task.notes ?? ''
   originalPinned.value = props.task.pinned
   originalDeadline.value = props.task.deadline ?? ''
+  originalPriority.value = props.task.priority
+}
+function cyclePriority() {
+  editedPriority.value = (editedPriority.value + 1) % 4
 }
 async function toggleComplete() {
   if(props.task.completed) {
@@ -118,7 +137,8 @@ async function finishEditing() {
       editedTitle.value === originalTitle.value &&
       editedNotes.value === originalNotes.value &&
       editedPinned.value === originalPinned.value &&
-      editedDeadline.value === originalDeadline.value
+      editedDeadline.value === originalDeadline.value &&
+      editedPriority.value === originalPriority.value
   ) {
     return
   }
@@ -128,6 +148,7 @@ async function finishEditing() {
     editedNotes.value = originalNotes.value
     editedPinned.value = originalPinned.value
     editedDeadline.value = originalDeadline.value
+    editedPriority.value = originalPriority.value
     return
   }
 
@@ -135,7 +156,8 @@ async function finishEditing() {
     title: editedTitle.value.trim(),
     notes: editedNotes.value || null,
     pinned: editedPinned.value,
-    deadline: editedDeadline.value || null
+    deadline: editedDeadline.value || null,
+    priority: editedPriority.value
   })
 }
 async function remove() {
@@ -190,8 +212,12 @@ async function remove() {
     <div v-if="!task.completed" class="flex justify-end">
       <button
           id="priority"
+          @click="cyclePriority"
           class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
-        <ChessPawn />
+        <ChessKing v-if="editedPriority === 3" />
+        <ChessQueen v-else-if="editedPriority === 2" />
+        <ChessKnight v-else-if="editedPriority === 1" />
+        <ChessPawn v-else />
       </button>
       
       <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100">
@@ -218,7 +244,6 @@ async function remove() {
           :class="{ 'checkbox-primary' : task.completed}"
       /></div>
     
-
     <div @click="startEditing" class="cursor-text">
       <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
@@ -232,8 +257,12 @@ async function remove() {
       <button 
           id="priority" 
           @click="startEditing"
-          class="btn btn-ghost btn-circle opacity-0 group-hover:opacity-50"> 
-        <ChessPawn />
+          class="btn btn-circle"
+          :class="task.priority === 0 ? 'btn-ghost opacity-0 group-hover:opacity-50': 'btn-soft btn-info'">
+        <ChessKing v-if="task.priority === 3" />
+        <ChessQueen v-else-if="task.priority === 2" />
+        <ChessKnight v-else-if="task.priority === 1" />
+        <ChessPawn v-else />
       </button>
       <button 
           id="pin" 

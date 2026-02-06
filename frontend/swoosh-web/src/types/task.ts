@@ -5,6 +5,7 @@ export interface Task {
     completed?: string | null
     deadline?: string | null
     pinned: boolean
+    priority: number
     createdAt: string
 }
 

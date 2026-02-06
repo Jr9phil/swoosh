@@ -51,6 +51,7 @@ public class TaskService : ITaskService
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
                 Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
                 Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
+                Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                 CreatedAt = t.CreatedAt
             })
             .ToListAsync();
@@ -69,6 +70,7 @@ public class TaskService : ITaskService
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
                 Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
                 Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
+                Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                 CreatedAt = t.CreatedAt
             })
             .FirstOrDefaultAsync();
@@ -78,6 +80,12 @@ public class TaskService : ITaskService
     {
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
+        var encryptedPriority = _crypto.EncryptInt(
+            Math.Clamp(dto.Priority, 0, 3),
+            userId,
+            salt
+        );
+
         
         var task = new TaskItem
         {
@@ -88,6 +96,7 @@ public class TaskService : ITaskService
             EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext,
             EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
             EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
+            EncryptedPriority = encryptedPriority.Ciphertext,
             KeyVersion = keyVersion,
             CreatedAt = DateTime.UtcNow
         };
@@ -103,6 +112,7 @@ public class TaskService : ITaskService
             Completed = dto.Completed,
             Deadline = dto.Deadline,
             Pinned = dto.Pinned,
+            Priority = dto.Priority,
             CreatedAt = task.CreatedAt
         };
     }
@@ -117,12 +127,18 @@ public class TaskService : ITaskService
         
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
+        var encryptedPriority = _crypto.EncryptInt(
+            Math.Clamp(dto.Priority, 0, 3),
+            userId,
+            salt
+        );
 
         task.EncryptedTitle = encryptedTitle;
         task.EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext;
         task.EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext;
         task.EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext;
         task.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
+        task.EncryptedPriority = encryptedPriority.Ciphertext;
         task.KeyVersion = keyVersion;
 
         await _db.SaveChangesAsync();

@@ -4,6 +4,8 @@ public interface IEncryptionService
 {
     (string Ciphertext, int KeyVersion) Encrypt(string plaintext, Guid userId, byte[] salt);
     string Decrypt(string ciphertext, Guid userId, int keyVersion, byte[] salt);
+    (string Ciphertext, int KeyVersion) EncryptInt(int value, Guid userId, byte[] salt);
+    int DecryptInt(string ciphertext, Guid userId, int keyVersion, byte[] salt);
     (string Ciphertext, int KeyVersion) EncryptNullableString(string? plaintext, Guid userId, byte[] salt);
     string? DecryptNullableString(string ciphertext, Guid userId, int keyVersion, byte[] salt);
     (string Ciphertext, int KeyVersion) EncryptNullableDateTime(DateTime? value, Guid userId, byte[] salt);

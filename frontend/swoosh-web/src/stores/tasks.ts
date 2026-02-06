@@ -69,7 +69,16 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
-        async editTask(taskId: string, payload: { title: string, notes?: string | null, pinned?: boolean, deadline?: string | null }) {
+        async editTask(
+            taskId: string, 
+            payload: { 
+                title: string, 
+                notes?: string | null, 
+                pinned?: boolean, 
+                deadline?: string | null,
+                priority?: number,
+            }
+            ) {
             await api.put(`/tasks/${taskId}`, payload)
             
             const task = this.tasks.find(t => t.id === taskId)
@@ -77,9 +86,8 @@ export const useTasksStore = defineStore('tasks', {
                 task.title = payload.title
                 task.notes = payload.notes ?? null
                 
-                if(payload.pinned !== undefined) {
-                    task.pinned = payload.pinned
-                }
+                if(payload.pinned !== undefined) task.pinned = payload.pinned
+                if (payload.priority !== undefined) task.priority = payload.priority
                 
                 task.deadline = payload.deadline ?? null
             }
