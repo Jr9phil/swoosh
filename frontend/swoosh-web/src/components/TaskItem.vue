@@ -192,11 +192,9 @@ async function remove() {
         :class="task.completed ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
       />
-      
-      <div class="flex-1 flex items-center justify-center cursor-grab group">
+      <div class="flex-1 flex items-center justify-center min-h-8 cursor-grab group" @click="finishEditing">
         <GripVertical class="opacity-10 group-hover:opacity-50 transition-opacity duration-200" />
       </div>
-      
     </div>
 
     <div class="flex flex-col gap-2 w-full">
@@ -252,13 +250,19 @@ async function remove() {
     </div>
   </li>
   <li v-else class="list-row">
-      <div><input
+      <div class="flex flex-col">
+        <input
           type="checkbox"
           :checked="!!task.completed"
           @change="toggleComplete"
           class="checkbox hover:checkbox-primary"
           :class="{ 'checkbox-primary' : task.completed}"
-      /></div>
+        />
+
+        <div class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
+          <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
+        </div>
+      </div>
     
     <div @click="startEditing" class="cursor-text">
       <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
