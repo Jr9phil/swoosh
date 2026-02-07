@@ -212,7 +212,7 @@ async function remove() {
         :class="task.completed ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
       />
-      <div class="flex-1 flex items-center justify-center min-h-8 cursor-grab group" @click="finishEditing">
+      <div v-if="!task.completed" class="flex-1 flex items-center justify-center min-h-8 cursor-grab group" @click="finishEditing">
         <GripVertical class="opacity-10 group-hover:opacity-50 transition-opacity duration-200" />
       </div>
     </div>
@@ -271,7 +271,7 @@ async function remove() {
   </li>
   <li v-else 
       class="list-row"
-      draggable="true"
+      :draggable="!task.completed"
       @dragstart="onDragStart"
   >
       <div class="flex flex-col">
@@ -283,7 +283,7 @@ async function remove() {
           :class="{ 'checkbox-primary' : task.completed}"
         />
 
-        <div class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
+        <div v-if="!task.completed" class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
           <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
         </div>
       </div>
