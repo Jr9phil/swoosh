@@ -56,6 +56,19 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        async resetCreationDate(task: Task) {
+          const updated = {
+              ...task,
+              createdAt: new Date().toISOString()
+          }
+          await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].createdAt = updated.createdAt
+            }
+        },
+        
         async resetDeadline(task: Task) {
             const updated = {
                 ...task,

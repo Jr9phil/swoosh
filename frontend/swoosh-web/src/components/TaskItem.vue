@@ -164,6 +164,9 @@ async function resetDeadline() {
     await tasksStore.resetDeadline(props.task)
   }
 }
+async function moveToTop() {
+  await tasksStore.resetCreationDate(props.task)
+}
 async function finishEditing() {
   if (!editing.value) return
 
@@ -266,6 +269,7 @@ async function remove() {
           :has-deadline="!!task.deadline"
           @delete="remove"
           @reset-deadline="resetDeadline"
+          @move-to-top="moveToTop"
       />
     </div>
   </li>
@@ -322,6 +326,7 @@ async function remove() {
           :has-deadline="!!task.deadline"
           @delete="remove"
           @reset-deadline="resetDeadline"
+          @move-to-top="moveToTop"
       />
     </div>
   </li>
