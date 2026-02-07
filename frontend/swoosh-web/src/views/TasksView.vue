@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
@@ -45,6 +45,14 @@ const completedTasks = computed(() =>
         })
 )
 
+const draggedTask = ref<Task | null>(null)
+
+function onDragStart(task: Task) {
+  draggedTask.value = task
+  console.log('Dragging:', task.title)
+}
+
+
 const auth = useAuthStore()
 const router = useRouter()
 
@@ -85,11 +93,12 @@ onMounted(async () => {
         
         <div v-if="pinnedTasks.length" class="divider"></div>
         
-        <ul class="list bg-base-100 rounded-box shadow-md">
+        <ul class="drop-zone list bg-base-100 rounded-box shadow-md">
           <TaskItem
               v-for="task in incompleteTasks"
               :key="task.id"
               :task="task"
+              @drag-start="onDragStart"
           />
         </ul>
 

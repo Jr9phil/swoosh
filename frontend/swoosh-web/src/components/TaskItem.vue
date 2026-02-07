@@ -50,6 +50,26 @@ const editedPriority = computed(() =>
 
 const tasksStore = useTasksStore()
 
+const emit = defineEmits<{
+  (e: 'drag-start', task: Task): void
+  (e: 'drag-end'): void
+  (e: 'drop', task: Task): void
+}>()
+
+function onDragStart(e: DragEvent) {
+  if (!canDrag.value) {
+    e.preventDefault()
+    return
+  }
+
+  e.dataTransfer!.effectAllowed = 'move'
+  emit('drag-start', props.task)
+}
+
+function onDragEnd() {
+  emit('drag-end')
+}
+
 function formattedDeadline() {
   if (!props.task.deadline) return null
 
@@ -113,7 +133,7 @@ function startEditing() {
   editing.value = true
   editedTitle.value = props.task.title
   editedNotes.value = props.task.notes ?? ''
-  editPinned.value = props.task.pinned
+  editedPinned.value = props.task.pinned
   editedDeadline.value = props.task.deadline ?? ''
   
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === props.task.priority)
@@ -249,7 +269,11 @@ async function remove() {
       />
     </div>
   </li>
-  <li v-else class="list-row">
+  <li v-else 
+      class="list-row"
+      draggable="true"
+      @dragstart="onDragStart"
+  >
       <div class="flex flex-col">
         <input
           type="checkbox"
