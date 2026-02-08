@@ -65,7 +65,7 @@ const deadlineExpired = computed(() =>
 )
 
 const isDueToday = computed(() => {
-  if (!props.task.deadline) return false
+  if (!props.task.deadline || deadlineExpired.value) return false
 
   const today = new Date(now.value)
   const deadline = new Date(props.task.deadline)
@@ -114,6 +114,15 @@ function formattedDeadline() {
   }
   
   if (diffSec < 0) {
+    if (diffDays >= -1) {
+      return 'Overdue - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    }
+    if (diffDays >= -2) {
+      return 'Overdue - Yesterday'
+    }
+    if (diffDays >= -7) {
+      return 'Overdue - ' + deadline.toLocaleDateString('en-US', { weekday: 'long' })
+    }
     return 'Overdue - ' + deadline.toLocaleDateString()
   }
   if (diffDays === 0) {
@@ -325,7 +334,7 @@ async function remove() {
       <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
       </h1>
-      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
+      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3 mb-1"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
       <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-secondary' : isDueToday }">
         <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
