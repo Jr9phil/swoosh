@@ -81,7 +81,76 @@ export const useTasksStore = defineStore('tasks', {
                 this.tasks[index].deadline = updated.deadline
             }
         },
-        
+
+        async updatePriority(task: Task, priority: number) {
+            const updated = {
+                ...task,
+                priority
+            }
+
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].priority = priority
+            }
+            
+            const localTask = this.tasks.find(t => t.id === task.id)
+            if (localTask) {
+                localTask.priority = newPriority
+            }
+        },
+
+        async moveTaskRelative(source: Task, target: Task, before: boolean) {
+            // Copy source and target
+            const tasksCopy = [...this.tasks]
+
+            // Get all tasks of the same priority and not completed/pinned
+            const samePriorityTasks = tasksCopy.filter(
+                t => t.priority === source.priority && !t.completed && !t.pinned
+            )
+
+            // Sort them by creation date descending
+            samePriorityTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+            // Find target index in the sorted same-priority list
+            const targetIndex = samePriorityTasks.findIndex(t => t.id === target.id)
+            if (targetIndex === -1) return
+
+            let newCreatedAt: string
+
+            if (before) {
+                // Place source **before** target → make createdAt slightly later than target
+                const nextTask = samePriorityTasks[targetIndex - 1] // task above target
+                if (nextTask) {
+                    // Average timestamps to fit in between
+                    const avg = (new Date(nextTask.createdAt).getTime() + new Date(target.createdAt).getTime()) / 2
+                    newCreatedAt = new Date(avg).toISOString()
+                } else {
+                    // No task above → just slightly newer than target
+                    newCreatedAt = new Date(new Date(target.createdAt).getTime() + 1).toISOString()
+                }
+            } else {
+                // Place source **after** target → slightly older than target
+                const nextTask = samePriorityTasks[targetIndex + 1] // task below target
+                if (nextTask) {
+                    const avg = (new Date(target.createdAt).getTime() + new Date(nextTask.createdAt).getTime()) / 2
+                    newCreatedAt = new Date(avg).toISOString()
+                } else {
+                    // No task below → slightly older than target
+                    newCreatedAt = new Date(new Date(target.createdAt).getTime() - 1).toISOString()
+                }
+            }
+
+            // Update backend
+            const updated = { ...source, createdAt: newCreatedAt }
+            await api.put(`/tasks/${source.id}`, updated)
+
+            // Update local state
+            const index = this.tasks.findIndex(t => t.id === source.id)
+            if (index !== -1) this.tasks[index].createdAt = newCreatedAt
+        },
+
         async editTask(
             taskId: string, 
             payload: { 

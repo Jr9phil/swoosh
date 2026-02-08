@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
+import type { task } from '../types/task'
 import { useRouter } from 'vue-router'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
@@ -14,9 +15,7 @@ const incompleteTasks = computed(() =>
         .filter(t => !t.completed && !t.pinned)
         .slice()
         .sort((a, b) => {
-          if (b.priority !== a.priority) {
-            return b.priority - a.priority
-          }
+          if (b.priority !== a.priority) return b.priority - a.priority
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
 )
@@ -48,10 +47,22 @@ const completedTasks = computed(() =>
 const draggedTask = ref<Task | null>(null)
 
 function onDragStart(task: Task) {
-  draggedTask.value = task
-  console.log('Dragging:', task.title)
+  draggedTask.value = { ...task }
 }
 
+async function onDrop(targetTask: Task) {
+  const source = draggedTask.value
+  if (!source || source.id === targetTask.id) return
+  
+  if (source.priority !== targetTask.priority) {
+    await tasksStore.updatePriority(source, targetTask.priority)
+  } else {
+    const dropBefore = true // for now, assume "above" target; can be replaced with actual mouse position later
+    await tasksStore.moveTaskRelative(source, targetTask, dropBefore)
+  }
+
+  draggedTask.value = null
+}
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -98,7 +109,8 @@ onMounted(async () => {
               v-for="task in incompleteTasks"
               :key="task.id"
               :task="task"
-              @drag-start="onDragStart"
+              @drag-start="onDragStart(task)"
+              @drop="onDrop(task)"
           />
         </ul>
 

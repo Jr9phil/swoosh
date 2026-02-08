@@ -2,7 +2,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { 
   Trash2, 
   GripVertical, 
@@ -60,6 +60,15 @@ const editedPriority = computed(() =>
     PRIORITIES[priorityIndex.value].value
 )
 
+watch(
+    () => props.task.priority,
+    (newVal) => {
+      if (!editing.value) {
+        priorityIndex.value = PRIORITIES.findIndex(p => p.value === newVal)
+      }
+    }
+)
+
 const deadlineExpired = computed(() =>
     now.value >= new Date(props.task.deadline).getTime()
 )
@@ -81,23 +90,8 @@ const tasksStore = useTasksStore()
 
 const emit = defineEmits<{
   (e: 'drag-start', task: Task): void
-  (e: 'drag-end'): void
   (e: 'drop', task: Task): void
 }>()
-
-function onDragStart(e: DragEvent) {
-  if (!canDrag.value) {
-    e.preventDefault()
-    return
-  }
-
-  e.dataTransfer!.effectAllowed = 'move'
-  emit('drag-start', props.task)
-}
-
-function onDragEnd() {
-  emit('drag-end')
-}
 
 function formattedDeadline() {
   if (!props.task.deadline) return null
@@ -314,7 +308,9 @@ async function remove() {
   <li v-else 
       class="list-row"
       :draggable="!task.completed"
-      @dragstart="onDragStart"
+      @dragstart="emit('drag-start', task)"
+      @dragover.prevent
+      @drop="emit('drop', task)"
   >
       <div class="flex flex-col">
         <input
