@@ -10,7 +10,8 @@ import {
   ListStart, 
   Pin, 
   PinOff, 
-  CalendarClock, 
+  CalendarClock,
+  ClockAlert,  
   ChessPawn,
   ChessKnight,
   ChessQueen,
@@ -33,12 +34,23 @@ const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
 const editedDeadline = ref(props.task.deadline ?? '')
 
+const now = ref(Date.now())
+
+setInterval(() => {
+  now.value = Date.now()
+}, 1000)
+
 const PRIORITIES = [
   { value: 0, icon: ChessPawn, label: 'Default' },
   { value: 1, icon: ChessKnight, label: 'Medium' },
   { value: 2, icon: ChessQueen, label: 'High' },
   { value: 3, icon: ChessKing, label: 'Top' }
 ]
+
+const EXPIRED = {
+  true: {icon: ClockAlert},
+  false: {icon: CalendarClock}
+}
 
 const priorityIndex = ref(
     PRIORITIES.findIndex(p => p.value === props.task.priority)
@@ -47,6 +59,23 @@ const priorityIndex = ref(
 const editedPriority = computed(() =>
     PRIORITIES[priorityIndex.value].value
 )
+
+const deadlineExpired = computed(() =>
+    now.value >= new Date(props.task.deadline).getTime()
+)
+
+const isDueToday = computed(() => {
+  if (!props.task.deadline) return false
+
+  const today = new Date(now.value)
+  const deadline = new Date(props.task.deadline)
+
+  return (
+      today.getFullYear() === deadline.getFullYear() &&
+      today.getMonth() === deadline.getMonth() &&
+      today.getDate() === deadline.getDate()
+  )
+})
 
 const tasksStore = useTasksStore()
 
@@ -88,7 +117,7 @@ function formattedDeadline() {
     return deadline.toLocaleDateString()
   }
   if (diffDays === 0) {
-    return deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    return 'Today - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   }
   if (diffDays === 1) {
     return 'Tomorrow'
@@ -298,7 +327,14 @@ async function remove() {
       </h1>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
-      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer"><CalendarClock :size="16" /> {{ formattedDeadline() }}</div> 
+      <div v-if="!task.completed && task.deadline" class="flex flex-row">
+        <div class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-secondary' : isDueToday }">
+          <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
+        </div>
+        <div v-if="deadlineExpired" class="badge ml-2 mt-1">
+          <div class="status status-error"></div> Overdue
+        </div>
+      </div>
     </div>
 
     <div v-if="!task.completed" class="flex justify-end group">
