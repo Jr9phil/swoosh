@@ -114,7 +114,7 @@ function formattedDeadline() {
   }
   
   if (diffSec < 0) {
-    return deadline.toLocaleDateString()
+    return 'Overdue - ' + deadline.toLocaleDateString()
   }
   if (diffDays === 0) {
     return 'Today - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -327,13 +327,8 @@ async function remove() {
       </h1>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
-      <div v-if="!task.completed && task.deadline" class="flex flex-row">
-        <div class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-secondary' : isDueToday }">
-          <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
-        </div>
-        <div v-if="deadlineExpired" class="badge ml-2 mt-1">
-          <div class="status status-error"></div> Overdue
-        </div>
+      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-secondary' : isDueToday }">
+        <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
       </div>
     </div>
 
