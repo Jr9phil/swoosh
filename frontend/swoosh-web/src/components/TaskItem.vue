@@ -41,10 +41,10 @@ setInterval(() => {
 }, 1000)
 
 const PRIORITIES = [
-  { value: 0, icon: ChessPawn, label: 'Default' },
-  { value: 1, icon: ChessKnight, label: 'Medium' },
-  { value: 2, icon: ChessQueen, label: 'High' },
-  { value: 3, icon: ChessKing, label: 'Top' }
+  { value: 0, icon: ChessPawn, label: 'Default', style: 'btn-ghost opacity-0 group-hover:opacity-50' },
+  { value: 1, icon: ChessKnight, label: 'Medium', style: 'btn-soft text-slate-400' },
+  { value: 2, icon: ChessQueen, label: 'High', style: 'btn-soft text-blue-400 bg-blue-400/10' },
+  { value: 3, icon: ChessKing, label: 'Top', style: 'btn-soft text-amber-400 bg-amber-400/10' }
 ]
 
 const EXPIRED = {
@@ -336,7 +336,7 @@ async function remove() {
       </h1>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3 mb-1"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
-      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-secondary' : isDueToday }">
+      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }">
         <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
       </div>
     </div>
@@ -346,7 +346,7 @@ async function remove() {
           id="priority" 
           @click="startEditing"
           class="btn btn-circle"
-          :class="priorityIndex === 0 ? 'btn-ghost opacity-0 group-hover:opacity-50': 'btn-soft btn-info'">
+          :class="PRIORITIES[priorityIndex].style">
         <component
             :is="PRIORITIES[priorityIndex].icon"
         />
