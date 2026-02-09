@@ -182,13 +182,26 @@ function cyclePriority() {
   if(!editing.value) return
   priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
 }
+
+const completing = ref(false)
+
+async function onCompleteClick() {
+  if( props.task.completed || completing.value ) return
+  
+  completing.value = true
+  
+  setTimeout(async () => {
+    await tasksStore.toggleComplete(props.task)
+    completing.value = false
+  }, 500)
+}
 async function toggleComplete() {
   if(props.task.completed) {
     if(!confirm('Mark task as incomplete?')) {
       return
     }
+    await tasksStore.toggleComplete(props.task)
   }
-  await tasksStore.toggleComplete(props.task)
 }
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
@@ -304,6 +317,7 @@ async function remove() {
           @delete="remove"
           @reset-deadline="resetDeadline"
           @move-to-top="moveToTop"
+          @un-complete="toggleComplete"
       />
     </div>
   </li>
@@ -315,13 +329,17 @@ async function remove() {
       @drop="emit('drop', task)"
   >
       <div class="flex flex-col">
-        <input
-          type="checkbox"
-          :checked="!!task.completed"
-          @change="toggleComplete"
-          class="checkbox hover:checkbox-primary"
-          :class="{ 'checkbox-primary' : task.completed}"
-        />
+        <div class="inline-grid *:[grid-area:1/1]">
+          <input type="checkbox" :checked="!!task.completed" class="checkbox checkbox-primary" :class="completing ? 'animate-ping opacity-100' : 'opacity-0'"/>
+          <input
+            type="checkbox"
+            :checked="!!task.completed"
+            :disabled="task.completed"
+            @change="onCompleteClick"
+            class="checkbox hover:checkbox-primary"
+            :class="{ 'checkbox-primary' : task.completed || completing }"
+          />
+        </div>
 
         <div v-if="!task.completed" class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
           <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
@@ -365,6 +383,7 @@ async function remove() {
           @delete="remove"
           @reset-deadline="resetDeadline"
           @move-to-top="moveToTop"
+          @un-complete="toggleComplete"
       />
     </div>
   </li>
