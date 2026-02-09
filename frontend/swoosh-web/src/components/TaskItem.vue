@@ -206,6 +206,9 @@ async function toggleComplete() {
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
+async function resetPriority() {
+  await tasksStore.updatePriority(props.task, 0)
+}
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
     await tasksStore.resetDeadline(props.task)
@@ -294,16 +297,17 @@ async function remove() {
       />
     </div>
     <div v-if="!task.completed" class="flex justify-end">
-      <button
-          id="priority"
-          @click="cyclePriority"
-          class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
-        <component
-          :is="PRIORITIES[priorityIndex].icon"
-          class="transition-transform duration-150 active:rotate-12"
-        />
-      </button>
-      
+      <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
+        <button
+            id="priority"
+            @click="cyclePriority"
+            class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
+          <component
+            :is="PRIORITIES[priorityIndex].icon"
+            class="transition-transform duration-150 active:rotate-12"
+          />
+        </button>
+      </div>
       <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100">
         <input type="checkbox" v-model="editedPinned" />
         <Pin class="swap-off" />
@@ -380,10 +384,13 @@ async function remove() {
       <TaskMenu
           :is-completed="!!task.completed"
           :has-deadline="!!task.deadline"
+          :has-priority="priorityIndex !== 0"
           @delete="remove"
+          @edit="startEditing"
           @reset-deadline="resetDeadline"
           @move-to-top="moveToTop"
           @un-complete="toggleComplete"
+          @priority="resetPriority"
       />
     </div>
   </li>

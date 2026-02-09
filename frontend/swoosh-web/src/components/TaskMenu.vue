@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, ListStart, CalendarOff, Undo2 } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, ListStart, CalendarOff, CalendarPlus, Undo2, ChessPawn } from 'lucide-vue-next'
 
 defineProps<{
   isCompleted: boolean
   hasDeadline: boolean
+  hasPriority: boolean
 }>()
 
 const emit = defineEmits<{
@@ -11,6 +12,8 @@ const emit = defineEmits<{
   (e: 'moveToTop'): void
   (e: 'resetDeadline'): void
   (e: 'unComplete'): void
+  (e: 'edit'): void
+  (e: 'priority'): void
 }>()
 </script>
 
@@ -46,8 +49,20 @@ const emit = defineEmits<{
         </a>
       </li>
       
+      <li v-else-if="!isCompleted">
+        <a @click="emit('edit')">
+          <CalendarPlus :size="16" /> Add deadline
+        </a>
+      </li>
+      
+      <li v-if="!isCompleted && !!hasPriority">
+        <a @click="emit('priority')">
+          <ChessPawn :size="16" /> Reset priority
+        </a>
+      </li>
+      
       <li>
-        <a @click="emit('delete')">
+        <a @click="emit('delete')" class="link-error">
           <Trash2 :size="16" /> Delete
         </a>
       </li>
