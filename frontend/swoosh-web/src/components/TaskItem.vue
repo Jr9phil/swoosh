@@ -312,7 +312,7 @@ async function remove() {
           />
         </button>
       </div>
-      <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100">
+      <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100 ml-1">
         <input type="checkbox" v-model="editedPinned" />
         <Pin class="swap-off" />
         <PinOff class="swap-on" />
@@ -378,7 +378,7 @@ async function remove() {
       <button 
           id="pin" 
           @click="togglePinned"
-          class="btn btn-ghost btn-circle"
+          class="btn btn-ghost btn-circle ml-1"
           :class="task.pinned ? '' : 'opacity-0 group-hover:opacity-50'">
         <Pin />
       </button>
