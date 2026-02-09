@@ -207,7 +207,11 @@ async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
 async function resetPriority() {
-  await tasksStore.updatePriority(props.task, 0)
+  if(priorityIndex.value === 0 ) return
+  
+  if(confirm('Reset priority?')) {
+    await tasksStore.updatePriority(props.task, 0)
+  }
 }
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
