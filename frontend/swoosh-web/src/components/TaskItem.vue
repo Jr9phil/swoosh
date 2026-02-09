@@ -102,6 +102,7 @@ function formattedDeadline() {
   const diffMs = deadline.getTime() - now.getTime()
   const diffSec = Math.floor(diffMs / 1000)
   const diffDays = Math.floor(diffSec / 86400)
+  const isToday = now.getDate() === deadline.getDate()
   
   if (Math.abs(diffDays) > 730) {
     return deadline.toLocaleDateString()
@@ -120,7 +121,8 @@ function formattedDeadline() {
     return 'Overdue - ' + deadline.toLocaleDateString()
   }
   if (diffDays === 0) {
-    return 'Today - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    if(isToday) return 'Today - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    return 'Tomorrow - ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   }
   if (diffDays === 1) {
     return 'Tomorrow'
