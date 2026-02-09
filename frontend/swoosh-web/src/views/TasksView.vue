@@ -12,7 +12,7 @@ import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
 const tasksStore = useTasksStore()
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && !t.pinned)
+        .filter(t => !t.completed && !t.pinned && !isDueToday(t.deadline))
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
@@ -20,9 +20,25 @@ const incompleteTasks = computed(() =>
         })
 )
 
+function isDueToday(deadline? : string | null) {
+  if (!deadline) return false
+  
+  const now = new Date()
+  const d = new Date(deadline)
+  
+  return (
+      now.getFullYear() === d.getFullYear() &&
+      now.getMonth() === d.getMonth() &&
+      now.getDate() === d.getDate()
+  )
+}
+
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned)
+        .filter(t =>
+            !t.completed &&
+            (t.pinned || isDueToday(t.deadline))
+        )
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) {
