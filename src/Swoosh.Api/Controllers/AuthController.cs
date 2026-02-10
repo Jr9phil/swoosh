@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
 using Swoosh.Api.Services;
 using Swoosh.Api.Dtos;
+using Swoosh.Api.Security;
 
 namespace Swoosh.Api.Controllers;
 
@@ -43,14 +45,37 @@ public class AuthController : ControllerBase
     public IActionResult Login(LoginDto dto)
     {
         var user = _db.Users.SingleOrDefault(u => u.Email == dto.Email);
-        if (user == null)
-            return Unauthorized("Invalid credentials");
+        if (user == null) return Unauthorized("Invalid credentials");
 
-        if (!_auth.Verify(dto.Password, user.PasswordHash))
-            return Unauthorized("Invalid credentials");
+        if (!_auth.Verify(dto.Password, user.PasswordHash)) return Unauthorized("Invalid credentials");
 
         var token = _auth.GenerateToken(user);
 
         return Ok(new { token });
+    }
+    
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = UserContext.GetUserId(User);
+
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null)
+            return Unauthorized();
+        
+        if (!_auth.Verify(dto.CurrentPassword, user.PasswordHash))
+            return Unauthorized("Current password is incorrect");
+        
+        user.EncryptionSalt = _auth.GenerateSalt();
+        
+        _auth.ChangePassword(user, dto.NewPassword);
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
     }
 }

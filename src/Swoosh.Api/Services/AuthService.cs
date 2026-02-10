@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Swoosh.Api.Domain;
@@ -20,6 +21,10 @@ public class AuthService
 
     public bool Verify(string password, string hash)
         => BCrypt.Net.BCrypt.Verify(password, hash);
+    
+    public byte[] GenerateSalt(int size = 16) 
+        => RandomNumberGenerator.GetBytes(size);
+    
 
     public string GenerateToken(User user)
     {
@@ -44,5 +49,10 @@ public class AuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public void ChangePassword(User user, string newPassword)
+    {
+        user.PasswordHash = HashPassword(newPassword);
     }
 }
