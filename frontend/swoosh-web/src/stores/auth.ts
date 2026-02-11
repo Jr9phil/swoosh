@@ -19,6 +19,9 @@ export const useAuthStore = defineStore('auth', {
         async register(email: string, password: string) {
             await api.post('/auth/register', { email, password })
         },
+        async changePassword(currentPassword: string, newPassword: string) {
+          await api.post('/auth/change-password', { currentPassword, newPassword })  
+        },
         logout() {
             this.token = null
             this.currentUser = null

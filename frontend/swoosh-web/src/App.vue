@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
-import { UserRound, LogOut, Sun, Moon, Github } from 'lucide-vue-next'
+import { UserRound, LogOut, Sun, Moon, Github, KeyRound } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -11,6 +11,10 @@ function logout() {
     auth.logout()
     router.push('/login')
   }
+}
+
+function changePassword() {
+  router.push('/changePassword')
 }
 </script>
 
@@ -42,6 +46,7 @@ function logout() {
         <div class="fab-close"><span class="btn btn-circle btn-lg btn-error">✕</span></div>
         
         <div>Logout <button class="btn btn-lg btn-circle" @click="logout"><LogOut /></button></div>
+        <div>Change Password <button class="btn btn-lg btn-circle" @click="changePassword"><KeyRound /></button></div>
       </div>
     </footer>
   </div>
