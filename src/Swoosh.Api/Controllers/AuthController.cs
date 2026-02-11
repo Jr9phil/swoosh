@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
@@ -15,11 +16,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly AuthService _auth;
+    private readonly IEncryptionService _encryption;
 
-    public AuthController(AppDbContext db, AuthService auth)
+    public AuthController(AppDbContext db, AuthService auth, IEncryptionService encryption)
     {
         _db = db;
         _auth = auth;
+        _encryption = encryption;
     }
     
     [HttpPost("register")]
@@ -56,7 +59,7 @@ public class AuthController : ControllerBase
     
     [Authorize]
     [HttpPost("change-password")]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -66,16 +69,120 @@ public class AuthController : ControllerBase
         var user = await _db.Users.FindAsync(userId);
         if (user == null)
             return Unauthorized();
-        
+
         if (!_auth.Verify(dto.CurrentPassword, user.PasswordHash))
             return Unauthorized("Current password is incorrect");
         
-        user.EncryptionSalt = _auth.GenerateSalt();
+        var tasks = await _db.Tasks
+            .Where(t => t.UserId == userId)
+            .ToListAsync();
+
+        var oldSalt = user.EncryptionSalt;
+        var newSalt = RandomNumberGenerator.GetBytes(16);
         
-        _auth.ChangePassword(user, dto.NewPassword);
+        foreach (var task in tasks)
+        {
+            var title = _encryption.Decrypt(
+                task.EncryptedTitle,
+                userId,
+                task.KeyVersion,
+                oldSalt);
 
-        await _db.SaveChangesAsync();
+            var (newTitle, newVersion1) =
+                _encryption.Encrypt(title, userId, newSalt);
 
+            task.EncryptedTitle = newTitle;
+            task.KeyVersion = newVersion1;
+            
+            var notes = _encryption.DecryptNullableString(
+                task.EncryptedNotes,
+                userId,
+                task.KeyVersion,
+                oldSalt);
+
+            var (newNotes, newVersion2) =
+                _encryption.EncryptNullableString(
+                    notes,
+                    userId,
+                    newSalt);
+
+            task.EncryptedNotes = newNotes;
+            task.KeyVersion = newVersion2;
+            
+            var deadline = _encryption.DecryptNullableDateTime(
+                task.EncryptedDeadline,
+                userId,
+                task.KeyVersion,
+                oldSalt);
+
+            var (newDeadline, newVersion3) =
+                _encryption.EncryptNullableDateTime(
+                    deadline,
+                    userId,
+                    newSalt);
+
+            task.EncryptedDeadline = newDeadline;
+            task.KeyVersion = newVersion3;
+            
+            var priority = _encryption.DecryptInt(
+                task.EncryptedPriority,
+                userId,
+                task.KeyVersion,
+                oldSalt);
+
+            var (newPriority, newVersion4) =
+                _encryption.EncryptInt(
+                    priority,
+                    userId,
+                    newSalt);
+
+            task.EncryptedPriority = newPriority;
+            task.KeyVersion = newVersion4;
+            
+            var pinned = _encryption.DecryptBool(
+                task.EncryptedPinned,
+                userId,
+                task.KeyVersion,
+                oldSalt);
+
+            var (newPinned, newVersion5) =
+                _encryption.EncryptBool(
+                    pinned,
+                    userId,
+                    newSalt);
+
+            task.EncryptedPinned = newPinned;
+            task.KeyVersion = newVersion5;
+            
+            var completed = _encryption.DecryptNullableDateTime(
+                task.EncryptedCompletedAt,
+                userId,
+                task.KeyVersion,
+                oldSalt);
+
+            var (newCompleted, newVersion6) =
+                _encryption.EncryptNullableDateTime(
+                    completed,
+                    userId,
+                    newSalt);
+
+            task.EncryptedCompletedAt = newCompleted;
+            task.KeyVersion = newVersion6;
+        }
+        
+        user.EncryptionSalt = newSalt;
+        
+        user.PasswordHash = _auth.HashPassword(dto.NewPassword);
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, "Password change failed");
+        }
+        
         return NoContent();
     }
 }
