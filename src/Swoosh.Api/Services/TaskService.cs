@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using Swoosh.Api.Data;
 using Swoosh.Api.Domain;
 using Swoosh.Api.Dtos;
@@ -40,21 +41,39 @@ public class TaskService : ITaskService
     public async Task<IEnumerable<TaskDto>> GetAllAsync(Guid userId)
     {
         var salt = await GetUserSalt(userId);
-        return await _db.Tasks
+        
+        var tasks = await _db.Tasks
             .Where(t => t.UserId == userId)
             .OrderByDescending(t => t.CreatedAt)
-            .Select(t => new TaskDto
-            {
-                Id = t.Id,
-                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
-                Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
-                Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
-                Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
-                Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
-                Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
-                CreatedAt = t.CreatedAt
-            })
             .ToListAsync();
+
+        var result = new List<TaskDto>();
+        
+        foreach (var t in tasks)
+        {
+            try
+            {
+                var dto = new TaskDto
+                {
+                    Id = t.Id,
+                    Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                    Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                    Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                    Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
+                    Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
+                    Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
+                    CreatedAt = t.CreatedAt
+                };
+
+                result.Add(dto);
+            }
+            catch (CryptographicException ex)
+            {
+                Console.WriteLine($"Failed to decrypt task {t.Id}: {ex.Message}");
+            }
+        }
+
+        return result;
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid userId, Guid taskId)
