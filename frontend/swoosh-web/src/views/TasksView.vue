@@ -149,7 +149,7 @@ onMounted(async () => {
           <div class="collapse collapse-arrow">
             <input type="checkbox" name="completed-tasks-list" />
             <div class="collapse-title opacity-50">Completed ({{ completedTasks.length }})</div>
-            <div class="collapse-content p-0">
+            <div class="collapse-content p-0 pb-6">
               <ul class="list bg-base-100 rounded-box shadow-md">
                 <TaskItem
                     v-for="task in completedTasks"
