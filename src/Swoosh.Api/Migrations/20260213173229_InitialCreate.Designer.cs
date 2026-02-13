@@ -12,7 +12,7 @@ using Swoosh.Api.Data;
 namespace Swoosh.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260127182338_InitialCreate")]
+    [Migration("20260213173229_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -34,25 +34,39 @@ namespace Swoosh.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("Deadline")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("EncryptedCompletedAt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedDeadline")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("EncryptedNotes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedPinned")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedPriority")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("EncryptedTitle")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
+                    b.Property<int>("KeyVersion")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "IsCompleted");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
                 });
@@ -69,6 +83,10 @@ namespace Swoosh.Api.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("EncryptionSalt")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

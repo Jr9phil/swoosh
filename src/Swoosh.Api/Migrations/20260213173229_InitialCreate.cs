@@ -18,9 +18,12 @@ namespace Swoosh.Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     EncryptedTitle = table.Column<string>(type: "text", nullable: false),
-                    EncryptedNotes = table.Column<string>(type: "text", nullable: true),
-                    Deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
+                    EncryptedNotes = table.Column<string>(type: "text", nullable: false),
+                    EncryptedCompletedAt = table.Column<string>(type: "text", nullable: false),
+                    EncryptedDeadline = table.Column<string>(type: "text", nullable: false),
+                    EncryptedPinned = table.Column<string>(type: "text", nullable: false),
+                    EncryptedPriority = table.Column<string>(type: "text", nullable: false),
+                    KeyVersion = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -35,6 +38,7 @@ namespace Swoosh.Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    EncryptionSalt = table.Column<byte[]>(type: "bytea", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -43,9 +47,9 @@ namespace Swoosh.Api.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tasks_UserId_IsCompleted",
+                name: "IX_Tasks_UserId",
                 table: "Tasks",
-                columns: new[] { "UserId", "IsCompleted" });
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
