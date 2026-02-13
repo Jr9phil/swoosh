@@ -118,7 +118,7 @@ onMounted(async () => {
           />
         </ul>
         
-        <div v-if="pinnedTasks.length" class="divider"></div>
+        <div v-if="pinnedTasks.length && incompleteTasks.length" class="divider"></div>
         
         <ul class="drop-zone list bg-base-100 rounded-box shadow-md">
           <TaskItem
@@ -140,7 +140,7 @@ onMounted(async () => {
         
         <div v-else-if="completedTasks.length">
           
-          <div v-if="!incompleteTasks.length" class="card bg-base-300 rounded-box grid h-24 place-items-center">
+          <div v-if="!incompleteTasks.length && !pinnedTasks.length" class="card bg-base-300 rounded-box grid h-24 place-items-center">
             <div class="flex opacity-50">
               <ListChecks class="mr-2"/> All tasks completed!
             </div>
