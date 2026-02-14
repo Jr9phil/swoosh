@@ -1,0 +1,37 @@
+﻿services:
+  db:
+    image: postgres:15
+    container_name: swoosh-db
+    restart: always
+    environment:
+      POSTGRES_USER: swoosh
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: swoosh
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - swoosh-net
+
+  api:
+    build:
+      context: ./src/Swoosh.Api
+    container_name: swoosh-api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__SwooshDb: Host=db;Port=5432;Database=swoosh;Username=swoosh;Password=${DB_PASSWORD}
+      Jwt__Key: ${JWT_SECRET}
+      Encryption__ActiveKeyVersion: 1
+      Encryption__Keys__1: ${ENCRYPTION_KEY}
+    ports:
+      - "8080:8080"
+    networks:
+      - swoosh-net
+
+volumes:
+  db_data:
+
+networks:
+  swoosh-net:
