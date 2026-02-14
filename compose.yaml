@@ -21,7 +21,7 @@
       - db
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__SwooshDb: Host=db;Port=5432;Database=swoosh;Username=swoosh;Password=${DB_PASSWORD}
+      ConnectionStrings__SwooshDb: Host=swoosh-db;Port=5432;Database=swoosh;Username=swoosh;Password=${DB_PASSWORD}
       Jwt__Key: ${JWT_SECRET}
       Encryption__ActiveKeyVersion: 1
       Encryption__Keys__1: ${ENCRYPTION_KEY}
