@@ -41,7 +41,11 @@ builder.Services.AddHostedService<ReencryptionService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend",
-        p => p.WithOrigins("http://localhost:5173")
+        p => p.WithOrigins(
+                "http://localhost:5173",
+                "https://swoosh-demo.vercel.app",
+                "https://swoosh-demo-57n0a0sx9-jr9phils-projects.vercel.app"
+                )
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
