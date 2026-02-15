@@ -43,7 +43,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("frontend",
         p => p.WithOrigins("https://swoosh-demo.vercel.app")
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 var app = builder.Build();
