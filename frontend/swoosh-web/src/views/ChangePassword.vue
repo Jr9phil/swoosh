@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 const auth = useAuthStore()
@@ -16,7 +15,6 @@ const showNewPassword = ref(false)
 const showConfNewPassword = ref(false)
 
 const error = ref<string | null>(null)
-const loading = ref(false)
 
 const passwordMismatch = computed(() =>
     confirmNewPassword.value.length > 0 &&
