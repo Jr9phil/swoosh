@@ -27,7 +27,7 @@ function changePassword() {
       <div class="flex-grow"/>
       <label class="toggle text-base-content">
 
-        <input type="checkbox" checked class="theme-controller" name="theme" value="dark" />
+        <input type="checkbox" checked="checked" class="theme-controller" name="theme" value="dark" />
         <Sun class="h-4 w-4 fill-current" />
         <Moon class="h-4 w-4 fill-current" />
 

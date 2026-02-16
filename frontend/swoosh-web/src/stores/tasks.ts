@@ -37,7 +37,7 @@ export const useTasksStore = defineStore('tasks', {
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1 && this.tasks[index]) {
+            if (index !== -1) {
                 this.tasks[index].completed = completedAt
             }
         },
@@ -51,7 +51,7 @@ export const useTasksStore = defineStore('tasks', {
             await api.put(`/tasks/${task.id}`, updated)
             
             const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1 && this.tasks[index]) {
+            if (index !== -1) {
                 this.tasks[index].pinned = updated.pinned
             }
         },
@@ -64,7 +64,7 @@ export const useTasksStore = defineStore('tasks', {
           await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1 && this.tasks[index]) {
+            if (index !== -1) {
                 this.tasks[index].createdAt = updated.createdAt
             }
         },
@@ -77,7 +77,7 @@ export const useTasksStore = defineStore('tasks', {
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1 && this.tasks[index]) {
+            if (index !== -1) {
                 this.tasks[index].deadline = updated.deadline
             }
         },
@@ -91,8 +91,13 @@ export const useTasksStore = defineStore('tasks', {
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1 && this.tasks[index]) {
+            if (index !== -1) {
                 this.tasks[index].priority = priority
+            }
+            
+            const localTask = this.tasks.find(t => t.id === task.id)
+            if (localTask) {
+                localTask.priority = newPriority
             }
         },
 
@@ -143,7 +148,7 @@ export const useTasksStore = defineStore('tasks', {
 
             // Update local state
             const index = this.tasks.findIndex(t => t.id === source.id)
-            if (index !== -1 && this.tasks[index]) this.tasks[index].createdAt = newCreatedAt
+            if (index !== -1) this.tasks[index].createdAt = newCreatedAt
         },
 
         async editTask(

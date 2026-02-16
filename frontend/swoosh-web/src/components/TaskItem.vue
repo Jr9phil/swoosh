@@ -4,7 +4,10 @@ import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref, computed, watch } from 'vue'
 import { 
+  Trash2, 
   GripVertical, 
+  EllipsisVertical, 
+  ListStart, 
   Pin, 
   PinOff, 
   CalendarClock,
@@ -53,13 +56,8 @@ const priorityIndex = ref(
     PRIORITIES.findIndex(p => p.value === props.task.priority)
 )
 
-const editedPriority = ref(props.task.priority)
-
-watch(
-    () => priorityIndex.value,
-    (newVal) => {
-      editedPriority.value = PRIORITIES[newVal]?.value ?? 0
-    }
+const editedPriority = computed(() =>
+    PRIORITIES[priorityIndex.value].value
 )
 
 watch(
@@ -72,7 +70,7 @@ watch(
 )
 
 const deadlineExpired = computed(() =>
-    props.task.deadline ? now.value >= new Date(props.task.deadline).getTime() : false
+    now.value >= new Date(props.task.deadline).getTime()
 )
 
 const isDueToday = computed(() => {
@@ -303,13 +301,13 @@ async function remove() {
       />
     </div>
     <div v-if="!task.completed" class="flex justify-end">
-      <div class="tooltip h-0" :data-tip="PRIORITIES[priorityIndex]?.label">
+      <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
         <button
             id="priority"
             @click="cyclePriority"
             class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
           <component
-            :is="PRIORITIES[priorityIndex]?.icon"
+            :is="PRIORITIES[priorityIndex].icon"
             class="transition-transform duration-150 active:rotate-12"
           />
         </button>
@@ -324,7 +322,6 @@ async function remove() {
       <TaskMenu
           :is-completed="!!task.completed"
           :has-deadline="!!task.deadline"
-          :has-priority="priorityIndex !== 0"
           @delete="remove"
           @reset-deadline="resetDeadline"
           @move-to-top="moveToTop"
@@ -345,7 +342,7 @@ async function remove() {
           <input
             type="checkbox"
             :checked="!!task.completed"
-            :disabled="!!task.completed"
+            :disabled="task.completed"
             @change="onCompleteClick"
             class="checkbox hover:checkbox-primary"
             :class="{ 'checkbox-primary' : task.completed || completing }"
@@ -363,8 +360,8 @@ async function remove() {
       </h1>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3 mb-1"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
-      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="[{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }]">
-        <component :is="EXPIRED[String(deadlineExpired) as 'true' | 'false'].icon" :size="16" /> {{ formattedDeadline() }}
+      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }">
+        <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
       </div>
     </div>
 
@@ -373,9 +370,9 @@ async function remove() {
           id="priority" 
           @click="startEditing"
           class="btn btn-circle"
-          :class="PRIORITIES[priorityIndex]?.style">
+          :class="PRIORITIES[priorityIndex].style">
         <component
-            :is="PRIORITIES[priorityIndex]?.icon"
+            :is="PRIORITIES[priorityIndex].icon"
         />
       </button>
       <button 

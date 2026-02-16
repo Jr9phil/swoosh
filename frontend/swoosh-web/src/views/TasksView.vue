@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
-import type { Task } from '../types/task'
+import type { task } from '../types/task'
 import { useRouter } from 'vue-router'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
