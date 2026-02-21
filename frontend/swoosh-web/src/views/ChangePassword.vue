@@ -142,9 +142,12 @@ async function submit() {
       {{ error }}
     </div>
 
-    <!-- Password change submission button -->
-    <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
-    <!-- Link to cancel and return to main page -->
-    <a class="btn btn-secondary mt-1" href="/">Cancel</a>
+    <div class="flex flex-row mt-4">
+      <!-- Link to cancel and return to main page -->
+      <a class="btn btn-secondary btn-outline" href="/">Cancel</a>
+      <div class="flex-grow" />
+      <!-- Password change submission button -->
+      <button class="btn btn-primary" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
+    </div>
   </form>
 </template>

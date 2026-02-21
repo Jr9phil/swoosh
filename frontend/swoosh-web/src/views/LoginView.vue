@@ -82,9 +82,12 @@ async function submit() {
       {{ error }}
     </div>
 
-    <!-- Login submission button -->
-    <button class="btn btn-neutral mt-4" :disabled="loading" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Login' }}</button>
-    <!-- Link to the registration page -->
-    <a v-if="!loading" class="btn btn-primary mt-1" href="/register">Create Account</a>
+    <div class="flex flex-row mt-4">
+      <!-- Link to the registration page -->
+      <a v-if="!loading" class="btn btn-primary btn-outline" href="/register">Create Account</a>
+      <div class="flex-grow" />
+      <!-- Login submission button -->
+      <button class="btn btn-primary" :disabled="loading || !email || !password" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Log In' }}</button>
+    </div>
   </form>
 </template>

@@ -130,9 +130,12 @@ async function submit() {
       {{ error }}
     </div>
 
-    <!-- Registration submission button -->
-    <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Creating User...' : 'Register' }}</button>
-    <!-- Link back to login page -->
-    <a class="btn btn-neutral mt-1" href="/">Back to Login</a>
+    <div class="flex flex-row mt-4">
+      <!-- Link back to login page -->
+      <a class="btn btn-secondary btn-outline" href="/">Back to Login</a>
+      <div class="flex-grow" />
+      <!-- Registration submission button -->
+      <button class="btn btn-primary " :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Creating User...' : 'Register' }}</button>
+    </div>
   </form>
 </template>
