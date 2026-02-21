@@ -29,8 +29,27 @@ const fieldsEntered = computed(() =>
     confirmNewPassword.value.length > 0
 )
 async function submit() {
-  await auth.changePassword(password.value, newPassword.value)
-  router.push('/')
+  error.value = null
+  loading.value = true
+  
+  try {
+    await auth.changePassword(password.value, newPassword.value)
+    router.push('/')
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const status = err.response?.status
+      if (status === 500) {
+        error.value = 'Internal Server Error'
+      } else {
+        error.value = 'Registration Failed'
+      }
+    } else {
+      error.value = 'Unexpected error occurred'
+    }
+  } finally {
+    loading.value = false
+  }
+
 }
 </script>
 
@@ -105,7 +124,7 @@ async function submit() {
       {{ error }}
     </div>
 
-    <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit">Change Password</button>
+    <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
     <a class="btn btn-secondary mt-1" href="/">Cancel</a>
   </form>
 </template>
