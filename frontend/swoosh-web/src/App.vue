@@ -6,6 +6,7 @@ import { UserRound, LogOut, Sun, Moon, Github, KeyRound } from 'lucide-vue-next'
 const auth = useAuthStore()
 const router = useRouter()
 
+// Logs the user out after confirmation and redirects to the login page
 function logout() {
   if (confirm('Log out?')) {
     auth.logout()
@@ -13,6 +14,7 @@ function logout() {
   }
 }
 
+// Redirects the user to the change password page
 function changePassword() {
   router.push('/changePassword')
 }
@@ -21,10 +23,12 @@ function changePassword() {
 <template>
   <div id="app" class="min-h-screen grid grid-rows-[auto_1fr_auto]">
     <header class="flex flex-container bg-base-200 p-4">
+      <!-- Github repository link -->
       <a href="https://github.com/Jr9phil/swoosh" target="_blank">
         <Github class="logo" />
       </a>
       <div class="flex-grow"/>
+      <!-- Theme controller for switching between light and dark modes -->
       <label class="toggle text-base-content">
 
         <input type="checkbox" checked="checked" class="theme-controller" name="theme" value="dark" />
@@ -33,11 +37,14 @@ function changePassword() {
 
       </label>
     </header>
+    <!-- Main content area where the routed views are rendered -->
     <div class="flex items-center justify-center">
       <router-view />
     </div>
     
+    <!-- Application footer, visible only when the user is authenticated -->
     <footer v-if="auth.token">
+      <!-- Floating Action Button (FAB) menu for user-related actions -->
       <div class="fab">
         <div class="tooltip tooltip-left" :data-tip="auth.currentUser || 'user'">
           <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info"><UserRound /></div>

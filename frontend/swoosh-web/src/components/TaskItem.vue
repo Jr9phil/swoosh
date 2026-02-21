@@ -1,3 +1,8 @@
+<!-- 
+  TaskItem.vue
+  Represents a single task in the list.
+  Handles inline editing, completion toggling, pinning, priority management, and drag-and-drop.
+-->
 <script setup lang="ts">
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
@@ -22,6 +27,7 @@ const props = defineProps<{
   task: Task
 }>()
 
+// Store original values to allow canceling edits
 const originalTitle = ref(props.task.title)
 const originalNotes = ref(props.task.notes ?? '')
 const originalPinned = ref(props.task.pinned)
@@ -36,10 +42,12 @@ const editedDeadline = ref(props.task.deadline ?? '')
 
 const now = ref(Date.now())
 
+// Update current time every second for deadline relative formatting
 setInterval(() => {
   now.value = Date.now()
 }, 1000)
 
+// Priority levels with associated icons and styles
 const PRIORITIES = [
   { value: 0, icon: ChessPawn, label: 'Default', style: 'btn-ghost opacity-0 group-hover:opacity-50' },
   { value: 1, icon: ChessKnight, label: 'Medium', style: 'btn-soft text-slate-400 bg-slate-400/10' },
@@ -60,6 +68,7 @@ const editedPriority = computed(() =>
     PRIORITIES[priorityIndex.value].value
 )
 
+// Sync priorityIndex if the task priority changes externally
 watch(
     () => props.task.priority,
     (newVal) => {
@@ -69,10 +78,12 @@ watch(
     }
 )
 
+// Computes if the task deadline has passed
 const deadlineExpired = computed(() =>
     now.value >= new Date(props.task.deadline).getTime()
 )
 
+// Computes if the task is due on the current day
 const isDueToday = computed(() => {
   if (!props.task.deadline || deadlineExpired.value) return false
 
@@ -93,6 +104,7 @@ const emit = defineEmits<{
   (e: 'drop', task: Task): void
 }>()
 
+// Formats the deadline date into a human-readable relative string
 function formattedDeadline() {
   if (!props.task.deadline) return null
 
@@ -147,10 +159,13 @@ function formattedDeadline() {
   return deadline.toLocaleDateString()
 }
 
+// Formats the completion date for display
 function formattedCompletionDate() {
   if (!props.task.completed) return null
   return new Date(props.task.completed).toLocaleDateString()
 }
+
+// Handles keyboard shortcuts for the inline editor
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     e.preventDefault()
@@ -163,6 +178,8 @@ function onKeydown(e: KeyboardEvent) {
     editing.value = false
   }
 }
+
+// Switches the component to editing mode and initializes edited values
 function startEditing() {
   editing.value = true
   editedTitle.value = props.task.title
@@ -178,6 +195,8 @@ function startEditing() {
   originalDeadline.value = props.task.deadline ?? ''
   originalPriority.value = props.task.priority
 }
+
+// Cycles through available priority levels
 function cyclePriority() {
   if(!editing.value) return
   priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
@@ -185,6 +204,7 @@ function cyclePriority() {
 
 const completing = ref(false)
 
+// Initiates the task completion animation and updates the store
 async function onCompleteClick() {
   if( props.task.completed || completing.value ) return
   
@@ -195,6 +215,8 @@ async function onCompleteClick() {
     completing.value = false
   }, 500)
 }
+
+// Toggles completion status for already completed tasks (with confirmation)
 async function toggleComplete() {
   if(props.task.completed) {
     if(!confirm('Mark task as incomplete?')) {
@@ -203,9 +225,13 @@ async function toggleComplete() {
     await tasksStore.toggleComplete(props.task)
   }
 }
+
+// Toggles the pinned status of the task
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
+
+// Resets the task priority to default (0)
 async function resetPriority() {
   if(priorityIndex.value === 0 ) return
   
@@ -213,14 +239,20 @@ async function resetPriority() {
     await tasksStore.updatePriority(props.task, 0)
   }
 }
+
+// Removes the task's deadline
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
     await tasksStore.resetDeadline(props.task)
   }
 }
+
+// Moves the task to the top of the list by resetting its creation date
 async function moveToTop() {
   await tasksStore.resetCreationDate(props.task)
 }
+
+// Saves changes made in the inline editor to the store
 async function finishEditing() {
   if (!editing.value) return
 
@@ -253,6 +285,8 @@ async function finishEditing() {
     priority: editedPriority.value
   })
 }
+
+// Deletes the task after confirmation
 async function remove() {
   if (confirm('Delete this task?')) {
     await tasksStore.deleteTask(props.task.id)
@@ -260,20 +294,25 @@ async function remove() {
 }
 </script>
 
+<!-- Component Template: Renders either the task display or the inline editor -->
 <template>
+  <!-- Inline Editor Mode -->
   <li v-if="editing" class="list-row" v-click-outside="finishEditing">
     <div class="flex flex-col">
+      <!-- Completion checkbox (disabled in edit mode) -->
       <input
         type="checkbox"
         :checked="!!task.completed"
         :class="task.completed ? 'checkbox checkbox-primary' : 'checkbox' "
         disabled 
       />
+      <!-- Drag handle for reordering -->
       <div v-if="!task.completed" class="flex-1 flex items-center justify-center min-h-8 cursor-grab group" @click="finishEditing">
         <GripVertical class="opacity-10 group-hover:opacity-50 transition-opacity duration-200" />
       </div>
     </div>
 
+    <!-- Input fields for editing task details -->
     <div class="flex flex-col gap-2 w-full">
       <input
           ref="titleInput"
@@ -300,6 +339,8 @@ async function remove() {
           @keydown="onKeydown"
       />
     </div>
+
+    <!-- Edit mode action buttons (priority and pin) -->
     <div v-if="!task.completed" class="flex justify-end">
       <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
         <button
@@ -318,6 +359,7 @@ async function remove() {
         <PinOff class="swap-on" />
       </label>
     </div>
+    <!-- Secondary task menu -->
     <div class="flex justify-end">
       <TaskMenu
           :is-completed="!!task.completed"
@@ -329,6 +371,8 @@ async function remove() {
       />
     </div>
   </li>
+
+  <!-- Display Mode -->
   <li v-else 
       class="list-row"
       :draggable="!task.completed"
@@ -337,6 +381,7 @@ async function remove() {
       @drop="emit('drop', task)"
   >
       <div class="flex flex-col">
+        <!-- Interactive completion checkbox with animation support -->
         <div class="inline-grid *:[grid-area:1/1]">
           <input type="checkbox" :checked="!!task.completed" class="checkbox checkbox-primary" :class="completing ? 'animate-ping opacity-100' : 'opacity-0'"/>
           <input
@@ -349,22 +394,26 @@ async function remove() {
           />
         </div>
 
+        <!-- Drag handle visible on hover -->
         <div v-if="!task.completed" class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
           <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
         </div>
       </div>
     
+    <!-- Task textual content: Title, notes, and deadline badge -->
     <div @click="startEditing" class="cursor-text">
       <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
       </h1>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3 mb-1"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
+      <!-- Deadline indicator badge -->
       <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }">
         <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
       </div>
     </div>
 
+    <!-- Quick action buttons: Priority and Pin -->
     <div v-if="!task.completed" class="flex justify-end group">
       <button 
           id="priority" 
@@ -384,6 +433,7 @@ async function remove() {
       </button>
     </div>
 
+    <!-- Task overflow menu -->
     <div class="flex justify-end">
       <TaskMenu
           :is-completed="!!task.completed"

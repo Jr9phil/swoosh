@@ -1,14 +1,21 @@
+/**
+ * tasks.ts
+ * Pinia store for managing task state and operations.
+ * Handles fetching, creating, updating, and deleting tasks, as well as reordering and priority management.
+ */
 import { defineStore } from 'pinia'
 import api from '../api/client'
 import type { Task, CreateTask } from '../types/task'
 
 export const useTasksStore = defineStore('tasks', {
+    // Store state: maintains the list of tasks and a loading indicator
     state: () => ({
         tasks: [] as Task[],
         loading: false
     }),
 
     actions: {
+        // Fetches all tasks from the server and populates the store
         async fetchTasks() {
             this.loading = true
             try {
@@ -19,11 +26,13 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Creates a new task and adds it to the top of the local list
         async createTask(payload: CreateTask) {
             const res = await api.post('/tasks', payload)
             this.tasks.unshift(res.data)
         },
         
+        // Toggles the completion status of a task and updates the backend
         async toggleComplete(task: Task) {
             const completedAt = task.completed 
                 ? null
@@ -42,6 +51,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Toggles whether a task is pinned (sticky) in the list
         async togglePinned(task: Task) {
             const updated = {
                 ...task,
@@ -56,6 +66,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Resets the creation date to now, effectively moving it to the top of the creation-sorted list
         async resetCreationDate(task: Task) {
           const updated = {
               ...task,
@@ -69,6 +80,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Removes the deadline from a task
         async resetDeadline(task: Task) {
             const updated = {
                 ...task,
@@ -82,6 +94,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
+        // Updates the priority level of a task
         async updatePriority(task: Task, priority: number) {
             const updated = {
                 ...task,
@@ -94,13 +107,9 @@ export const useTasksStore = defineStore('tasks', {
             if (index !== -1) {
                 this.tasks[index].priority = priority
             }
-            
-            const localTask = this.tasks.find(t => t.id === task.id)
-            if (localTask) {
-                localTask.priority = newPriority
-            }
         },
 
+        // Moves a task relative to another task by adjusting its creation timestamp
         async moveTaskRelative(source: Task, target: Task, before: boolean) {
             // Copy source and target
             const tasksCopy = [...this.tasks]
@@ -151,6 +160,7 @@ export const useTasksStore = defineStore('tasks', {
             if (index !== -1) this.tasks[index].createdAt = newCreatedAt
         },
 
+        // Edits multiple task fields at once (title, notes, pinned, deadline, priority)
         async editTask(
             taskId: string, 
             payload: { 
@@ -175,6 +185,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Removes a task from the backend and local store
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)
             this.tasks = this.tasks.filter(t => t.id !== taskId)

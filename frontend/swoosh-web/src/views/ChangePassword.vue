@@ -1,3 +1,7 @@
+<!-- 
+  ChangePassword.vue
+  Provides a form for authenticated users to change their account password.
+-->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
@@ -18,16 +22,20 @@ const showConfNewPassword = ref(false)
 const error = ref<string | null>(null)
 const loading = ref(false)
 
+// Computes whether the new password and confirmation password match
 const passwordMismatch = computed(() =>
     confirmNewPassword.value.length > 0 &&
     newPassword.value !== confirmNewPassword.value
 )
 
+// Computes whether all required fields have been filled out
 const fieldsEntered = computed(() =>
     password.value.length > 0 &&
     newPassword.value.length > 0 &&
     confirmNewPassword.value.length > 0
 )
+
+// Handles form submission to change the user's password
 async function submit() {
   error.value = null
   loading.value = true
@@ -53,12 +61,16 @@ async function submit() {
 }
 </script>
 
+<!-- View Template: Password change form with current, new, and confirm password fields -->
 <template>
+  <!-- Main password change form -->
   <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+    <!-- Current password input field with visibility toggle -->
     <label class="fieldset">
       <span class="label">Current Password</span>
       <div class="join">
         <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+        <!-- Toggle button for current password visibility -->
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -72,10 +84,12 @@ async function submit() {
       <span class="validator-hint hidden">Required</span>
     </label>
 
+    <!-- New password input field with visibility toggle -->
     <label class="fieldset">
       <span class="label">New Password</span>
       <div class="join">
         <input :type="showNewPassword ? 'text' : 'password'" class="input validator join-item" placeholder="New Password" required v-model="newPassword" minlength="8" />
+        <!-- Toggle button for new password visibility -->
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -88,6 +102,7 @@ async function submit() {
       </div>
     </label>
 
+    <!-- Confirm new password input field with visibility toggle -->
     <label class="fieldset">
       <span class="label">Confirm New Password</span>
       <div class="join">
@@ -101,6 +116,7 @@ async function submit() {
           'input-error': passwordMismatch
         }"
         />
+        <!-- Toggle button for confirmation password visibility -->
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -112,6 +128,7 @@ async function submit() {
         </button>
       </div>
 
+      <!-- Password mismatch error message -->
       <span
           v-if="passwordMismatch"
           class="text-error text-sm mt-1"
@@ -120,11 +137,14 @@ async function submit() {
       </span>
     </label>
 
+    <!-- Error message display -->
     <div v-if="error" class="alert alert-error alert-soft mt-2">
       {{ error }}
     </div>
 
+    <!-- Password change submission button -->
     <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
+    <!-- Link to cancel and return to main page -->
     <a class="btn btn-secondary mt-1" href="/">Cancel</a>
   </form>
 </template>

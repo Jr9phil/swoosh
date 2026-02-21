@@ -1,3 +1,7 @@
+<!-- 
+  RegisterView.vue
+  Provides a registration form for new users to create an account.
+-->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
@@ -16,17 +20,20 @@ const showConfPassword = ref(false)
 const error = ref<string | null>(null)
 const loading = ref(false)
 
+// Computes whether the password and confirmation password match
 const passwordMismatch = computed(() => 
     confirmPassword.value.length > 0 &&
     password.value !== confirmPassword.value
 )
 
+// Computes whether all required fields have been filled out
 const fieldsEntered = computed(() => 
     email.value.length > 0 &&
     password.value.length > 0 &&
     confirmPassword.value.length > 0
 )
 
+// Handles form submission to register a new user
 async function submit() {
   error.value = null
   loading.value = true
@@ -52,19 +59,25 @@ async function submit() {
 }
 </script>
 
+<!-- View Template: Registration form with email, password, and password confirmation -->
 <template>
+  <!-- Main registration form -->
   <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+    <!-- Section for account details -->
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Create Account</legend>
+      <!-- Email input field -->
       <label class="label">Email</label>
       <input type="email" class="input validator" placeholder="Email" required v-model="email" />
       <p class="validator-hint hidden">Required</p>
     </fieldset>
 
+    <!-- Password input field with visibility toggle -->
     <label class="fieldset">
       <span class="label">Password</span>
       <div class="join">
         <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" minlength="8" />
+        <!-- Toggle button for password visibility -->
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -77,6 +90,7 @@ async function submit() {
       </div>
     </label>
 
+    <!-- Password confirmation field with visibility toggle -->
     <label class="fieldset">
       <span class="label">Confirm Password</span>
       <div class="join">
@@ -90,6 +104,7 @@ async function submit() {
           'input-error': passwordMismatch
         }"
         />
+        <!-- Toggle button for password confirmation visibility -->
         <button
             type="button"
             class="btn btn-soft btn-square join-item"
@@ -101,6 +116,7 @@ async function submit() {
         </button>
       </div>
 
+      <!-- Password mismatch error message -->
       <span
           v-if="passwordMismatch"
           class="text-error text-sm mt-1"
@@ -109,11 +125,14 @@ async function submit() {
       </span>
     </label>
 
+    <!-- Error message display -->
     <div v-if="error" class="alert alert-error alert-soft mt-2">
       {{ error }}
     </div>
 
+    <!-- Registration submission button -->
     <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Creating User...' : 'Register' }}</button>
+    <!-- Link back to login page -->
     <a class="btn btn-neutral mt-1" href="/">Back to Login</a>
   </form>
 </template>
