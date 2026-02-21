@@ -23,7 +23,6 @@ function changePassword() {
 <template>
   <div id="app" class="min-h-screen grid grid-rows-[auto_1fr_auto]">
     <header class="flex flex-container bg-base-200 p-4">
-      <!-- Github repository link -->
       <a href="https://github.com/Jr9phil/swoosh" target="_blank">
         <Github class="logo" />
       </a>
@@ -38,7 +37,7 @@ function changePassword() {
       </label>
     </header>
     <!-- Main content area where the routed views are rendered -->
-    <div class="flex items-center justify-center">
+    <div class="flex justify-center mt-8">
       <router-view />
     </div>
     
