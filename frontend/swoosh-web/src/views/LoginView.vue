@@ -72,6 +72,6 @@ async function submit() {
     </div>
 
     <button class="btn btn-neutral mt-4" :disabled="loading" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Login' }}</button>
-    <a class="btn btn-primary mt-1" href="/register">Create Account</a>
+    <a v-if="!loading" class="btn btn-primary mt-1" href="/register">Create Account</a>
   </form>
 </template>
