@@ -106,6 +106,6 @@ async function submit() {
     </div>
 
     <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit">Change Password</button>
-    <a class="link link-primary mt-1" href="/">Back to Tasks</a>
+    <a class="btn btn-secondary mt-1" href="/">Cancel</a>
   </form>
 </template>

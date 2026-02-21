@@ -71,7 +71,7 @@ async function submit() {
       {{ error }}
     </div>
 
-    <button class="btn btn-neutral mt-4" :disabled="loading" type="submit">{{ loading ? 'Logging in...' : 'Login' }}</button>
-    <a class="link link-primary mt-1" href="/register">Create Account</a>
+    <button class="btn btn-neutral mt-4" :disabled="loading" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Login' }}</button>
+    <a class="btn btn-primary mt-1" href="/register">Create Account</a>
   </form>
 </template>

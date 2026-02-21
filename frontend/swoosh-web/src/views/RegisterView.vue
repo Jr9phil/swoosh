@@ -88,6 +88,6 @@ async function submit() {
     </label>
 
     <button class="btn btn-primary mt-4" :disabled="passwordMismatch || !fieldsEntered" type="submit">Register</button>
-    <a class="link link-primary mt-1" href="/">Back to Login</a>
+    <a class="btn btn-neutral mt-1" href="/">Back to Login</a>
   </form>
 </template>

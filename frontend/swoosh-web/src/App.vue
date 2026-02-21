@@ -43,7 +43,7 @@ function changePassword() {
           <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info"><UserRound /></div>
         </div>
         
-        <div class="fab-close"><span class="btn btn-circle btn-lg btn-error">✕</span></div>
+        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-info"><UserRound /></span></div>
         
         <div>Logout <button class="btn btn-lg btn-circle" @click="logout"><LogOut /></button></div>
         <div>Change Password <button class="btn btn-lg btn-circle" @click="changePassword"><KeyRound /></button></div>
