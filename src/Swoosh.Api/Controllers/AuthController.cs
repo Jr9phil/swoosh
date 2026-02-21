@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
         _encryption = encryption;
     }
     
+    //Create User
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
@@ -44,6 +45,7 @@ public class AuthController : ControllerBase
         return Ok();
     }
     
+    //Login
     [HttpPost("login")]
     public IActionResult Login(LoginDto dto)
     {
@@ -57,6 +59,7 @@ public class AuthController : ControllerBase
         return Ok(new { token });
     }
     
+    //Change Password 
     [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)

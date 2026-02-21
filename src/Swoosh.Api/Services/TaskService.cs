@@ -8,6 +8,7 @@ using Swoosh.Api.Security;
 
 namespace Swoosh.Api.Services;
 
+/// Service for managing user tasks, handling encryption/decryption of task data before storage/retrieval.
 public class TaskService : ITaskService
 {
     private readonly AppDbContext _db;
@@ -19,6 +20,7 @@ public class TaskService : ITaskService
         _crypto = crypto;
     }
 
+    /// Retrieves the encryption salt for a specific user.
     private async Task<byte[]> GetUserSalt(Guid userId)
     {
         try
@@ -38,6 +40,7 @@ public class TaskService : ITaskService
         }
     }
 
+    /// Fetches all tasks for a specific user and decrypts their fields.
     public async Task<IEnumerable<TaskDto>> GetAllAsync(Guid userId)
     {
         var salt = await GetUserSalt(userId);
@@ -76,6 +79,7 @@ public class TaskService : ITaskService
         return result;
     }
 
+    /// Retrieves a specific task by ID for a user and decrypts its fields.
     public async Task<TaskDto?> GetByIdAsync(Guid userId, Guid taskId)
     {
         var salt = await GetUserSalt(userId);
@@ -95,6 +99,7 @@ public class TaskService : ITaskService
             .FirstOrDefaultAsync();
     }
 
+    /// Creates a new task, encrypting all sensitive fields before saving to the database.
     public async Task<TaskDto> CreateAsync(Guid userId, CreateTaskDto dto)
     {
         var salt = await GetUserSalt(userId);
@@ -136,6 +141,7 @@ public class TaskService : ITaskService
         };
     }
 
+    /// Updates an existing task, re-encrypting updated fields.
     public async Task<bool> UpdateAsync(Guid userId, Guid taskId, UpdateTaskDto dto)
     {
         var task = await _db.Tasks
@@ -164,6 +170,7 @@ public class TaskService : ITaskService
         return true;
     }
 
+    /// Deletes a task from the database.
     public async Task<bool> DeleteAsync(Guid userId, Guid taskId)
     {
         var task = await _db.Tasks

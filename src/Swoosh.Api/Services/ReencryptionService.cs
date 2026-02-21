@@ -6,6 +6,8 @@ using Swoosh.Api.Security;
 
 namespace Swoosh.Api.Services;
 
+/// Background service that periodically re-encrypts tasks when the active encryption key version changes.
+/// This ensures that all data eventually migrates to the latest key.
 public class ReencryptionService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -22,6 +24,7 @@ public class ReencryptionService : BackgroundService
         _logger = logger;
     }
     
+    /// Retrieves the encryption salt for a specific user from the database.
     private async Task<byte[]> GetUserSalt(Guid userId, AppDbContext db)
     {
         try
@@ -41,6 +44,7 @@ public class ReencryptionService : BackgroundService
         }
     }
 
+    /// Main execution loop for the background service.
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Task re-encryption service started");
@@ -61,6 +65,7 @@ public class ReencryptionService : BackgroundService
         }
     }
 
+    /// Processes a batch of tasks that are using an outdated encryption key version.
     private async Task ReencryptBatchAsync(CancellationToken ct)
     {
         var activeVersion = int.Parse(_config["Encryption:ActiveKeyVersion"]!);
