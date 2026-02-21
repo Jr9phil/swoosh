@@ -50,44 +50,46 @@ async function submit() {
 <!-- View Template: Login form with email and password fields -->
 <template>
   <!-- Main login form -->
-  <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
-    <!-- Email input field -->
-    <fieldset class="fieldset">
-      <label class="label">Email</label>
-      <input type="email" class="input validator" placeholder="Email" required v-model="email" />
-      <p class="validator-hint hidden">Required</p>
-    </fieldset>
+  <div>
+    <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+      <!-- Email input field -->
+      <fieldset class="fieldset">
+        <label class="label">Email</label>
+        <input type="email" class="input validator" placeholder="Email" required v-model="email" />
+        <p class="validator-hint hidden">Required</p>
+      </fieldset>
 
-    <!-- Password input field with visibility toggle -->
-    <label class="fieldset">
-      <span class="label">Password</span>
-      <div class="join">
-        <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
-        <!-- Toggle button for password visibility -->
-        <button
-            type="button"
-            class="btn btn-soft btn-square join-item"
-            @click="showPassword = !showPassword"
-            tabindex="-1"
-        >
-          <Eye v-if="!showPassword" class="w-4 h-4" />
-          <EyeOff v-else class="w-4 h-4" />
-        </button>
+      <!-- Password input field with visibility toggle -->
+      <label class="fieldset">
+        <span class="label">Password</span>
+        <div class="join">
+          <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+          <!-- Toggle button for password visibility -->
+          <button
+              type="button"
+              class="btn btn-soft btn-square join-item"
+              @click="showPassword = !showPassword"
+              tabindex="-1"
+          >
+            <Eye v-if="!showPassword" class="w-4 h-4" />
+            <EyeOff v-else class="w-4 h-4" />
+          </button>
+        </div>
+        <span class="validator-hint hidden">Required</span>
+      </label>
+
+      <!-- Error message display -->
+      <div v-if="error" class="alert alert-error alert-soft mt-2">
+        {{ error }}
       </div>
-      <span class="validator-hint hidden">Required</span>
-    </label>
 
-    <!-- Error message display -->
-    <div v-if="error" class="alert alert-error alert-soft mt-2">
-      {{ error }}
-    </div>
-
-    <div class="flex flex-row mt-4">
-      <!-- Link to the registration page -->
-      <a v-if="!loading" class="btn btn-primary btn-outline" href="/register">Create Account</a>
-      <div class="flex-grow" />
-      <!-- Login submission button -->
-      <button class="btn btn-primary" :disabled="loading || !email || !password" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Log In' }}</button>
-    </div>
-  </form>
+      <div class="flex flex-row mt-4">
+        <!-- Link to the registration page -->
+        <a v-if="!loading" class="btn btn-primary btn-outline" href="/register">Create Account</a>
+        <div class="flex-grow" />
+        <!-- Login submission button -->
+        <button class="btn btn-primary" :disabled="loading || !email || !password" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Log In' }}</button>
+      </div>
+    </form>
+  </div>
 </template>

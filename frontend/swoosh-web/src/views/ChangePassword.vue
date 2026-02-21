@@ -64,90 +64,92 @@ async function submit() {
 <!-- View Template: Password change form with current, new, and confirm password fields -->
 <template>
   <!-- Main password change form -->
-  <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
-    <!-- Current password input field with visibility toggle -->
-    <label class="fieldset">
-      <span class="label">Current Password</span>
-      <div class="join">
-        <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
-        <!-- Toggle button for current password visibility -->
-        <button
-            type="button"
-            class="btn btn-soft btn-square join-item"
-            @click="showPassword = !showPassword"
-            tabindex="-1"
-        >
-          <Eye v-if="!showPassword" class="w-4 h-4" />
-          <EyeOff v-else class="w-4 h-4" />
-        </button>
-      </div>
-      <span class="validator-hint hidden">Required</span>
-    </label>
+  <div>
+    <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+      <!-- Current password input field with visibility toggle -->
+      <label class="fieldset">
+        <span class="label">Current Password</span>
+        <div class="join">
+          <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+          <!-- Toggle button for current password visibility -->
+          <button
+              type="button"
+              class="btn btn-soft btn-square join-item"
+              @click="showPassword = !showPassword"
+              tabindex="-1"
+          >
+            <Eye v-if="!showPassword" class="w-4 h-4" />
+            <EyeOff v-else class="w-4 h-4" />
+          </button>
+        </div>
+        <span class="validator-hint hidden">Required</span>
+      </label>
 
-    <!-- New password input field with visibility toggle -->
-    <label class="fieldset">
-      <span class="label">New Password</span>
-      <div class="join">
-        <input :type="showNewPassword ? 'text' : 'password'" class="input validator join-item" placeholder="New Password" required v-model="newPassword" minlength="8" />
-        <!-- Toggle button for new password visibility -->
-        <button
-            type="button"
-            class="btn btn-soft btn-square join-item"
-            @click="showNewPassword = !showNewPassword"
-            tabindex="-1"
-        >
-          <Eye v-if="!showNewPassword" class="w-4 h-4" />
-          <EyeOff v-else class="w-4 h-4" />
-        </button>
-      </div>
-    </label>
+      <!-- New password input field with visibility toggle -->
+      <label class="fieldset">
+        <span class="label">New Password</span>
+        <div class="join">
+          <input :type="showNewPassword ? 'text' : 'password'" class="input validator join-item" placeholder="New Password" required v-model="newPassword" minlength="8" />
+          <!-- Toggle button for new password visibility -->
+          <button
+              type="button"
+              class="btn btn-soft btn-square join-item"
+              @click="showNewPassword = !showNewPassword"
+              tabindex="-1"
+          >
+            <Eye v-if="!showNewPassword" class="w-4 h-4" />
+            <EyeOff v-else class="w-4 h-4" />
+          </button>
+        </div>
+      </label>
 
-    <!-- Confirm new password input field with visibility toggle -->
-    <label class="fieldset">
-      <span class="label">Confirm New Password</span>
-      <div class="join">
-        <input
-            :type="showConfNewPassword ? 'text' : 'password'"
-            class="input join-item"
-            placeholder="Confirm password"
-            required
-            v-model="confirmNewPassword"
-            :class="{
+      <!-- Confirm new password input field with visibility toggle -->
+      <label class="fieldset">
+        <span class="label">Confirm New Password</span>
+        <div class="join">
+          <input
+              :type="showConfNewPassword ? 'text' : 'password'"
+              class="input join-item"
+              placeholder="Confirm password"
+              required
+              v-model="confirmNewPassword"
+              :class="{
           'input-error': passwordMismatch
         }"
-        />
-        <!-- Toggle button for confirmation password visibility -->
-        <button
-            type="button"
-            class="btn btn-soft btn-square join-item"
-            @click="showConfNewPassword = !showConfNewPassword"
-            tabindex="-1"
-        >
-          <Eye v-if="!showConfNewPassword" class="w-4 h-4" />
-          <EyeOff v-else class="w-4 h-4" />
-        </button>
-      </div>
+          />
+          <!-- Toggle button for confirmation password visibility -->
+          <button
+              type="button"
+              class="btn btn-soft btn-square join-item"
+              @click="showConfNewPassword = !showConfNewPassword"
+              tabindex="-1"
+          >
+            <Eye v-if="!showConfNewPassword" class="w-4 h-4" />
+            <EyeOff v-else class="w-4 h-4" />
+          </button>
+        </div>
 
-      <!-- Password mismatch error message -->
-      <span
-          v-if="passwordMismatch"
-          class="text-error text-sm mt-1"
-      >
+        <!-- Password mismatch error message -->
+        <span
+            v-if="passwordMismatch"
+            class="text-error text-sm mt-1"
+        >
         Passwords do not match
       </span>
-    </label>
+      </label>
 
-    <!-- Error message display -->
-    <div v-if="error" class="alert alert-error alert-soft mt-2">
-      {{ error }}
-    </div>
+      <!-- Error message display -->
+      <div v-if="error" class="alert alert-error alert-soft mt-2">
+        {{ error }}
+      </div>
 
-    <div class="flex flex-row mt-4">
-      <!-- Link to cancel and return to main page -->
-      <a class="btn btn-secondary btn-outline" href="/">Cancel</a>
-      <div class="flex-grow" />
-      <!-- Password change submission button -->
-      <button class="btn btn-primary" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
-    </div>
-  </form>
+      <div class="flex flex-row mt-4">
+        <!-- Link to cancel and return to main page -->
+        <a class="btn btn-secondary btn-outline" href="/">Cancel</a>
+        <div class="flex-grow" />
+        <!-- Password change submission button -->
+        <button class="btn btn-primary" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
+      </div>
+    </form>
+  </div>
 </template>
