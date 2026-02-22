@@ -5,6 +5,7 @@
 -->
 <script setup lang="ts">
 import type { Task } from '../types/task'
+import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref, computed, watch } from 'vue'
@@ -16,11 +17,7 @@ import {
   Pin, 
   PinOff, 
   CalendarClock,
-  ClockAlert,  
-  ChessPawn,
-  ChessKnight,
-  ChessQueen,
-  ChessKing  
+  ClockAlert
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -46,14 +43,6 @@ const now = ref(Date.now())
 setInterval(() => {
   now.value = Date.now()
 }, 1000)
-
-// Priority levels with associated icons and styles
-const PRIORITIES = [
-  { value: 0, icon: ChessPawn, label: 'Default', style: 'btn-ghost opacity-0 group-hover:opacity-50' },
-  { value: 1, icon: ChessKnight, label: 'Medium', style: 'btn-soft text-slate-400 bg-slate-400/10' },
-  { value: 2, icon: ChessQueen, label: 'High', style: 'btn-soft text-blue-400 bg-blue-400/10' },
-  { value: 3, icon: ChessKing, label: 'Top', style: 'btn-soft text-amber-400 bg-amber-400/10' }
-]
 
 const EXPIRED = {
   true: {icon: ClockAlert},
