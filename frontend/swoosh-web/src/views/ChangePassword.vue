@@ -56,10 +56,12 @@ async function submit() {
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const status = err.response?.status
-      if (status === 500) {
+      if (status === 400) {
+        error.value = 'Current Password is Incorrect'
+      } else if (status === 500) {
         error.value = 'Internal Server Error'
       } else {
-        error.value = 'Registration Failed'
+        error.value = 'Change Password Failed'
       }
     } else {
       error.value = 'Unexpected error occurred'

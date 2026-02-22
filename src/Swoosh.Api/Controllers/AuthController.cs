@@ -74,7 +74,7 @@ public class AuthController : ControllerBase
             return Unauthorized();
 
         if (!_auth.Verify(dto.CurrentPassword, user.PasswordHash))
-            return Unauthorized("Current password is incorrect");
+            return BadRequest("Current password is incorrect");
         
         var tasks = await _db.Tasks
             .Where(t => t.UserId == userId)
