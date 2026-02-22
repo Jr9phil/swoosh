@@ -3,7 +3,7 @@
   Provides a form for authenticated users to change their account password.
 -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -17,7 +17,17 @@ const showPassword = ref(false)
 const newPassword = ref('')
 const confirmNewPassword = ref('')
 const showNewPassword = ref(false)
-const showConfNewPassword = ref(false)
+
+const newPasswordInput = ref<HTMLInputElement | null>(null)
+const confirmNewPasswordInput = ref<HTMLInputElement | null>(null)
+
+// Clear confirmation password if new password is cleared
+watch(newPassword, (newValue) => {
+  if (newValue === '') {
+    confirmNewPassword.value = ''
+    showNewPassword.value = false
+  }
+})
 
 const error = ref<string | null>(null)
 const loading = ref(false)
@@ -59,6 +69,15 @@ async function submit() {
   }
 
 }
+
+// Auto-focus
+function focusNewPassword() {
+  newPasswordInput.value?.focus()
+}
+
+function focusConfirmNewPassword() {
+  confirmNewPasswordInput.value?.focus()
+}
 </script>
 
 <!-- View Template: Password change form with current, new, and confirm password fields -->
@@ -68,9 +87,15 @@ async function submit() {
     <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
       <!-- Current password input field with visibility toggle -->
       <label class="fieldset">
+        <legend class="fieldset-legend">Change password for {{ auth.currentUser }}</legend>
         <span class="label">Current Password</span>
         <div class="join">
-          <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+          <input :type="showPassword ? 'text' : 'password'" 
+                 class="input validator join-item" 
+                 placeholder="Password" 
+                 required 
+                 v-model="password" 
+                 @keydown.enter.prevent="focusNewPassword"/>
           <!-- Toggle button for current password visibility -->
           <button
               type="button"
@@ -86,10 +111,17 @@ async function submit() {
       </label>
 
       <!-- New password input field with visibility toggle -->
-      <label class="fieldset">
-        <span class="label">New Password</span>
+      <label class="fieldset" :hidden="!password">
+        <span class="label" v-if="!!newPassword">New Password</span>
         <div class="join">
-          <input :type="showNewPassword ? 'text' : 'password'" class="input validator join-item" placeholder="New Password" required v-model="newPassword" minlength="8" />
+          <input :type="showNewPassword ? 'text' : 'password'" 
+                 class="input validator join-item" 
+                 placeholder="New Password" 
+                 required 
+                 v-model="newPassword" 
+                 ref="newPasswordInput"
+                 @keydown.enter.prevent="focusConfirmNewPassword"
+                 minlength="8" />
           <!-- Toggle button for new password visibility -->
           <button
               type="button"
@@ -104,15 +136,16 @@ async function submit() {
       </label>
 
       <!-- Confirm new password input field with visibility toggle -->
-      <label class="fieldset">
+      <label class="fieldset" :hidden="!newPassword">
         <span class="label">Confirm New Password</span>
         <div class="join">
           <input
-              :type="showConfNewPassword ? 'text' : 'password'"
+              :type="showNewPassword ? 'text' : 'password'"
               class="input join-item"
               placeholder="Confirm password"
               required
               v-model="confirmNewPassword"
+              ref="confirmNewPasswordInput"
               :class="{
           'input-error': passwordMismatch
         }"
@@ -121,10 +154,10 @@ async function submit() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
-              @click="showConfNewPassword = !showConfNewPassword"
+              @click="showNewPassword = !showNewPassword"
               tabindex="-1"
           >
-            <Eye v-if="!showConfNewPassword" class="w-4 h-4" />
+            <Eye v-if="!showNewPassword" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
           </button>
         </div>

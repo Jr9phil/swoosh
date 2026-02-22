@@ -3,7 +3,7 @@
   Provides a registration form for new users to create an account.
 -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import { Eye, EyeOff } from 'lucide-vue-next'
@@ -15,10 +15,20 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const showPassword = ref(false)
-const showConfPassword = ref(false)
+
+const passwordInput = ref<HTMLInputElement | null>(null)
+const confirmPasswordInput = ref<HTMLInputElement | null>(null)
 
 const error = ref<string | null>(null)
 const loading = ref(false)
+
+// Clear confirmation password if new password is cleared
+watch(password, (newValue) => {
+  if (newValue === '') {
+    confirmPassword.value = ''
+    showPassword.value = false
+  }
+})
 
 // Computes whether the password and confirmation password match
 const passwordMismatch = computed(() => 
@@ -57,6 +67,15 @@ async function submit() {
   }
 
 }
+
+// Auto-focus
+function focusPassword() {
+  passwordInput.value?.focus()
+}
+
+function focusConfirmPassword() {
+  confirmPasswordInput.value?.focus()
+}
 </script>
 
 <!-- View Template: Registration form with email, password, and password confirmation -->
@@ -69,7 +88,12 @@ async function submit() {
         <legend class="fieldset-legend">Create Account</legend>
         <!-- Email input field -->
         <label class="label">Email</label>
-        <input type="email" class="input validator" placeholder="Email" required v-model="email" />
+        <input type="email" 
+               class="input validator" 
+               placeholder="Email" 
+               required
+               v-model="email" 
+               @keydown.enter.prevent="focusPassword"/>
         <p class="validator-hint hidden">Required</p>
       </fieldset>
 
@@ -77,7 +101,14 @@ async function submit() {
       <label class="fieldset">
         <span class="label">Password</span>
         <div class="join">
-          <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" minlength="8" />
+          <input :type="showPassword ? 'text' : 'password'" 
+                 class="input validator join-item" 
+                 placeholder="Password" 
+                 required 
+                 v-model="password"
+                 ref="passwordInput"
+                 minlength="8" 
+                 @keydown.enter.prevent="focusConfirmPassword" />
           <!-- Toggle button for password visibility -->
           <button
               type="button"
@@ -96,11 +127,12 @@ async function submit() {
         <span class="label">Confirm Password</span>
         <div class="join">
           <input
-              :type="showConfPassword ? 'text' : 'password'"
+              :type="showPassword ? 'text' : 'password'"
               class="input join-item"
               placeholder="Confirm password"
               required
               v-model="confirmPassword"
+              ref="confirmPasswordInput"
               :class="{
           'input-error': passwordMismatch
         }"
@@ -109,10 +141,10 @@ async function submit() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
-              @click="showConfPassword = !showConfPassword"
+              @click="showPassword = !showPassword"
               tabindex="-1"
           >
-            <Eye v-if="!showConfPassword" class="w-4 h-4" />
+            <Eye v-if="!showPassword" class="w-4 h-4" />
             <EyeOff v-else class="w-4 h-4" />
           </button>
         </div>

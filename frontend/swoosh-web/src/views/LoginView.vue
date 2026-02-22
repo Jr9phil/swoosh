@@ -3,7 +3,7 @@
   Provides a login form for existing users to authenticate.
 -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -14,10 +14,17 @@ const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const passwordInput = ref<HTMLInputElement | null>(null)
 const showPassword = ref(false)
 
 const error = ref<string | null>(null)
 const loading = ref(false)
+
+watch(password, (newValue) => {
+  if (newValue === '') {
+    showPassword.value = false
+  }
+})
 
 // Handles form submission, attempting to authenticate the user
 async function submit() {
@@ -45,6 +52,11 @@ async function submit() {
   }
 
 }
+
+// Auto-focus password input
+function focusPassword() {
+  passwordInput.value?.focus()
+}
 </script>
 
 <!-- View Template: Login form with email and password fields -->
@@ -54,16 +66,26 @@ async function submit() {
     <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
       <!-- Email input field -->
       <fieldset class="fieldset">
-        <label class="label">Email</label>
-        <input type="email" class="input validator" placeholder="Email" required v-model="email" />
+        <legend class="fieldset-legend">Sign in to your account</legend>
+        <label class="label" v-if="!!email">Email</label>
+        <input type="email" class="input validator" 
+               placeholder="Email" 
+               required 
+               v-model="email" 
+               @keydown.enter.prevent="focusPassword" />
         <p class="validator-hint hidden">Required</p>
       </fieldset>
 
       <!-- Password input field with visibility toggle -->
       <label class="fieldset">
-        <span class="label">Password</span>
+        <span class="label" v-if="!!password">Password</span>
         <div class="join">
-          <input :type="showPassword ? 'text' : 'password'" class="input validator join-item" placeholder="Password" required v-model="password" />
+          <input :type="showPassword ? 'text' : 'password'" 
+                 class="input validator join-item" 
+                 placeholder="Password" 
+                 required 
+                 v-model="password" 
+                 ref="passwordInput"/>
           <!-- Toggle button for password visibility -->
           <button
               type="button"
