@@ -109,16 +109,17 @@ onMounted(async () => {
     <div class="bg-base-200 border-base-300 rounded-box w-xl border p-4">
       
       <!-- Header section with loading indicator and title -->
-      <div class="flex mb-2 cursor-default">
-        <span v-if="tasksStore.loading" class="loading loading-spinner text-primary mr-4" />
-        <CircleCheckBig v-else class="text-primary mr-4" />
-        <h1 class="text-xl text-heading">My Tasks</h1>
+      <div class="mb-6 cursor-default">
+        <div class="flex items-center">
+          <div class="mr-4">
+            <span v-if="tasksStore.loading" class="loading loading-spinner w-10 text-primary" />
+            <button v-else class="btn btn-circle btn-primary shadow-md" onclick="create.showModal()">
+              <Plus />
+            </button>
+          </div>
+          <h1 class="text-xl text-heading">My Tasks</h1>
+        </div>
       </div>
-      
-      <!-- Button to open the create task modal -->
-      <button :disabled = "tasksStore.loading" class="btn btn-ghost btn-info mb-2" onclick="create.showModal()">
-        <Plus /> Add a task
-      </button>
       
       <!-- Skeleton loader shown while tasks are loading -->
       <div v-if="tasksStore.loading" class="skeleton w-full h-96" />
@@ -135,7 +136,7 @@ onMounted(async () => {
         </ul>
         
         <!-- Divider between pinned and regular tasks -->
-        <div v-if="pinnedTasks.length && incompleteTasks.length" class="divider"></div>
+        <div v-if="pinnedTasks.length && incompleteTasks.length" class="divider" />
         
         <!-- List of incomplete (regular) tasks with drag and drop support -->
         <ul class="drop-zone list bg-base-100 rounded-box shadow-md">
@@ -171,6 +172,7 @@ onMounted(async () => {
           <div class="collapse collapse-arrow">
             <input type="checkbox" name="completed-tasks-list" />
             <div class="collapse-title opacity-50">Completed ({{ completedTasks.length }})</div>
+            <!-- TODO: fix bottom padding issue -->
             <div class="collapse-content p-0 pb-6">
               <ul class="list bg-base-100 rounded-box shadow-md">
                 <TaskItem
