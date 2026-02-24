@@ -47,6 +47,7 @@ const fieldsEntered = computed(() =>
 async function submit() {
   error.value = null
   loading.value = true
+  showPassword.value = false
   
   try {
     await auth.register(email.value, password.value)
@@ -113,6 +114,7 @@ function focusConfirmPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showPassword = !showPassword"
               tabindex="-1"
           >
@@ -141,6 +143,7 @@ function focusConfirmPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showPassword = !showPassword"
               tabindex="-1"
           >

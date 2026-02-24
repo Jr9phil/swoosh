@@ -30,6 +30,7 @@ watch(password, (newValue) => {
 async function submit() {
   error.value = null
   loading.value = true
+  showPassword.value = false
   
   try {
     await auth.login(email.value, password.value)
@@ -90,6 +91,7 @@ function focusPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showPassword = !showPassword"
               tabindex="-1"
           >
@@ -107,7 +109,7 @@ function focusPassword() {
 
       <div class="flex flex-row mt-4">
         <!-- Link to the registration page -->
-        <a v-if="!loading" class="btn btn-primary btn-outline" href="/register">Create Account</a>
+        <a class="btn btn-primary btn-outline" href="/register">Create Account</a>
         <div class="flex-grow" />
         <!-- Login submission button -->
         <button class="btn btn-primary" :disabled="loading || !email || !password" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Logging in...' : 'Log In' }}</button>

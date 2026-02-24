@@ -49,6 +49,8 @@ const fieldsEntered = computed(() =>
 async function submit() {
   error.value = null
   loading.value = true
+  showPassword.value = false
+  showNewPassword.value = false
   
   try {
     await auth.changePassword(password.value, newPassword.value)
@@ -102,6 +104,7 @@ function focusConfirmNewPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showPassword = !showPassword"
               tabindex="-1"
           >
@@ -128,6 +131,7 @@ function focusConfirmNewPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showNewPassword = !showNewPassword"
               tabindex="-1"
           >
@@ -156,6 +160,7 @@ function focusConfirmNewPassword() {
           <button
               type="button"
               class="btn btn-soft btn-square join-item"
+              :disabled="loading"
               @click="showNewPassword = !showNewPassword"
               tabindex="-1"
           >
