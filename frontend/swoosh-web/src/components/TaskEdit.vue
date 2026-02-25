@@ -136,7 +136,8 @@ async function moveToTop() {
       <input
           type="checkbox"
           :checked="!!task.completed"
-          :class="task.completed ? 'checkbox checkbox-primary' : 'checkbox' "
+          class="checkbox"
+          :class="task.completed ? 'checkbox-lg checkbox-primary' : 'checkbox-lg' "
           disabled
       />
       <!-- Drag handle for reordering -->
@@ -179,14 +180,14 @@ async function moveToTop() {
         <button
             id="priority"
             @click="cyclePriority"
-            class="btn btn-ghost btn-circle opacity-60 hover:opacity-100">
+            class="btn btn-ghost btn-square opacity-60 hover:opacity-100">
           <component
               :is="PRIORITIES[priorityIndex].icon"
               class="transition-transform duration-150 active:rotate-12"
           />
         </button>
       </div>
-      <label class="swap btn btn-ghost btn-circle opacity-60 hover:opacity-100 ml-1">
+      <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2">
         <input type="checkbox" v-model="editedPinned" />
         <Pin class="swap-off" />
         <PinOff class="swap-on" />

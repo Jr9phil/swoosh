@@ -113,7 +113,7 @@ onMounted(async () => {
         <div class="flex items-center">
           <div class="mr-4">
             <span v-if="tasksStore.loading" class="loading loading-spinner w-10 text-primary" />
-            <button v-else class="btn btn-circle btn-primary shadow-md" onclick="create.showModal()">
+            <button v-else class="btn btn-square btn-primary shadow-md" onclick="create.showModal()">
               <Plus />
             </button>
           </div>

@@ -62,6 +62,10 @@ const isDueToday = computed(() => {
   )
 })
 
+const isBlank = computed(() => {
+  return !props.task.deadline && !props.task.notes
+})
+
 const tasksStore = useTasksStore()
 
 const emit = defineEmits<{
@@ -201,28 +205,24 @@ async function remove() {
   <!-- Display Mode -->
   <li v-else 
       class="list-row"
+      :class="{ 'items-center' : isBlank }"
       :draggable="!task.completed"
       @dragstart="emit('drag-start', task)"
       @dragover.prevent
       @drop="emit('drop', task)"
   >
-      <div class="flex flex-col">
+      <div class="flex">
         <!-- Interactive completion checkbox with animation support -->
         <div class="inline-grid *:[grid-area:1/1]">
-          <input type="checkbox" :checked="!!task.completed" class="checkbox checkbox-primary" :class="completing ? 'animate-ping opacity-100' : 'opacity-0'"/>
+          <input type="checkbox" :checked="!!task.completed" class="checkbox checkbox-primary checkbox-lg" :class="completing ? 'animate-ping opacity-100' : 'opacity-0'"/>
           <input
             type="checkbox"
             :checked="!!task.completed"
             :disabled="task.completed"
             @change="onCompleteClick"
-            class="checkbox hover:checkbox-primary"
+            class="checkbox checkbox-lg hover:checkbox-primary"
             :class="{ 'checkbox-primary' : task.completed || completing }"
           />
-        </div>
-
-        <!-- Drag handle visible on hover -->
-        <div v-if="!task.completed" class="flex-1 flex items-center justify-center mt-2 cursor-grab group">
-          <GripVertical class="opacity-0 group-hover:opacity-50 transition-opacity duration-200" />
         </div>
       </div>
     
@@ -231,7 +231,7 @@ async function remove() {
       <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
         {{ task.title }}
       </h1>
-      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3 mb-1"> {{ task.notes }}</p>
+      <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
       <!-- Deadline indicator badge -->
       <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }">
@@ -244,7 +244,7 @@ async function remove() {
       <button 
           id="priority" 
           @click="startEditing"
-          class="btn btn-circle"
+          class="btn btn-square"
           :class="PRIORITIES[priorityIndex].style">
         <component
             :is="PRIORITIES[priorityIndex].icon"
@@ -253,7 +253,7 @@ async function remove() {
       <button 
           id="pin" 
           @click="togglePinned"
-          class="btn btn-ghost btn-circle ml-1"
+          class="btn btn-ghost btn-circle ml-2"
           :class="task.pinned ? '' : 'opacity-0 group-hover:opacity-50'">
         <Pin />
       </button>
