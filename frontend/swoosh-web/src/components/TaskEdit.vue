@@ -27,10 +27,21 @@ const originalPinned = ref(props.task.pinned)
 const originalDeadline = ref(props.task.deadline ?? '')
 const originalPriority = ref(props.task.priority)
 
+// Splits ISO deadline string into date and time components for editing
+function splitDeadline(deadline: string | null) {
+  if (!deadline) return { date: '', time: '' }
+  const [date, fullTime] = deadline.split('T')
+  const time = fullTime ? fullTime.substring(0, 5) : '' // HH:mm
+  return { date, time }
+}
+
+const initialDeadline = splitDeadline(props.task.deadline ?? null)
+const editedDate = ref(initialDeadline.date)
+const editedTime = ref(initialDeadline.time)
+
 const editedTitle = ref(props.task.title)
 const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
-const editedDeadline = ref(props.task.deadline ?? '')
 
 const priorityIndex = ref(
     PRIORITIES.findIndex(p => p.value === props.task.priority)
@@ -39,6 +50,23 @@ const priorityIndex = ref(
 const editedPriority = computed(() =>
     PRIORITIES[priorityIndex.value].value
 )
+
+// Combines date and time inputs into a single deadline string
+// Defaults: date set -> 11:59 PM, time set -> today
+const combinedDeadline = computed(() => {
+  if (!editedDate.value && !editedTime.value) return null
+
+  let date = editedDate.value
+  let time = editedTime.value
+
+  if (date && !time) {
+    time = '23:59'
+  } else if (!date && time) {
+    date = new Date().toISOString().split('T')[0]
+  }
+
+  return `${date}T${time}:00`
+})
 
 // Cycles through available priority levels
 function cyclePriority() {
@@ -64,18 +92,21 @@ function cancelEditing() {
   editedTitle.value = originalTitle.value
   editedNotes.value = originalNotes.value
   editedPinned.value = originalPinned.value
-  editedDeadline.value = originalDeadline.value
+  const { date, time } = splitDeadline(originalDeadline.value)
+  editedDate.value = date
+  editedTime.value = time
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === originalPriority.value)
   emit('close')
 }
 
 // Saves changes made in the inline editor to the store
 async function finishEditing() {
+  const currentDeadline = combinedDeadline.value
   if (
       editedTitle.value === originalTitle.value &&
       editedNotes.value === originalNotes.value &&
       editedPinned.value === originalPinned.value &&
-      editedDeadline.value === originalDeadline.value &&
+      currentDeadline === (originalDeadline.value || null) &&
       editedPriority.value === originalPriority.value
   ) {
     emit('close')
@@ -91,10 +122,10 @@ async function finishEditing() {
     title: editedTitle.value.trim(),
     notes: editedNotes.value || null,
     pinned: editedPinned.value,
-    deadline: editedDeadline.value || null,
+    deadline: currentDeadline,
     priority: editedPriority.value
   })
-  
+
   emit('close')
 }
 
@@ -152,7 +183,7 @@ async function moveToTop() {
           ref="titleInput"
           type="text"
           class="input input-bordered text-base font-semibold"
-          maxlength="200"
+          maxlength="24"
           v-model="editedTitle"
           @keydown="onKeydown"
           autofocus
@@ -161,17 +192,25 @@ async function moveToTop() {
       <textarea
           class="textarea textarea-bordered"
           placeholder="Notes"
-          maxlength="1000"
+          maxlength="250"
           v-model="editedNotes"
           @keydown="onKeydown"
       />
 
-      <input
-          type="datetime-local"
-          class="input input-bordered"
-          v-model="editedDeadline"
-          @keydown="onKeydown"
-      />
+      <div class="flex gap-2">
+        <input
+            type="date"
+            class="input input-bordered flex-1"
+            v-model="editedDate"
+            @keydown="onKeydown"
+        />
+        <input
+            type="time"
+            class="input input-bordered flex-1"
+            v-model="editedTime"
+            @keydown="onKeydown"
+        />
+      </div>
     </div>
 
     <!-- Edit mode action buttons (priority and pin) -->

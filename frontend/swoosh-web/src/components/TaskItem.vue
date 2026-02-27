@@ -62,10 +62,6 @@ const isDueToday = computed(() => {
   )
 })
 
-const isBlank = computed(() => {
-  return !props.task.deadline && !props.task.notes
-})
-
 const tasksStore = useTasksStore()
 
 const emit = defineEmits<{
@@ -205,7 +201,7 @@ async function remove() {
   <!-- Display Mode -->
   <li v-else 
       class="list-row"
-      :class="{ 'items-center' : isBlank }"
+      :class="{ 'items-center' : !task.notes && !task.deadline && !task.completed }"
       :draggable="!task.completed"
       @dragstart="emit('drag-start', task)"
       @dragover.prevent
@@ -228,9 +224,12 @@ async function remove() {
     
     <!-- Task textual content: Title, notes, and deadline badge -->
     <div @click="startEditing" class="cursor-text">
-      <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
-        {{ task.title }}
-      </h1>
+      <div class="flex flex-row">
+        <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
+          {{ task.title }}
+        </h1>
+<!--        TODO: Rating component goes here-->
+      </div>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
       <!-- Deadline indicator badge -->
