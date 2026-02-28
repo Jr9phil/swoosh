@@ -244,7 +244,7 @@ async function remove() {
           id="priority" 
           @click="startEditing"
           class="btn btn-square"
-          :class="PRIORITIES[priorityIndex].style">
+          :class="[priorityIndex === 0 ? 'btn-ghost' : 'btn-soft', PRIORITIES[priorityIndex].class]">
         <component
             :is="PRIORITIES[priorityIndex].icon"
         />

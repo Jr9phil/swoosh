@@ -8,6 +8,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import type { task } from '../types/task'
+import { PRIORITIES } from '../types/priority.ts'
 import { useRouter } from 'vue-router'
 import TaskForm from '../components/TaskForm.vue'
 import TaskItem from '../components/TaskItem.vue'
@@ -24,6 +25,14 @@ const incompleteTasks = computed(() =>
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
 )
+
+const tasksByPriority = computed(() => {
+  const groups = PRIORITIES.map(p => ({
+    priority: p,
+    tasks: incompleteTasks.value.filter(t => t.priority === p.value)
+  }))
+  return groups.filter(g => g.tasks.length > 0).reverse()
+})
 
 // Checks if a task is due today based on its deadline
 function isDueToday(deadline? : string | null) {
@@ -66,15 +75,15 @@ const completedTasks = computed(() =>
         })
 )
 
-const draggedTask = ref<Task | null>(null)
+const draggedTask = ref<task | null>(null)
 
 // Handles the start of a drag operation for a task
-function onDragStart(task: Task) {
+function onDragStart(task: task) {
   draggedTask.value = { ...task }
 }
 
 // Handles the drop operation when a task is reordered
-async function onDrop(targetTask: Task) {
+async function onDrop(targetTask: task) {
   const source = draggedTask.value
   if (!source || source.id === targetTask.id) return
   
@@ -127,7 +136,7 @@ onMounted(async () => {
       <!-- Content area for task lists -->
       <div v-else class="min-h-96">
         <!-- List of pinned tasks -->
-        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md">
+        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2 border-white/50">
           <TaskItem
               v-for="task in pinnedTasks"
               :key="task.id"
@@ -135,19 +144,26 @@ onMounted(async () => {
           />
         </ul>
         
-        <!-- Divider between pinned and regular tasks -->
-        <div v-if="pinnedTasks.length && incompleteTasks.length" class="divider" />
-        
-        <!-- List of incomplete (regular) tasks with drag and drop support -->
-        <ul class="drop-zone list bg-base-100 rounded-box shadow-md">
-          <TaskItem
-              v-for="task in incompleteTasks"
-              :key="task.id"
-              :task="task"
-              @drag-start="onDragStart(task)"
-              @drop="onDrop(task)"
-          />
-        </ul>
+        <!-- List of incomplete (regular) tasks grouped by priority with drag and drop support -->
+        <template v-for="(group, index) in tasksByPriority" :key="group.priority.value">
+          <div v-if="index === 0 && pinnedTasks.length" class="divider" />
+          <div v-else-if="index > 0" class="h-6" />
+          
+          <div v-if="group.priority.value !== 0" class="flex items-center gap-2 mb-2 px-2 text-xs font-bold uppercase tracking-wider" :class="group.priority.textClass">
+            <component :is="group.priority.icon" class="w-4 h-4" />
+            {{ group.priority.label }}
+          </div>
+          
+          <ul class="drop-zone list bg-base-100 rounded-box shadow-md" :class="[group.priority.value !== 0 ? 'border-2 ' + group.priority.borderColor : '']">
+            <TaskItem
+                v-for="task in group.tasks"
+                :key="task.id"
+                :task="task"
+                @drag-start="onDragStart(task)"
+                @drop="onDrop(task)"
+            />
+          </ul>
+        </template>
 
         <!-- Empty state message when no tasks exist -->
         <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center">
