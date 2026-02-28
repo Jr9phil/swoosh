@@ -6,6 +6,7 @@ export interface Task {
     deadline?: string | null
     pinned: boolean
     priority: number
+    rating: number
     createdAt: string
 }
 

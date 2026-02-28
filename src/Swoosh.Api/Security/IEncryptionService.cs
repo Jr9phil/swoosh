@@ -12,4 +12,7 @@ public interface IEncryptionService
     DateTime? DecryptNullableDateTime(string ciphertext, Guid userId, int keyVersion, byte[] salt);
     (string Ciphertext, int KeyVersion) EncryptBool(bool value, Guid userId, byte[] salt);
     bool DecryptBool(string ciphertext, Guid userId, int keyVersion, byte[] salt);
+
+    (string Ciphertext, int KeyVersion) EncryptNullableInt(int? value, Guid userId, byte[] salt);
+    int? DecryptNullableInt(string ciphertext, Guid userId, int keyVersion, byte[] salt);
 }

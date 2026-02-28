@@ -42,6 +42,7 @@ const editedTime = ref(initialDeadline.time)
 const editedTitle = ref(props.task.title)
 const editedNotes = ref(props.task.notes ?? '')
 const editedPinned = ref(props.task.pinned)
+const editedRating = ref(props.task.rating)
 
 const priorityIndex = ref(
     PRIORITIES.findIndex(p => p.value === props.task.priority)
@@ -92,6 +93,7 @@ function cancelEditing() {
   editedTitle.value = originalTitle.value
   editedNotes.value = originalNotes.value
   editedPinned.value = originalPinned.value
+  editedRating.value = props.task.rating
   const { date, time } = splitDeadline(originalDeadline.value)
   editedDate.value = date
   editedTime.value = time
@@ -106,6 +108,7 @@ async function finishEditing() {
       editedTitle.value === originalTitle.value &&
       editedNotes.value === originalNotes.value &&
       editedPinned.value === originalPinned.value &&
+      editedRating.value === props.task.rating &&
       currentDeadline === (originalDeadline.value || null) &&
       editedPriority.value === originalPriority.value
   ) {
@@ -123,7 +126,8 @@ async function finishEditing() {
     notes: editedNotes.value || null,
     pinned: editedPinned.value,
     deadline: currentDeadline,
-    priority: editedPriority.value
+    priority: editedPriority.value,
+    rating: editedRating.value
   })
 
   emit('close')
@@ -214,23 +218,29 @@ async function moveToTop() {
     </div>
 
     <!-- Edit mode action buttons (priority and pin) -->
-    <div v-if="!task.completed" class="flex justify-end">
-      <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
-        <button
-            id="priority"
-            @click="cyclePriority"
-            class="btn btn-ghost btn-square opacity-60 hover:opacity-100">
-          <component
-              :is="PRIORITIES[priorityIndex].icon"
-              class="transition-transform duration-150 active:rotate-12"
-          />
-        </button>
+    <div v-if="!task.completed" class="flex flex-col items-end gap-2">
+      <div class="flex justify-end">
+        <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
+          <button
+              id="priority"
+              @click="cyclePriority"
+              class="btn btn-ghost btn-square opacity-60 hover:opacity-100">
+            <component
+                :is="PRIORITIES[priorityIndex].icon"
+                class="transition-transform duration-150 active:rotate-12"
+            />
+          </button>
+        </div>
+        <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2">
+          <input type="checkbox" v-model="editedPinned" />
+          <Pin class="swap-off" />
+          <PinOff class="swap-on" />
+        </label>
       </div>
-      <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2">
-        <input type="checkbox" v-model="editedPinned" />
-        <Pin class="swap-off" />
-        <PinOff class="swap-on" />
-      </label>
+      <div class="rating rating-sm">
+        <input type="radio" name="rating-2" class="rating-hidden" :checked="editedRating === 0" @click="editedRating = 0" />
+        <input v-for="n in 5" :key="n" type="radio" name="rating-2" class="mask mask-diamond" :checked="editedRating === n" @click="editedRating = n" />
+      </div>
     </div>
     <!-- Secondary task menu -->
     <div class="flex justify-end">

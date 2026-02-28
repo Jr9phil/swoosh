@@ -65,6 +65,7 @@ public class TaskService : ITaskService
                     Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
                     Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                     Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
+                    Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                     CreatedAt = t.CreatedAt
                 };
 
@@ -94,6 +95,7 @@ public class TaskService : ITaskService
                 Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
                 Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                 Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
+                Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                 CreatedAt = t.CreatedAt
             })
             .FirstOrDefaultAsync();
@@ -121,6 +123,7 @@ public class TaskService : ITaskService
             EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
             EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
             EncryptedPriority = encryptedPriority.Ciphertext,
+            EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext,
             KeyVersion = keyVersion,
             CreatedAt = DateTime.UtcNow
         };
@@ -137,6 +140,7 @@ public class TaskService : ITaskService
             Deadline = dto.Deadline,
             Pinned = dto.Pinned,
             Priority = dto.Priority,
+            Rating = dto.Rating,
             CreatedAt = task.CreatedAt
         };
     }
@@ -164,6 +168,7 @@ public class TaskService : ITaskService
         task.EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext;
         task.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
         task.EncryptedPriority = encryptedPriority.Ciphertext;
+        task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.KeyVersion = keyVersion;
 
         await _db.SaveChangesAsync();

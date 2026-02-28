@@ -171,6 +171,24 @@ public class AuthController : ControllerBase
 
             task.EncryptedCompletedAt = newCompleted;
             task.KeyVersion = newVersion6;
+
+            if (task.EncryptedRating != null)
+            {
+                var rating = _encryption.DecryptInt(
+                    task.EncryptedRating,
+                    userId,
+                    task.KeyVersion,
+                    oldSalt);
+
+                var (newRating, newVersion7) =
+                    _encryption.EncryptInt(
+                        rating,
+                        userId,
+                        newSalt);
+
+                task.EncryptedRating = newRating;
+                task.KeyVersion = newVersion7;
+            }
         }
         
         user.EncryptionSalt = newSalt;

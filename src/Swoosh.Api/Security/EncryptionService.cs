@@ -152,4 +152,24 @@ public class EncryptionService : IEncryptionService
     {
         return Decrypt(encrypted, userId, keyVersion, userSalt) == "1";
     }
+
+    /// Encrypts a nullable integer value.
+    public (string Ciphertext, int KeyVersion) EncryptNullableInt(
+        int? value,
+        Guid userId,
+        byte[] userSalt)
+    {
+        return Encrypt(value?.ToString() ?? NullSentinel, userId, userSalt);
+    }
+
+    /// Decrypts a nullable integer value.
+    public int? DecryptNullableInt(
+        string encrypted,
+        Guid userId,
+        int keyVersion,
+        byte[] userSalt)
+    {
+        var plaintext = Decrypt(encrypted, userId, keyVersion, userSalt);
+        return plaintext == NullSentinel ? null : int.Parse(plaintext);
+    }
 }

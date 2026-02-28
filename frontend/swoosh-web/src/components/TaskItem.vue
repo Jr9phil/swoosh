@@ -10,6 +10,7 @@ import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref, computed, watch } from 'vue'
 import TaskEdit from './TaskEdit.vue'
+import TaskRating from './TaskRating.vue'
 import { 
   Trash2, 
   GripVertical, 
@@ -228,7 +229,7 @@ async function remove() {
         <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
           {{ task.title }}
         </h1>
-<!--        TODO: Rating component goes here-->
+        <TaskRating :rating="task.rating" :priority="task.priority" />
       </div>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>

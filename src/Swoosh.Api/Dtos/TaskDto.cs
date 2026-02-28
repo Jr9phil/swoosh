@@ -14,6 +14,7 @@ public class TaskDto
     public DateTime? Deadline { get; set; }
     public bool Pinned { get; set; }
     public int Priority { get; set; }
+    public int Rating { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }
@@ -31,6 +32,9 @@ public class CreateTaskDto
     public bool Pinned { get; set; } = false;
     [Range(0, 3)]
     public int Priority { get; set; } = 0;
+
+    [Range(0, 5)]
+    public int Rating { get; set; } = 0;
 }
 
 public class UpdateTaskDto
@@ -44,4 +48,7 @@ public class UpdateTaskDto
     public bool Pinned { get; set; }
     [Range(0, 3)]
     public int Priority { get; set; } = 0;
+
+    [Range(0, 5)]
+    public int Rating { get; set; } = 0;
 }
