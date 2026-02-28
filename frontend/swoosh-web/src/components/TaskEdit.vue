@@ -150,6 +150,11 @@ async function toggleComplete() {
   }
 }
 
+// Resets the task's rating to 0
+function resetRating() {
+  editedRating.value = 0
+}
+
 // Removes the task's deadline
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
@@ -237,7 +242,7 @@ async function moveToTop() {
           <PinOff class="swap-on" />
         </label>
       </div>
-      <div class="rating rating-sm">
+      <div class="rating rating-xs">
         <input type="radio" name="rating-2" class="rating-hidden" :checked="editedRating === 0" @click="editedRating = 0" />
         <input v-for="n in 5" :key="n" type="radio" name="rating-2" class="mask mask-diamond" :checked="editedRating === n" @click="editedRating = n" />
       </div>
@@ -248,10 +253,12 @@ async function moveToTop() {
           :is-completed="!!task.completed"
           :has-deadline="!!task.deadline"
           :has-priority="priorityIndex !== 0"
+          :has-rating="editedRating > 0"
           @delete="remove"
           @reset-deadline="resetDeadline"
           @move-to-top="moveToTop"
           @un-complete="toggleComplete"
+          @reset-rating="resetRating"
       />
     </div>
   </li>

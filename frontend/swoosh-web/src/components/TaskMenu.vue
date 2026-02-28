@@ -4,12 +4,13 @@
   Provides options like moving to top, resetting deadline, toggling completion, and deleting.
 -->
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, ListStart, CalendarOff, CalendarPlus, Undo2, ChessPawn } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, ListStart, CalendarOff, CalendarPlus, Undo2, ChessPawn, StarOff } from 'lucide-vue-next'
 
 defineProps<{
   isCompleted: boolean
   hasDeadline: boolean
   hasPriority: boolean
+  hasRating: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   (e: 'unComplete'): void
   (e: 'edit'): void
   (e: 'priority'): void
+  (e: 'resetRating'): void
 }>()
 </script>
 
@@ -72,6 +74,13 @@ const emit = defineEmits<{
       <li v-if="!isCompleted && !!hasPriority">
         <a @click="emit('priority')">
           <ChessPawn :size="16" /> Reset priority
+        </a>
+      </li>
+
+      <!-- Action: Reset task rating to 0 -->
+      <li v-if="!isCompleted && !!hasRating">
+        <a @click="emit('resetRating')">
+          <StarOff :size="16" /> Clear rating
         </a>
       </li>
       

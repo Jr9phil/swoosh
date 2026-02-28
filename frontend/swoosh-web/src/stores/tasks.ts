@@ -191,6 +191,20 @@ export const useTasksStore = defineStore('tasks', {
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)
             this.tasks = this.tasks.filter(t => t.id !== taskId)
+        },
+
+        // Resets a task's rating to 0
+        async resetRating(task: Task) {
+            const updated = {
+                ...task,
+                rating: 0
+            }
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].rating = 0
+            }
         }
     }
 })
