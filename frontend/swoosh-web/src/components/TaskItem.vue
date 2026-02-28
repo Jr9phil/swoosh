@@ -233,7 +233,7 @@ async function remove() {
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
       <!-- Deadline indicator badge -->
-      <div v-if="!task.completed && task.deadline" class="badge badge-soft mt-1 cursor-pointer" :class="{ 'badge-error' : deadlineExpired }, { 'badge-info' : isDueToday }">
+      <div v-if="!task.completed && task.deadline" class="badge mt-1 cursor-pointer" :class="deadlineExpired ? 'badge-error' : 'badge-soft', { 'badge-info' : isDueToday }">
         <component :is="EXPIRED[deadlineExpired].icon" :size="16" /> {{ formattedDeadline() }}
       </div>
     </div>

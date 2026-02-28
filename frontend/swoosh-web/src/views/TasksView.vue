@@ -21,6 +21,10 @@ const incompleteTasks = computed(() =>
         .filter(t => !t.completed && !t.pinned && !isDueToday(t.deadline))
         .slice()
         .sort((a, b) => {
+          const overdueA = isOverdue(a.deadline)
+          const overdueB = isOverdue(b.deadline)
+          if (overdueA !== overdueB) return overdueA ? -1 : 1
+          
           if (b.priority !== a.priority) return b.priority - a.priority
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
@@ -48,6 +52,17 @@ function isDueToday(deadline? : string | null) {
   )
 }
 
+// Checks if a task is overdue based on its deadline
+function isOverdue(deadline? : string | null) {
+  if (!deadline) return false
+  
+  const now = new Date()
+  const d = new Date(deadline)
+  
+  return now.getTime() > d.getTime()
+}
+
+// Pinned Tasks
 const pinnedTasks = computed(() =>
     tasksStore.tasks
         .filter(t =>
@@ -56,6 +71,10 @@ const pinnedTasks = computed(() =>
         )
         .slice()
         .sort((a, b) => {
+          const overdueA = isOverdue(a.deadline)
+          const overdueB = isOverdue(b.deadline)
+          if (overdueA !== overdueB) return overdueA ? -1 : 1
+
           if (b.priority !== a.priority) {
             return b.priority - a.priority
           }
@@ -63,6 +82,12 @@ const pinnedTasks = computed(() =>
         })
 )
 
+// Checks if any tasks are due today
+const anyTaskDueToday = computed(() =>
+    pinnedTasks.value.some(t => isDueToday(t.deadline))
+)
+
+// Completed Tasks
 const completedTasks = computed(() =>
     tasksStore.tasks
         .filter(t => t.completed)
@@ -122,7 +147,7 @@ onMounted(async () => {
         <div class="flex items-center">
           <div class="mr-4">
             <span v-if="tasksStore.loading" class="loading loading-spinner w-10 text-primary" />
-            <button v-else class="btn btn-square btn-primary shadow-md" onclick="create.showModal()">
+            <button v-else class="btn btn-square btn-soft btn-primary shadow-md" onclick="create.showModal()">
               <Plus />
             </button>
           </div>
@@ -136,7 +161,7 @@ onMounted(async () => {
       <!-- Content area for task lists -->
       <div v-else class="min-h-96">
         <!-- List of pinned tasks -->
-        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2 border-white/50">
+        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2" :class="anyTaskDueToday ? 'border-info/50' : 'border-white/50'">
           <TaskItem
               v-for="task in pinnedTasks"
               :key="task.id"
