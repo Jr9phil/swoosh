@@ -236,7 +236,7 @@ async function remove() {
         <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
           {{ task.title }}
         </h1>
-        <TaskRating :rating="task.rating" :priority="task.priority" />
+        <TaskRating v-if="!task.completed" :rating="task.rating" :priority="task.priority" />
       </div>
       <p v-if="!task.completed" class="text-sm opacity-70 line-clamp-3"> {{ task.notes }}</p>
       <p v-else class="text-xs opacity-50 line-clamp-1">Completed on {{ formattedCompletionDate() }}</p>
