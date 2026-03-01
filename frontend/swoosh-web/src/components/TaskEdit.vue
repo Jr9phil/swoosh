@@ -103,6 +103,12 @@ function cancelEditing() {
 
 // Saves changes made in the inline editor to the store
 async function finishEditing() {
+  // If the task is already completed, nothing happens
+  if (props.task.completed) {
+    emit('close')
+    return
+  }
+
   const currentDeadline = combinedDeadline.value
   if (
       editedTitle.value === originalTitle.value &&
@@ -195,6 +201,7 @@ async function moveToTop() {
           maxlength="24"
           v-model="editedTitle"
           @keydown="onKeydown"
+          :disabled="task.completed"
           autofocus
       />
 
@@ -204,6 +211,7 @@ async function moveToTop() {
           maxlength="250"
           v-model="editedNotes"
           @keydown="onKeydown"
+          :disabled="task.completed"
       />
 
       <div class="flex gap-2">
@@ -212,18 +220,20 @@ async function moveToTop() {
             class="input input-bordered flex-1"
             v-model="editedDate"
             @keydown="onKeydown"
+            :disabled="task.completed"
         />
         <input
             type="time"
             class="input input-bordered flex-1"
             v-model="editedTime"
             @keydown="onKeydown"
+            :disabled="task.completed"
         />
       </div>
     </div>
 
     <!-- Edit mode action buttons (priority and pin) -->
-    <div v-if="!task.completed" class="flex flex-col items-end gap-2">
+    <div class="flex flex-col items-end gap-2">
       <div class="flex justify-end">
         <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
           <button
@@ -236,7 +246,7 @@ async function moveToTop() {
             />
           </button>
         </div>
-        <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2">
+        <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2"">
           <input type="checkbox" v-model="editedPinned" />
           <Pin class="swap-off" />
           <PinOff class="swap-on" />
