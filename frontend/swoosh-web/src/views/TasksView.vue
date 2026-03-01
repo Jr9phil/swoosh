@@ -243,6 +243,9 @@ onMounted(async () => {
   <!-- Modal dialog for creating new tasks -->
   <dialog id="create" class="modal" @close="handleModalClose">
     <div class="modal-box w-2xl bg-base-200 border border-base-300 p-4">
+      <div class="flex flex-row items-center ml-4 gap-2 opacity-60">
+        <CircleCheckBig /> <h3 class="text-lg font-bold">New Task</h3>
+      </div>
       <TaskEdit ref="createTaskEdit" @close="closeModal" />
     </div>
 
