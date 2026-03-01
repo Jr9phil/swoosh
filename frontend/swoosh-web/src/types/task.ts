@@ -14,4 +14,7 @@ export interface CreateTask {
     title: string
     notes?: string | null
     deadline?: string | null
+    pinned?: boolean
+    priority?: number
+    rating?: number
 }

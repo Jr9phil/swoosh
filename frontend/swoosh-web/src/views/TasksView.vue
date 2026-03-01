@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth'
 import type { task } from '../types/task'
 import { PRIORITIES } from '../types/priority.ts'
 import { useRouter } from 'vue-router'
-import TaskForm from '../components/TaskForm.vue'
+import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
 
@@ -124,6 +124,16 @@ async function onDrop(targetTask: task) {
 
 const auth = useAuthStore()
 const router = useRouter()
+const createTaskEdit = ref<any>(null)
+
+function closeModal() {
+  const modal = document.getElementById('create') as HTMLDialogElement
+  modal?.close()
+}
+
+function handleModalClose() {
+  createTaskEdit.value?.resetForm()
+}
 
 // Fetches tasks when the component is mounted; redirects to login on failure
 onMounted(async () => {
@@ -231,10 +241,10 @@ onMounted(async () => {
   </div>
 
   <!-- Modal dialog for creating new tasks -->
-  <dialog id="create" class="modal">
-    <form method="dialog" class="modal-box w-xs bg-base-200 border border-base-300">
-      <TaskForm />
-    </form>
+  <dialog id="create" class="modal" @close="handleModalClose">
+    <div class="modal-box w-2xl bg-base-200 border border-base-300 p-4">
+      <TaskEdit ref="createTaskEdit" @close="closeModal" />
+    </div>
 
     <!-- Backdrop to close the modal when clicking outside -->
     <form method="dialog" class="modal-backdrop">
