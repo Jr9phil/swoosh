@@ -71,6 +71,8 @@ const pinnedTasks = computed(() =>
         )
         .slice()
         .sort((a, b) => {
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+
           const overdueA = isOverdue(a.deadline)
           const overdueB = isOverdue(b.deadline)
           if (overdueA !== overdueB) return overdueA ? -1 : 1
@@ -254,7 +256,7 @@ onMounted(async () => {
 
   <!-- Modal dialog for creating new tasks -->
   <dialog id="create" class="modal" @close="handleModalClose">
-    <div class="modal-box w-full max-w-2xl bg-base-200 border-2 border-base-content/60 p-4 sm:p-6">
+    <div class="modal-box w-full max-w-xl bg-base-200 border-2 border-base-content/60 p-4 sm:p-6">
       <div class="flex flex-row items-center ml-0 sm:ml-4 gap-2 opacity-60">
         <CircleCheckBig /> <h3 class="text-lg font-bold">New Task</h3>
       </div>
