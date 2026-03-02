@@ -158,9 +158,9 @@ onMounted(async () => {
       <div class="mb-6 cursor-default">
         <div class="flex items-center">
           <div class="mr-4">
-            <span v-if="tasksStore.loading" class="loading loading-spinner w-10 text-primary" />
-            <button v-else class="btn btn-square btn-soft btn-primary max-sm:btn-sm shadow-md" onclick="create.showModal()">
-              <Plus />
+            <button class="btn btn-square btn-soft btn-primary max-sm:btn-sm shadow-md" :disabled="tasksStore.loading" onclick="create.showModal()">
+              <span v-if="tasksStore.loading" class="loading loading-spinner text-primary" />
+              <Plus v-else />
             </button>
           </div>
           <h1 class="text-xl max-sm:text-lg text-heading">My Tasks</h1>
@@ -170,7 +170,7 @@ onMounted(async () => {
       <!-- Skeleton loader shown while tasks are loading -->
       <div v-if="tasksStore.loading" class="flex flex-col gap-4 min-h-96">
         <ul class="list bg-base-100 rounded-box shadow-md border-2 border-transparent w-full">
-          <li v-for="n in 3" :key="n" class="list-row items-center">
+          <li v-for="n in 6" :key="n" class="list-row items-center">
             <div class="skeleton w-10 h-10 rounded-lg shrink-0" />
             <div class="flex flex-col gap-2 flex-grow">
               <div class="skeleton h-4 w-32" />
