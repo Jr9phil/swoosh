@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { GripVertical, Pin, PinOff, Plus } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -52,6 +52,8 @@ const editedPriority = computed(() =>
     PRIORITIES[priorityIndex.value].value
 )
 
+const editContainer = ref<HTMLElement | null>(null)
+
 // Combines date and time inputs into a single deadline string
 // Defaults: date set -> 11:59 PM, time set -> today
 const combinedDeadline = computed(() => {
@@ -74,20 +76,44 @@ function cyclePriority() {
   priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
 }
 
-// Handles keyboard shortcuts for the inline editor
-function onKeydown(e: KeyboardEvent) {
+// Handles keyboard shortcuts globally
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if (!editContainer.value) return
+
+  // Skip if the component is inside a closed modal
+  const dialog = editContainer.value.closest('dialog')
+  if (dialog && !dialog.open) return
+
+  const isInside = editContainer.value.contains(e.target as Node)
+  const isInput = e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement
+
   if (e.key === 'Enter') {
-    if (e.target instanceof HTMLTextAreaElement) {
-        return
+    const isModifierPressed = e.ctrlKey || e.metaKey
+    if (e.target instanceof HTMLTextAreaElement && !isModifierPressed) return
+
+    if (isInside || !isInput) {
+      e.preventDefault()
+      finishEditing()
     }
-    e.preventDefault()
-    finishEditing()
   }
 
   if (e.key === 'Escape') {
-    cancelEditing()
+    if (isInside || !isInput) {
+      e.preventDefault()
+      cancelEditing()
+    }
   }
 }
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
 
 function cancelEditing() {
   if (!isEdit.value) {
@@ -249,7 +275,7 @@ function handleClickOutside() {
 </script>
 
 <template>
-  <li :class="isEdit ? 'list-row' : 'flex flex-col sm:flex-row gap-4 p-4'" @click.stop v-click-outside="handleClickOutside">
+  <li ref="editContainer" :class="isEdit ? 'list-row' : 'flex flex-col sm:flex-row gap-4 p-4'" @click.stop v-click-outside="handleClickOutside">
     <div v-if="isEdit" class="flex flex-col">
       <!-- Completion checkbox (disabled in edit mode) -->
       <input
@@ -279,7 +305,6 @@ function handleClickOutside() {
             maxlength="24"
             placeholder="Title"
             v-model="editedTitle"
-            @keydown="onKeydown"
             @input="showValidation = true"
             :disabled="task?.completed"
             required
@@ -292,7 +317,6 @@ function handleClickOutside() {
           placeholder="Notes"
           maxlength="250"
           v-model="editedNotes"
-          @keydown="onKeydown"
           :disabled="task?.completed"
       />
 
@@ -301,14 +325,12 @@ function handleClickOutside() {
             type="date"
             class="input input-bordered flex-1 min-w-[140px]"
             v-model="editedDate"
-            @keydown="onKeydown"
             :disabled="task?.completed"
         />
         <input
             type="time"
             class="input input-bordered flex-1 min-w-[100px]"
             v-model="editedTime"
-            @keydown="onKeydown"
             :disabled="task?.completed"
         />
       </div>
