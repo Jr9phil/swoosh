@@ -340,7 +340,7 @@ function handleClickOutside() {
         <input v-for="n in 5" :key="n" type="radio" :name="isEdit ? 'rating-edit-' + task?.id : 'rating-create'" class="mask mask-diamond" :checked="editedRating === n" @click="editedRating = n" />
       </div>
       <button v-if="!isEdit" class="btn btn-primary mt-auto" @click="finishEditing" :disabled="loading">
-        <span v-if="loading" class="loading loading-spinner loading-sm"></span><Plus v-else /> Create
+        <span v-if="loading" class="loading loading-spinner loading-sm"></span><Plus v-else /> Add
       </button>
     </div>
     <!-- Secondary task menu -->
