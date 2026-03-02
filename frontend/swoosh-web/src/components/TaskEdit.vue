@@ -296,17 +296,17 @@ function handleClickOutside() {
           :disabled="task?.completed"
       />
 
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <input
             type="date"
-            class="input input-bordered flex-1"
+            class="input input-bordered flex-1 min-w-[140px]"
             v-model="editedDate"
             @keydown="onKeydown"
             :disabled="task?.completed"
         />
         <input
             type="time"
-            class="input input-bordered flex-1"
+            class="input input-bordered flex-1 min-w-[100px]"
             v-model="editedTime"
             @keydown="onKeydown"
             :disabled="task?.completed"

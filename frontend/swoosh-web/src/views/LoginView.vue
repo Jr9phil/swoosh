@@ -63,8 +63,8 @@ function focusPassword() {
 <!-- View Template: Login form with email and password fields -->
 <template>
   <!-- Main login form -->
-  <div>
-    <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+  <div class="w-full max-w-sm">
+    <form class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8" @submit.prevent="submit">
       <!-- Email input field -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Sign in to your account</legend>

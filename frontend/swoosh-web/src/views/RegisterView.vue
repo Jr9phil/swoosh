@@ -82,8 +82,8 @@ function focusConfirmPassword() {
 <!-- View Template: Registration form with email, password, and password confirmation -->
 <template>
   <!-- Main registration form -->
-  <div>
-    <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+  <div class="w-full max-w-sm">
+    <form class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8" @submit.prevent="submit">
       <!-- Section for account details -->
       <fieldset class="fieldset">
         <legend class="fieldset-legend">Create Account</legend>

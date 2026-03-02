@@ -148,9 +148,9 @@ onMounted(async () => {
 
 <!-- View Template: Renders the task list, add task button, and modals -->
 <template>
-  <div>
+  <div class="w-full max-w-xl">
     <!-- Main tasks container -->
-    <div class="bg-base-200 border-base-300 rounded-box w-xl border p-4">
+    <div class="bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8">
       
       <!-- Header section with loading indicator and title -->
       <div class="mb-6 cursor-default">
@@ -166,12 +166,24 @@ onMounted(async () => {
       </div>
       
       <!-- Skeleton loader shown while tasks are loading -->
-      <div v-if="tasksStore.loading" class="skeleton w-full h-96" />
+      <div v-if="tasksStore.loading" class="flex flex-col gap-4 min-h-96">
+        <ul class="list bg-base-100 rounded-box shadow-md border-2 border-transparent w-full">
+          <li v-for="n in 3" :key="n" class="list-row items-center">
+            <div class="skeleton w-10 h-10 rounded-lg shrink-0" />
+            <div class="flex flex-col gap-2 flex-grow">
+              <div class="skeleton h-4 w-32" />
+              <div class="skeleton h-3 w-48 opacity-50" />
+            </div>
+            <div class="skeleton w-8 h-8 rounded-btn shrink-0" />
+            <div class="skeleton w-8 h-8 rounded-btn shrink-0" />
+          </li>
+        </ul>
+      </div>
 
       <!-- Content area for task lists -->
-      <div v-else class="min-h-96">
+      <div v-else class="min-h-96 w-full">
         <!-- List of pinned tasks -->
-        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2" :class="anyTaskDueToday ? 'border-info/50' : 'border-white/50'">
+        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2 w-full" :class="anyTaskDueToday ? 'border-info/50' : 'border-white/50'">
           <TaskItem
               v-for="task in pinnedTasks"
               :key="task.id"
@@ -189,7 +201,7 @@ onMounted(async () => {
             {{ group.priority.label }}
           </div>
           
-          <ul class="drop-zone list bg-base-100 rounded-box shadow-md" :class="[group.priority.value !== 0 ? 'border-2 ' + group.priority.borderColor : '']">
+          <ul class="drop-zone list bg-base-100 rounded-box shadow-md border-2 w-full" :class="[group.priority.value !== 0 ? group.priority.borderColor : 'border-transparent']">
             <TaskItem
                 v-for="task in group.tasks"
                 :key="task.id"
@@ -201,7 +213,7 @@ onMounted(async () => {
         </template>
 
         <!-- Empty state message when no tasks exist -->
-        <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center">
+        <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center w-full">
           <div class="opacity-50 flex flex-col items-center text-center gap-2">
             <Rocket class="w-24 h-24"/>
             <b>No tasks yet</b>
@@ -225,7 +237,7 @@ onMounted(async () => {
             <div class="collapse-title opacity-50">Completed ({{ completedTasks.length }})</div>
             <!-- TODO: fix bottom padding issue -->
             <div class="collapse-content p-0 pb-6">
-              <ul class="list bg-base-100 rounded-box shadow-md">
+              <ul class="list bg-base-100 rounded-box shadow-md border-2 border-transparent w-full">
                 <TaskItem
                     v-for="task in completedTasks"
                     :key="task.id"

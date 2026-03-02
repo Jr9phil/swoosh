@@ -37,7 +37,7 @@ function changePassword() {
       </label>
     </header>
     <!-- Main content area where the routed views are rendered -->
-    <div class="flex justify-center mt-8">
+    <div class="flex justify-center mt-8 px-4">
       <router-view />
     </div>
     

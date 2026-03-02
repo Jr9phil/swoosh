@@ -87,8 +87,8 @@ function focusConfirmNewPassword() {
 <!-- View Template: Password change form with current, new, and confirm password fields -->
 <template>
   <!-- Main password change form -->
-  <div>
-    <form class="fieldset bg-base-200 border-base-300 rounded-box w-sm border p-8" @submit.prevent="submit">
+  <div class="w-full max-w-sm">
+    <form class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8" @submit.prevent="submit">
       <!-- Current password input field with visibility toggle -->
       <label class="fieldset">
         <legend class="fieldset-legend">Change password for {{ auth.currentUser }}</legend>

@@ -231,7 +231,7 @@ async function remove() {
       </div>
     
     <!-- Task textual content: Title, notes, and deadline badge -->
-    <div @click="startEditing" class="cursor-text">
+    <div @click="startEditing" class="cursor-text flex-grow">
       <div class="flex flex-row">
         <h1 class="text-base" :class="task.completed ? 'line-through opacity-70' : 'font-semibold'">
           {{ task.title }}
