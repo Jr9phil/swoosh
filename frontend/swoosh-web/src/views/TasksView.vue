@@ -157,11 +157,11 @@ onMounted(async () => {
         <div class="flex items-center">
           <div class="mr-4">
             <span v-if="tasksStore.loading" class="loading loading-spinner w-10 text-primary" />
-            <button v-else class="btn btn-square btn-soft btn-primary shadow-md" onclick="create.showModal()">
+            <button v-else class="btn btn-square btn-soft btn-primary max-sm:btn-sm shadow-md" onclick="create.showModal()">
               <Plus />
             </button>
           </div>
-          <h1 class="text-xl text-heading">My Tasks</h1>
+          <h1 class="text-xl max-sm:text-lg text-heading">My Tasks</h1>
         </div>
       </div>
       
@@ -254,8 +254,8 @@ onMounted(async () => {
 
   <!-- Modal dialog for creating new tasks -->
   <dialog id="create" class="modal" @close="handleModalClose">
-    <div class="modal-box w-2xl bg-base-200 border-2 border-base-content/60 p-4">
-      <div class="flex flex-row items-center ml-4 gap-2 opacity-60">
+    <div class="modal-box w-full max-w-2xl bg-base-200 border-2 border-base-content/60 p-4 sm:p-6">
+      <div class="flex flex-row items-center ml-0 sm:ml-4 gap-2 opacity-60">
         <CircleCheckBig /> <h3 class="text-lg font-bold">New Task</h3>
       </div>
       <TaskEdit ref="createTaskEdit" @close="closeModal" />

@@ -249,7 +249,7 @@ function handleClickOutside() {
 </script>
 
 <template>
-  <li :class="isEdit ? 'list-row' : 'flex gap-4 p-4'" @click.stop v-click-outside="handleClickOutside">
+  <li :class="isEdit ? 'list-row' : 'flex flex-col sm:flex-row gap-4 p-4'" @click.stop v-click-outside="handleClickOutside">
     <div v-if="isEdit" class="flex flex-col">
       <!-- Completion checkbox (disabled in edit mode) -->
       <input
@@ -315,21 +315,21 @@ function handleClickOutside() {
     </div>
 
     <!-- Edit mode action buttons (priority and pin) -->
-    <div class="flex flex-col items-end gap-2">
+    <div class="flex flex-col items-end gap-2 shrink-0">
       <div class="flex justify-end">
         <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
           <button
               id="priority"
               type="button"
               @click="cyclePriority"
-              class="btn btn-ghost btn-square opacity-60 hover:opacity-100">
+              class="btn btn-ghost btn-square max-sm:btn-sm opacity-60 hover:opacity-100">
             <component
                 :is="PRIORITIES[priorityIndex].icon"
                 class="transition-transform duration-150 active:rotate-12"
             />
           </button>
         </div>
-        <label class="swap btn btn-ghost btn-square opacity-60 hover:opacity-100 ml-2">
+        <label class="swap btn btn-ghost btn-square max-sm:btn-sm opacity-60 hover:opacity-100 ml-2">
           <input type="checkbox" v-model="editedPinned" />
           <Pin class="swap-off" />
           <PinOff class="swap-on" />
@@ -339,7 +339,7 @@ function handleClickOutside() {
         <input type="radio" :name="isEdit ? 'rating-edit-' + task?.id : 'rating-create'" class="rating-hidden" :checked="editedRating === 0" @click="editedRating = 0" />
         <input v-for="n in 5" :key="n" type="radio" :name="isEdit ? 'rating-edit-' + task?.id : 'rating-create'" class="mask mask-diamond" :checked="editedRating === n" @click="editedRating = n" />
       </div>
-      <button v-if="!isEdit" class="btn btn-primary mt-auto" @click="finishEditing" :disabled="loading">
+      <button v-if="!isEdit" class="btn btn-primary max-sm:btn-sm mt-auto" @click="finishEditing" :disabled="loading">
         <span v-if="loading" class="loading loading-spinner loading-sm"></span><Plus v-else /> Add
       </button>
     </div>

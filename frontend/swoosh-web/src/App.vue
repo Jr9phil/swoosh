@@ -46,13 +46,13 @@ function changePassword() {
       <!-- Floating Action Button (FAB) menu for user-related actions -->
       <div class="fab">
         <div class="tooltip tooltip-left" :data-tip="auth.currentUser || 'user'">
-          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info"><UserRound /></div>
+          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info max-sm:btn-md"><UserRound /></div>
         </div>
         
-        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-info"><UserRound /></span></div>
+        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-info max-sm:btn-md"><UserRound /></span></div>
         
-        <div>Logout <button class="btn btn-lg btn-circle" @click="logout"><LogOut /></button></div>
-        <div>Change Password <button class="btn btn-lg btn-circle" @click="changePassword"><KeyRound /></button></div>
+        <div>Logout <button class="btn btn-lg btn-circle max-sm:btn-md" @click="logout"><LogOut /></button></div>
+        <div>Change Password <button class="btn btn-lg btn-circle max-sm:btn-md" @click="changePassword"><KeyRound /></button></div>
       </div>
     </footer>
   </div>

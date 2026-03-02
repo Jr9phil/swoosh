@@ -251,7 +251,7 @@ async function remove() {
       <button 
           id="priority" 
           @click="startEditing"
-          class="btn btn-square"
+          class="btn btn-square max-sm:btn-sm"
           :class="[priorityIndex === 0 ? 'btn-ghost' : 'btn-soft', PRIORITIES[priorityIndex].class]">
         <component
             :is="PRIORITIES[priorityIndex].icon"
@@ -260,7 +260,7 @@ async function remove() {
       <button 
           id="pin" 
           @click="togglePinned"
-          class="btn btn-ghost btn-circle ml-2"
+          class="btn btn-ghost btn-circle ml-2 max-sm:btn-sm"
           :class="task.pinned ? '' : 'opacity-0 group-hover:opacity-50'">
         <Pin />
       </button>
