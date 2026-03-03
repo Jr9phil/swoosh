@@ -246,26 +246,6 @@ async function remove() {
       </div>
     </div>
 
-    <!-- Quick action buttons: Priority and Pin -->
-    <div v-if="!task.completed" class="flex justify-end group">
-      <button 
-          id="priority" 
-          @click="startEditing"
-          class="btn btn-square max-sm:btn-sm"
-          :class="[priorityIndex === 0 ? 'btn-ghost' : 'btn-soft', PRIORITIES[priorityIndex].class]">
-        <component
-            :is="PRIORITIES[priorityIndex].icon"
-        />
-      </button>
-      <button 
-          id="pin" 
-          @click="togglePinned"
-          class="btn btn-ghost btn-circle ml-2 max-sm:btn-sm"
-          :class="task.pinned ? '' : 'opacity-0 group-hover:opacity-50'">
-        <Pin />
-      </button>
-    </div>
-
     <!-- Task overflow menu -->
     <div class="flex justify-end">
       <TaskMenu
