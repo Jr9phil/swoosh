@@ -353,8 +353,8 @@ function handleClickOutside() {
         </div>
         <label class="swap btn btn-ghost btn-square max-sm:btn-sm opacity-60 hover:opacity-100 ml-2">
           <input type="checkbox" v-model="editedPinned" />
-          <Pin class="swap-off" />
-          <PinOff class="swap-on" />
+          <PinOff class="swap-off" />
+          <Pin class="swap-on" />
         </label>
       </div>
       <div class="rating rating-xs">

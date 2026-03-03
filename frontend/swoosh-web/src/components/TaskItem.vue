@@ -188,11 +188,6 @@ async function resetDeadline() {
   }
 }
 
-// Moves the task to the top of the list by resetting its creation date
-async function moveToTop() {
-  await tasksStore.resetCreationDate(props.task)
-}
-
 // Deletes the task after confirmation
 async function remove() {
   if (confirm('Delete this task?')) {
@@ -250,13 +245,14 @@ async function remove() {
     <div class="flex justify-end">
       <TaskMenu
           :is-completed="!!task.completed"
+          :pinned="task.pinned"
           :has-deadline="!!task.deadline"
           :has-priority="priorityIndex !== 0"
           :has-rating="task.rating > 0"
           @delete="remove"
           @edit="startEditing"
           @reset-deadline="resetDeadline"
-          @move-to-top="moveToTop"
+          @pin="togglePinned"
           @un-complete="toggleComplete"
           @priority="resetPriority"
           @reset-rating="resetRating"

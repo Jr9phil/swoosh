@@ -4,18 +4,19 @@
   Provides options like moving to top, resetting deadline, toggling completion, and deleting.
 -->
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, ListStart, CalendarOff, CalendarPlus, Undo2, ChessPawn, StarOff } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, Pin, PinOff, CalendarOff, CalendarPlus, Undo2, ChessPawn, StarOff } from 'lucide-vue-next'
 
 defineProps<{
   isCompleted: boolean
   hasDeadline: boolean
   hasPriority: boolean
   hasRating: boolean
+  pinned: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'delete'): void
-  (e: 'moveToTop'): void
+  (e: 'pin'): void
   (e: 'resetDeadline'): void
   (e: 'unComplete'): void
   (e: 'edit'): void
@@ -43,9 +44,15 @@ const emit = defineEmits<{
         class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-44 p-2 shadow-sm"
     >
       <!-- Action: Move task to the top (only for incomplete tasks) -->
-      <li v-if="!isCompleted">
-        <a @click="emit('moveToTop')">
-          <ListStart :size="16" /> Move to top
+      <li v-if="!isCompleted && !pinned">
+        <a @click="emit('pin')">
+          <Pin :size="16" /> Pin Task
+        </a>
+      </li>
+
+      <li v-else-if="!isCompleted">
+        <a @click="emit('pin')">
+          <PinOff :size="16" /> Unpin Task
         </a>
       </li>
 
