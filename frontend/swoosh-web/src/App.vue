@@ -45,7 +45,7 @@ function changePassword() {
     <footer v-if="auth.token">
       <!-- Floating Action Button (FAB) menu for user-related actions -->
       <div class="fab">
-        <div class="tooltip tooltip-left" :data-tip="auth.currentUser || 'user'">
+        <div>
           <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info max-sm:btn-md"><UserRound /></div>
         </div>
         
