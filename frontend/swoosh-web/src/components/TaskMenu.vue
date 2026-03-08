@@ -20,7 +20,6 @@ const emit = defineEmits<{
   (e: 'resetDeadline'): void
   (e: 'unComplete'): void
   (e: 'edit'): void
-  (e: 'priority'): void
   (e: 'resetRating'): void
 }>()
 </script>
@@ -66,13 +65,6 @@ const emit = defineEmits<{
         <li v-else-if="!isCompleted">
           <button @click="emit('edit')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
             <CalendarPlus :size="14" /> Add deadline
-          </button>
-        </li>
-
-        <!-- Action: Reset priority -->
-        <li v-if="!isCompleted && !!hasPriority">
-          <button @click="emit('priority')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
-            <ChessPawn :size="14" /> Reset priority
           </button>
         </li>
 

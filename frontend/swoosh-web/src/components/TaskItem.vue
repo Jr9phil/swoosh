@@ -160,14 +160,6 @@ async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
 
-// Resets the task priority to default (0)
-async function resetPriority() {
-  if (priorityIndex.value === 0) return
-  if (confirm('Reset priority?')) {
-    await tasksStore.updatePriority(props.task, 0)
-  }
-}
-
 // Resets the task's rating to 0
 async function resetRating() {
   if (props.task.rating === 0) return
@@ -250,7 +242,6 @@ async function remove() {
           @reset-deadline="resetDeadline"
           @pin="togglePinned"
           @un-complete="toggleComplete"
-          @priority="resetPriority"
           @reset-rating="resetRating"
       />
     </div>
