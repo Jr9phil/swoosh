@@ -235,7 +235,6 @@ async function remove() {
           :is-completed="!!task.completed"
           :pinned="task.pinned"
           :has-deadline="!!task.deadline"
-          :has-priority="priorityIndex !== 0"
           :has-rating="task.rating > 0"
           @delete="remove"
           @edit="startEditing"
