@@ -221,7 +221,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
 </script>
 
 <template>
-  <main class="flex-1 flex justify-center pt-10 px-5 pb-[60px]">
+  <main class="flex-1 flex justify-center pt-6 px-5 pb-[60px]">
     <div class="w-full max-w-[540px]">
 
       <!-- ── Header ── -->
