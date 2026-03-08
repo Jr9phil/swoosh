@@ -18,16 +18,7 @@ const tasksStore = useTasksStore()
 const auth = useAuthStore()
 const router = useRouter()
 
-// ── Sync all pulsing animations to a shared phase ──────────────────────────
-// This is called ONLY on meaningful events (mount, task changes, section
-// toggles) — NOT on a repeating interval.  Calling it every second via
-// setInterval forces a reflow on every animated element each second, which
-// restarts their CSS animations and produces visible flicker.
-//
-// The previous guard `el.style.animation !== anim` was also broken: the
-// string always contains `${phase}ms` which changes every call, so the guard
-// never prevented the unnecessary reflow.  We follow the mockup exactly:
-// always removeProperty → reflow → setProperty, but only when needed.
+// Sync all pulsing elements
 const PULSE_DURATION = 1100
 function syncOverdueAnimations() {
   const phase      = -(performance.now() % PULSE_DURATION)
@@ -305,7 +296,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             @click="togglePriority(group.priority.value)"
         >
           <div class="section-label-left">
-            <component :is="group.priority.icon" :size="14" />
+            <component :is="group.priority.icon" :size="14" fill="currentColor" />
             <span>{{ group.priority.label }}</span>
             <!-- Overdue dot: LEFT = visible when EXPANDED -->
             <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" class="overdue-dot left"></span>
