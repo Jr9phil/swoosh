@@ -94,21 +94,6 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
-        // Updates the priority level of a task
-        async updatePriority(task: Task, priority: number) {
-            const updated = {
-                ...task,
-                priority
-            }
-
-            await api.put(`/tasks/${task.id}`, updated)
-
-            const index = this.tasks.findIndex(t => t.id === task.id)
-            if (index !== -1) {
-                this.tasks[index].priority = priority
-            }
-        },
-
         // Moves a task relative to another task by adjusting its creation timestamp
         async moveTaskRelative(source: Task, target: Task, before: boolean) {
             // Copy source and target
