@@ -81,98 +81,54 @@ function focusConfirmPassword() {
 
 <!-- View Template: Registration form with email, password, and password confirmation -->
 <template>
-  <!-- Main registration form -->
-  <div class="w-full max-w-sm">
-    <form class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8" @submit.prevent="submit">
-      <!-- Section for account details -->
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">Create Account</legend>
-        <!-- Email input field -->
-        <label class="label">Email</label>
-        <input type="email" 
-               class="input validator" 
-               placeholder="Email" 
-               required
-               v-model="email" 
-               @keydown.enter.prevent="focusPassword"/>
-        <p class="validator-hint hidden">Required</p>
-      </fieldset>
+  <main class="flex-1 flex justify-center pt-20 px-5">
+    <div class="w-full max-w-[360px]">
+      <header class="mb-8 text-center">
+        <h1 class="text-[24px] font-extrabold tracking-tight text-swoosh-text">Join Swoosh</h1>
+        <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-widest mt-1">Start organizing today</p>
+      </header>
 
-      <!-- Password input field with visibility toggle -->
-      <label class="fieldset">
-        <span class="label">Password</span>
-        <div class="join">
-          <input :type="showPassword ? 'text' : 'password'" 
-                 class="input validator join-item" 
-                 placeholder="Password" 
-                 required 
-                 v-model="password"
-                 ref="passwordInput"
-                 minlength="8" 
-                 @keydown.enter.prevent="focusConfirmPassword" />
-          <!-- Toggle button for password visibility -->
-          <button
-              type="button"
-              class="btn btn-soft btn-square join-item"
-              :disabled="loading"
-              @click="showPassword = !showPassword"
-              tabindex="-1"
-          >
-            <Eye v-if="!showPassword" class="w-4 h-4" />
-            <EyeOff v-else class="w-4 h-4" />
-          </button>
-        </div>
-      </label>
-
-      <!-- Password confirmation field with visibility toggle -->
-      <label class="fieldset">
-        <span class="label">Confirm Password</span>
-        <div class="join">
-          <input
-              :type="showPassword ? 'text' : 'password'"
-              class="input join-item"
-              placeholder="Confirm password"
-              required
-              v-model="confirmPassword"
-              ref="confirmPasswordInput"
-              :class="{
-          'input-error': passwordMismatch
-        }"
-          />
-          <!-- Toggle button for password confirmation visibility -->
-          <button
-              type="button"
-              class="btn btn-soft btn-square join-item"
-              :disabled="loading"
-              @click="showPassword = !showPassword"
-              tabindex="-1"
-          >
-            <Eye v-if="!showPassword" class="w-4 h-4" />
-            <EyeOff v-else class="w-4 h-4" />
-          </button>
+      <form class="flex flex-col gap-4" @submit.prevent="submit">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Email</label>
+          <input type="email" class="swoosh-input" placeholder="Enter your email" required v-model="email" />
         </div>
 
-        <!-- Password mismatch error message -->
-        <span
-            v-if="passwordMismatch"
-            class="text-error text-sm mt-1"
-        >
-        Passwords do not match
-      </span>
-      </label>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Password</label>
+          <div class="relative">
+            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Min 8 characters" required v-model="password" minlength="8" />
+            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
+              <Eye v-if="!showPassword" :size="18" />
+              <EyeOff v-else :size="18" />
+            </button>
+          </div>
+        </div>
 
-      <!-- Error message display -->
-      <div v-if="error" class="alert alert-error alert-soft mt-2">
-        {{ error }}
-      </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Confirm Password</label>
+          <div class="relative">
+            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Confirm password" required v-model="confirmPassword" :class="{ 'border-swoosh-danger': passwordMismatch }" />
+            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
+              <Eye v-if="!showPassword" :size="18" />
+              <EyeOff v-else :size="18" />
+            </button>
+          </div>
+          <span v-if="passwordMismatch" class="text-swoosh-danger text-[11px] ml-1">Passwords do not match</span>
+        </div>
 
-      <div class="flex flex-row mt-4">
-        <!-- Link back to login page -->
-        <a class="btn btn-secondary btn-outline" href="/">Back to Login</a>
-        <div class="flex-grow" />
-        <!-- Registration submission button -->
-        <button class="btn btn-primary " :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Creating User...' : 'Register' }}</button>
-      </div>
-    </form>
-  </div>
+        <div v-if="error" class="text-swoosh-danger text-[13px] font-medium text-center mt-1">
+          {{ error }}
+        </div>
+
+        <button type="submit" class="w-full bg-swoosh-text text-swoosh-bg py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading || passwordMismatch || !fieldsEntered">
+          {{ loading ? 'Creating account...' : 'Create Account' }}
+        </button>
+
+        <div class="flex justify-center mt-4">
+          <router-link to="/login" class="text-[13px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors">Already have an account? Sign In</router-link>
+        </div>
+      </form>
+    </div>
+  </main>
 </template>

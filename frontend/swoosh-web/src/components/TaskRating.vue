@@ -1,25 +1,55 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PRIORITIES } from '../types/priority'
 
 const props = defineProps<{
   rating: number
   priority: number
+  pinned?: boolean
+  interactive?: boolean
 }>()
 
-const priorityClass = computed(() => {
-  const p = PRIORITIES.find(p => p.value === props.priority)
-  return p ? p.textClass : 'text-primary'
+const emit = defineEmits<{
+  (e: 'update:rating', value: number): void
+}>()
+
+// Hard-coded colour values
+const COLORS = {
+  high:   '#e07050',
+  med:    '#6090d0',
+  low:    '#50b880',
+  accent: '#9070c0', // pinned
+  muted:  '#a8acb8', // no priority / interactive editor
+  empty:  '#3a3d46',
+} as const
+
+const filledColor = computed((): string => {
+  if (props.interactive) return COLORS.muted
+  if (props.pinned)         return COLORS.accent
+  if (props.priority === 3) return COLORS.high
+  if (props.priority === 2) return COLORS.med
+  if (props.priority === 1) return COLORS.low
+  return COLORS.muted
 })
+
+function diamondStyle(n: number) {
+  return { background: n <= props.rating ? filledColor.value : COLORS.empty }
+}
+
+function setRating(n: number) {
+  if (props.interactive) {
+    emit('update:rating', props.rating === n ? 0 : n)
+  }
+}
 </script>
 
 <template>
-  <div v-if="rating > 0" class="rating rating-xs flex-auto items-center justify-end">
-    <div 
-      v-for="n in 5" 
-      :key="n"
-      class="mask mask-diamond"
-      :class="[n <= rating ? [priorityClass, 'opacity-90'] : 'bg-base-300 opacity-80', n <= rating ? 'bg-current' : '']"
+  <div v-if="rating > 0 || interactive" class="task-rating">
+    <div
+        v-for="n in 5"
+        :key="n"
+        :class="interactive ? 'rdiamond' : 'diamond'"
+        :style="diamondStyle(n)"
+        @click="setRating(n)"
     />
   </div>
 </template>

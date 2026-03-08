@@ -1,51 +1,391 @@
 @import "tailwindcss";
 
 @plugin "daisyui" {
-    themes: light --default, dark;
-    root: ":root";
-    logs: true;
+    themes: swoosh --default;
 }
 
-.btn-priority-default {
-    @apply opacity-0 group-hover:opacity-50;
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --color-swoosh-bg: #0e0f11;
+    --color-swoosh-surface: #181a1d;
+    --color-swoosh-surface-raised: #202328;
+    --color-swoosh-surface-input: #0e0f11;
+    --color-swoosh-border: rgba(255, 255, 255, 0.12);
+    --color-swoosh-border-hover: rgba(255, 255, 255, 0.22);
+    --color-swoosh-text: #f0f0f3;
+    --color-swoosh-text-muted: #a8acb8;
+    --color-swoosh-text-faint: #6a6e7a;
+    --color-swoosh-accent: #e8e8ea;
+    --color-swoosh-high: #e07050;
+    --color-swoosh-med: #6090d0;
+    --color-swoosh-low: #50b880;
+    --color-swoosh-danger: #ee4444;
+    --color-swoosh-pin: #9070c0;
+
+    --radius-r: 4px;
+    --radius-r-sm: 3px;
 }
 
-.btn-priority-medium {
-    @apply bg-slate-400 border-slate-400 text-white hover:bg-slate-500 hover:border-slate-500;
+[data-theme="swoosh"] {
+    --color-base-100: #0e0f11;
+    --color-base-200: #181a1d;
+    --color-base-300: #202328;
+    --color-base-content: #f0f0f3;
+    --color-primary: #e8e8ea;
+    --color-primary-content: #0e0f11;
+    --color-secondary: #9070c0;
+    --color-accent: #6090d0;
+    --color-neutral: #181a1d;
+    --color-neutral-content: #f0f0f3;
+    --color-info: #6090d0;
+    --color-success: #50b880;
+    --color-warning: #e07050;
+    --color-error: #ee4444;
 }
 
-.btn-soft.btn-priority-medium {
-    @apply bg-slate-400/10 text-slate-400 border-none hover:bg-slate-400/20;
+/* ─────────────────────────────────────────────────────────
+   Keyframes — outside all layers.
+   CSS animations referenced by JS-injected `animation`
+   properties must be in the global scope, not inside a
+   cascade layer, or they will not be found reliably.
+───────────────────────────────────────────────────────── */
+@keyframes btnStamp {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.93); }
+    100% { transform: scale(1); }
+}
+@keyframes checkPop {
+    0%  { transform: scale(0.6); }
+    55% { transform: scale(1.2); }
+    100%{ transform: scale(1); }
+}
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes overdueBadge {
+    0%   { border-color: rgba(210,50,50,.2);  box-shadow: none; }
+    50%  { border-color: rgba(255,80,80,.75); box-shadow: 0 0 6px rgba(238,68,68,.25); }
+    100% { border-color: rgba(210,50,50,.2);  box-shadow: none; }
+}
+@keyframes overdueGlow {
+    0%   { filter: brightness(0.6) drop-shadow(0 0 0px #ee4444); transform: scale(1); }
+    50%  { filter: brightness(1.8) drop-shadow(0 0 6px #ff6060); transform: scale(1.35); }
+    100% { filter: brightness(0.6) drop-shadow(0 0 0px #ee4444); transform: scale(1); }
+}
+@keyframes todayPulse {
+    0%   { filter: brightness(0.7); }
+    50%  { filter: brightness(1.3); }
+    100% { filter: brightness(0.7); }
+}
+@keyframes todayBorderPulse {
+    0%   { border-color: rgba(100,140,255,.18); }
+    50%  { border-color: rgba(100,140,255,.65); }
+    100% { border-color: rgba(100,140,255,.18); }
 }
 
-.btn-priority-high {
-    @apply bg-blue-400 border-blue-400 text-white hover:bg-blue-500 hover:border-blue-500;
+/* ─────────────────────────────────────────────────────────
+   Base
+───────────────────────────────────────────────────────── */
+@layer base {
+    body {
+        background: var(--color-swoosh-bg);
+        color: var(--color-swoosh-text);
+        font-family: var(--font-sans);
+        font-size: 17px;
+        min-height: 100vh;
+    }
 }
 
-.btn-soft.btn-priority-high {
-    @apply bg-blue-400/10 text-blue-400 border-none hover:bg-blue-400/20;
+/* ─────────────────────────────────────────────────────────
+   Utilities
+───────────────────────────────────────────────────────── */
+@layer utilities {
+    .text-muted        { color: var(--color-swoosh-text-muted); }
+    .text-faint        { color: var(--color-swoosh-text-faint); }
+    .bg-surface        { background: var(--color-swoosh-surface); }
+    .bg-surface-raised { background: var(--color-swoosh-surface-raised); }
+    .border-swoosh     { border-color: var(--color-swoosh-border); }
+
+    .btn-stamp { animation: btnStamp .18s cubic-bezier(0.4, 0, 0.2, 1) both; }
+    .check-pop { animation: checkPop .2s cubic-bezier(.34,1.56,.64,1) both; }
+    .fade-up   { animation: fadeUp .18s ease both; }
+
+    /* ── Section body — animated collapse via CSS grid trick ──
+       overflow is NOT set permanently — it would clip dropdown menus.
+       .is-animating adds it only for the ~220ms transition duration. */
+    .section-body {
+        display: grid;
+        grid-template-rows: 1fr;
+        transition: grid-template-rows .22s ease, opacity .18s ease;
+        opacity: 1;
+    }
+    .section-body.collapsed {
+        grid-template-rows: 0fr;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .section-body.is-animating { overflow: hidden; }
+    /* Required: inner div must have min-height:0 for 0fr to work */
+    .section-body > div { min-height: 0; }
+
+    /* ── Section labels ── */
+    .section-label {
+        display: flex; align-items: center; justify-content: space-between;
+        font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;
+        letter-spacing: 0.09em; text-transform: uppercase;
+        margin-top: 20px; margin-bottom: 8px;
+        opacity: 0.75; cursor: pointer; user-select: none;
+        transition: opacity .15s;
+    }
+    .section-label:hover { opacity: 1; }
+    .section-label svg   { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .section-label.pinned { color: var(--color-swoosh-pin);  opacity: 0.7; }
+    .section-label.high   { color: var(--color-swoosh-high); opacity: 0.7; }
+    .section-label.med    { color: var(--color-swoosh-med);  opacity: 0.7; }
+    /* FIX: low priority label color was missing entirely */
+    .section-label.low    { color: var(--color-swoosh-low);  opacity: 0.7; }
+    .section-label.none   { color: var(--color-swoosh-text-muted); }
+    .section-label.pinned:hover,
+    .section-label.high:hover,
+    .section-label.med:hover,
+    .section-label.low:hover { opacity: 1; }
+
+    .section-label-left  { display: flex; align-items: center; gap: 6px; }
+    .section-label-right { display: flex; align-items: center; gap: 7px; }
+
+    /* ── Section count pill (shown only when collapsed) ── */
+    .section-count {
+        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        opacity: 0; pointer-events: none;
+        transition: opacity .15s;
+        border-radius: 99px; padding: 1px 7px;
+        color: #0e0f11; margin-right: 2px;
+    }
+    .section-label:not(.open) .section-count { opacity: 1; }
+    .section-label.pinned .section-count { background: var(--color-swoosh-pin); }
+    .section-label.high   .section-count { background: var(--color-swoosh-high); }
+    .section-label.med    .section-count { background: var(--color-swoosh-med); }
+    /* FIX: low section count background was missing */
+    .section-label.low    .section-count { background: var(--color-swoosh-low); }
+    .section-label.none   .section-count { background: var(--color-swoosh-text-muted); }
+
+    /* ── Section toggle +/− character
+       FIX: previous implementation used ::before + ::after bar geometry
+       to animate a graphic cross, which looked wrong during transition.
+       The mockup uses plain text characters — simple and clean. ── */
+    .section-toggle {
+        font-family: var(--font-mono);
+        font-size: 16px; font-weight: 400;
+        opacity: 0.45; flex-shrink: 0;
+        line-height: 1; width: 14px; text-align: center;
+        transition: opacity .15s;
+    }
+    .section-label:hover .section-toggle { opacity: 0.7; }
+    .section-label:not(.open) .section-toggle::before { content: '+'; }
+    .section-label.open       .section-toggle::before { content: '−'; }
+
+    .section-divider { height: 1px; background: var(--color-swoosh-border); margin: 18px 0 14px; }
+
+    /* ── Task groups ── */
+    .task-group {
+        border-radius: var(--radius-r);
+        overflow: visible; margin-bottom: 3px;
+        animation: fadeUp .18s ease both;
+        position: relative;
+    }
+    /* Mockup only accents pinned/high/med — no background tinting, no bar on low or none */
+    .task-group.pinned { border-left: 4px solid rgba(144,112,192,0.8); }
+    .task-group.high   { border-left: 4px solid rgba(224,112,80,0.85); }
+    .task-group.med    { border-left: 4px solid rgba(96,144,208,0.8);  }
+    .task-group.low    { border-left: 4px solid rgba(80,184,128,0.8);  }
+
+    /* ── Task action menu — invisible until row hover ── */
+    .task-actions { opacity: 0; transition: opacity .15s; }
+    li:hover .task-actions { opacity: 1; }
+    /* Keep visible while the dropdown is open (cursor may leave the li briefly) */
+    .task-actions:focus-within { opacity: 1; }
+    /* Elevate the row above siblings within the same group */
+    li:has(.task-actions:focus-within) { position: relative; z-index: 10; }
+    /* Elevate the entire task-group above subsequent sections when a dropdown
+       is open — the dropdown escapes the group's bounds and would otherwise
+       be painted over by the next section which is later in the DOM */
+    .task-group:has(.task-actions:focus-within) { position: relative; z-index: 50; }
+    @media (max-width: 480px) { .task-actions { opacity: 1; } }
+
+    /* ── Task item hover background
+       Tailwind v4 does not auto-generate hover: variants for classes defined
+       inside @layer utilities, so hover:bg-surface on the <li> never fires.
+       This explicit rule replicates the mockup's .task-item:hover style. ── */
+    li.task-item:hover {
+        background: var(--color-swoosh-surface);
+        border-radius: var(--radius-r-sm);
+    }
+
+    /* ── Overdue / today dots on section labels ── */
+    .overdue-dot {
+        width: 7px; height: 7px; border-radius: 99px;
+        background: #ee4444; flex-shrink: 0; transition: opacity .15s;
+    }
+    .overdue-dot.left  { margin-left: 2px; }
+    .overdue-dot.right { margin-left: 0; }
+
+    /* FIX: today dots appear only in the RIGHT column (when section is collapsed).
+       The mockup does not show a today dot on the left/when-expanded side.
+       Template updated to match — only renders today-dot in the right slot. */
+    .today-dot {
+        width: 6px; height: 6px; border-radius: 99px;
+        background: #7898ff; flex-shrink: 0; transition: opacity .15s;
+    }
+
+    /* ── Overdue banner ── */
+    .overdue-banner {
+        display: flex; align-items: center; gap: 9px;
+        padding: 8px 12px; margin-bottom: 14px;
+        border-radius: var(--radius-r-sm); background: transparent;
+        border: 1.5px solid rgba(238,68,68,.35); cursor: default;
+    }
+    .overdue-banner-dot {
+        width: 6px; height: 6px; border-radius: 99px;
+        background: #ee4444; flex-shrink: 0;
+    }
+    .overdue-banner-text {
+        flex: 1; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; color: #ee4444;
+    }
+    .overdue-banner-action {
+        display: inline-flex; align-items: center;
+        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        color: #ee4444; opacity: 0.5;
+        cursor: pointer; border: none; background: none; padding: 0;
+        transition: opacity .15s;
+    }
+    .overdue-banner-action:hover { opacity: 1; }
+
+    /* ── Deadline badges on task rows ── */
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+    .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 12px; font-family: var(--font-mono);
+        padding: 3px 9px; border-radius: 4px;
+        background: var(--color-swoosh-surface-raised);
+        border: 1px solid var(--color-swoosh-border-hover);
+        color: var(--color-swoosh-text-muted);
+        font-weight: 500; line-height: 1;
+    }
+    .badge svg { width: 11px; height: 11px; flex-shrink: 0; }
+    /* Note: overdue badge animation is injected by syncOverdueAnimations() in JS */
+    .badge.overdue   { background: rgba(210,50,50,.12); color: #ee4444; border-color: rgba(210,50,50,.38); }
+    .badge.due-today { background: rgba(100,140,255,.10); color: #7898ff; border-color: rgba(100,140,255,.32); }
+
+    /* ── Completed section header ── */
+    .collapse-header {
+        display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer;
+        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+        color: var(--color-swoosh-text-muted); user-select: none;
+        text-transform: uppercase; font-weight: 600; transition: color .15s;
+    }
+    .collapse-header svg { width: 13px; height: 13px; transition: transform .2s; }
+    .collapse-header.open svg { transform: rotate(90deg); }
+
+    .spacer { height: 18px; }
 }
 
-.btn-priority-top {
-    @apply bg-amber-400 border-amber-400 text-black hover:bg-amber-500 hover:border-amber-500;
+/* ─────────────────────────────────────────────────────────
+   Rating diamonds — intentionally OUTSIDE @layer utilities.
+   CLASS NAME: .task-rating (NOT .rating).
+   DaisyUI ships a .rating component that applies opacity:0.2
+   to all children when no radio input is checked. Any div
+   inside a .rating wrapper gets faded out by daisyUI's CSS
+   regardless of inline styles. Renaming avoids the collision.
+
+   In Tailwind v4, styles inside @layer utilities participate
+   in the cascade layer system. Any unlayered CSS (including
+   Tailwind's own generated utilities on parent elements) has
+   higher implicit priority and can silently override layered
+   styles. Moving diamond styles out of the layer gives them
+   "unlayered" (highest) cascade priority, so their fill
+   colors are never overridden.
+───────────────────────────────────────────────────────── */
+.task-rating {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
+    align-items: center;
 }
 
-.btn-soft.btn-priority-top {
-    @apply bg-amber-400/10 text-amber-400 border-none hover:bg-amber-400/20;
+/* Diamond shape geometry only — colors applied via inline style in TaskRating.vue.
+   Tailwind v4 purges rules for class names that only appear as dynamic string
+   expressions (e.g. `'filled ' + priorityClass`), so color rules driven by
+   class names are silently dropped from the output bundle. Inline styles are
+   immune to purging. */
+.diamond {
+    width: 8px; height: 8px;
+    transform: rotate(45deg); border-radius: 1px;
+    flex-shrink: 0; display: block;
 }
 
-.text-priority-default {
-    @apply text-base-content opacity-50;
+.rdiamond {
+    width: 9px; height: 9px;
+    transform: rotate(45deg); border-radius: 0;
+    cursor: pointer; transition: transform .1s;
+    flex-shrink: 0; display: block;
+}
+.rdiamond:hover { transform: rotate(45deg) scale(1.3); }
+
+/* Slightly larger interactive diamonds in the modal/editor */
+dialog.modal .rdiamond { width: 10px; height: 10px; }
+
+/* ─────────────────────────────────────────────────────────
+   Checkbox
+───────────────────────────────────────────────────────── */
+.swoosh-check {
+    width: 23px; height: 23px; border-radius: 6px;
+    border: 2.5px solid var(--color-swoosh-border-hover);
+    appearance: none; cursor: pointer;
+    background: transparent;
+    transition: border-color .15s, background .15s;
+    display: block;
+}
+.swoosh-check:hover { border-color: var(--color-swoosh-text-muted); }
+.swoosh-check:checked {
+    background: var(--color-swoosh-text);
+    border-color: var(--color-swoosh-text);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 12 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 5l3.5 3.5L11 1' stroke='%23111214' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center; background-size: 9px 7px;
+    animation: checkPop .2s cubic-bezier(.34,1.56,.64,1) both;
 }
 
-.text-priority-medium {
-    @apply text-slate-400;
+/* ─────────────────────────────────────────────────────────
+   Generic input
+───────────────────────────────────────────────────────── */
+.swoosh-input {
+    background: var(--color-swoosh-surface-input);
+    border: 1px solid var(--color-swoosh-border);
+    border-radius: var(--radius-r); padding: 12px 14px;
+    color: var(--color-swoosh-text); font-size: 15px;
+    transition: border-color .15s, background .15s;
+}
+.swoosh-input:focus {
+    outline: none;
+    border-color: var(--color-swoosh-border-hover);
+    background: var(--color-swoosh-surface);
 }
 
-.text-priority-high {
-    @apply text-blue-400;
-}
+/* ─────────────────────────────────────────────────────────
+   Priority helpers
+───────────────────────────────────────────────────────── */
+.text-priority-default { color: var(--color-swoosh-text-muted); opacity: 0.5; }
+.text-priority-low     { color: var(--color-swoosh-low); }
+.text-priority-medium  { color: var(--color-swoosh-med); }
+.text-priority-high    { color: var(--color-swoosh-high); }
 
-.text-priority-top {
-    @apply text-amber-400;
-}
+.border-priority-low    { border-left: 4px solid var(--color-swoosh-low); }
+.border-priority-medium { border-left: 4px solid var(--color-swoosh-med); }
+.border-priority-high   { border-left: 4px solid var(--color-swoosh-high); }
+.border-priority-pinned { border-left: 4px solid var(--color-swoosh-pin); }

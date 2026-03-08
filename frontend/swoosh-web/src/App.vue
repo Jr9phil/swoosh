@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from './stores/auth'
 import { useRouter } from 'vue-router'
-import { UserRound, LogOut, Sun, Moon, Github, KeyRound } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -21,39 +20,7 @@ function changePassword() {
 </script>
 
 <template>
-  <div id="app" class="min-h-screen grid grid-rows-[auto_1fr_auto]">
-    <header class="flex flex-container bg-base-200 p-4">
-      <a href="https://github.com/Jr9phil/swoosh" target="_blank">
-        <Github class="logo" />
-      </a>
-      <div class="flex-grow"/>
-      <!-- Theme controller for switching between light and dark modes -->
-      <label class="toggle text-base-content">
-
-        <input type="checkbox" checked="checked" class="theme-controller" name="theme" value="dark" />
-        <Sun class="h-4 w-4 fill-current" />
-        <Moon class="h-4 w-4 fill-current" />
-
-      </label>
-    </header>
-    <!-- Main content area where the routed views are rendered -->
-    <div class="flex justify-center mt-8 px-4">
-      <router-view />
-    </div>
-    
-    <!-- Application footer, visible only when the user is authenticated -->
-    <footer v-if="auth.token">
-      <!-- Floating Action Button (FAB) menu for user-related actions -->
-      <div class="fab">
-        <div>
-          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info max-sm:btn-md"><UserRound /></div>
-        </div>
-        
-        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-info max-sm:btn-md"><UserRound /></span></div>
-        
-        <div>Logout <button class="btn btn-lg btn-circle max-sm:btn-md" @click="logout"><LogOut /></button></div>
-        <div>Change Password <button class="btn btn-lg btn-circle max-sm:btn-md" @click="changePassword"><KeyRound /></button></div>
-      </div>
-    </footer>
+  <div id="app" class="min-h-screen flex flex-col">
+    <router-view />
   </div>
 </template>
