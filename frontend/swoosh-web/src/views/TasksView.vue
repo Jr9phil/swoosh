@@ -1,271 +1,376 @@
 <!-- 
   TasksView.vue
-  Main view for displaying and managing tasks. 
+  Main view for displaying and managing tasks.
   Includes sections for pinned, incomplete, and completed tasks.
 -->
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
-import type { task } from '../types/task'
-import { PRIORITIES } from '../types/priority.ts'
+import { PRIORITIES } from '../types/priority'
 import { useRouter } from 'vue-router'
 import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
-import { CircleCheckBig, Plus, Rocket, ListChecks } from 'lucide-vue-next'
-
+import TaskTimeline from '../components/TaskTimeline.vue'
+import { Plus, Pin, X } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
+const auth = useAuthStore()
+const router = useRouter()
+
+// ── Sync all pulsing animations to a shared phase ──────────────────────────
+// This is called ONLY on meaningful events (mount, task changes, section
+// toggles) — NOT on a repeating interval.  Calling it every second via
+// setInterval forces a reflow on every animated element each second, which
+// restarts their CSS animations and produces visible flicker.
+//
+// The previous guard `el.style.animation !== anim` was also broken: the
+// string always contains `${phase}ms` which changes every call, so the guard
+// never prevented the unnecessary reflow.  We follow the mockup exactly:
+// always removeProperty → reflow → setProperty, but only when needed.
+const PULSE_DURATION = 1100
+function syncOverdueAnimations() {
+  const phase      = -(performance.now() % PULSE_DURATION)
+  const todayPhase = -(performance.now() % 2400)
+
+  document.querySelectorAll(
+      '.overdue-dot, .badge.overdue, .overdue-banner, .overdue-banner-dot, .today-dot, .today-border-pulse'
+  ).forEach(el => {
+    if (!(el instanceof HTMLElement)) return
+
+    let anim = ''
+    if (el.classList.contains('overdue-dot') || el.classList.contains('overdue-banner-dot')) {
+      anim = `overdueGlow 1.1s ease-in-out ${phase}ms infinite`
+    } else if (el.classList.contains('badge') && el.classList.contains('overdue')) {
+      anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
+    } else if (el.classList.contains('overdue-banner')) {
+      anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
+    } else if (el.classList.contains('today-dot')) {
+      anim = `todayPulse 2.4s ease-in-out ${todayPhase}ms infinite`
+    } else if (el.classList.contains('today-border-pulse')) {
+      anim = `todayBorderPulse 2.4s ease-in-out ${todayPhase}ms infinite`
+    }
+
+    if (anim) {
+      el.style.removeProperty('animation')
+      void el.offsetWidth // force reflow to restart animation
+      el.style.setProperty('animation', anim)
+    }
+  })
+}
+
+// Re-sync when the task list changes (new tasks loaded, tasks completed, etc.)
+watch(() => tasksStore.tasks, () => {
+  nextTick(syncOverdueAnimations)
+}, { deep: true })
+
+// ── Computed task groups ────────────────────────────────────────────────────
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && !t.pinned && !isDueToday(t.deadline))
+        .filter(t => !t.completed && (!t.pinned || isOverdue(t.deadline) || isDueToday(t.deadline)))
         .slice()
         .sort((a, b) => {
-          const overdueA = isOverdue(a.deadline)
-          const overdueB = isOverdue(b.deadline)
+          const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
           if (overdueA !== overdueB) return overdueA ? -1 : 1
-          
+          const todayA = isDueToday(a.deadline),  todayB = isDueToday(b.deadline)
+          if (todayA !== todayB) return todayA ? -1 : 1
           if (b.priority !== a.priority) return b.priority - a.priority
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
 )
 
-const tasksByPriority = computed(() => {
-  const groups = PRIORITIES.map(p => ({
-    priority: p,
-    tasks: incompleteTasks.value.filter(t => t.priority === p.value)
-  }))
-  return groups.filter(g => g.tasks.length > 0).reverse()
-})
+const tasksByPriority = computed(() =>
+    PRIORITIES
+        .map(p => ({ priority: p, tasks: incompleteTasks.value.filter(t => t.priority === p.value) }))
+        .filter(g => g.tasks.length > 0)
+        .reverse()
+)
 
-// Checks if a task is due today based on its deadline
-function isDueToday(deadline? : string | null) {
-  if (!deadline) return false
-  
-  const now = new Date()
-  const d = new Date(deadline)
-  
-  return (
-      now.getFullYear() === d.getFullYear() &&
-      now.getMonth() === d.getMonth() &&
-      now.getDate() === d.getDate()
-  )
-}
-
-// Checks if a task is overdue based on its deadline
-function isOverdue(deadline? : string | null) {
-  if (!deadline) return false
-  
-  const now = new Date()
-  const d = new Date(deadline)
-  
-  return now.getTime() > d.getTime()
-}
-
-// Pinned Tasks
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t =>
-            !t.completed &&
-            (t.pinned || isDueToday(t.deadline))
-        )
+        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline) && !isDueToday(t.deadline))
         .slice()
         .sort((a, b) => {
-          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
-
-          const overdueA = isOverdue(a.deadline)
-          const overdueB = isOverdue(b.deadline)
-          if (overdueA !== overdueB) return overdueA ? -1 : 1
-
-          if (b.priority !== a.priority) {
-            return b.priority - a.priority
-          }
+          if (b.priority !== a.priority) return b.priority - a.priority
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         })
 )
 
-// Checks if any tasks are due today
-const anyTaskDueToday = computed(() =>
-    pinnedTasks.value.some(t => isDueToday(t.deadline))
-)
-
-// Completed Tasks
 const completedTasks = computed(() =>
     tasksStore.tasks
         .filter(t => t.completed)
         .slice()
-        .sort((a, b) => {
-          return (
-              new Date(b.completed!).getTime() -
-              new Date(a.completed!).getTime()
-          )
-        })
+        .sort((a, b) => new Date(b.completed!).getTime() - new Date(a.completed!).getTime())
 )
 
-const draggedTask = ref<task | null>(null)
+const overdueCount = computed(() =>
+    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
+)
 
-// Handles the start of a drag operation for a task
-function onDragStart(task: task) {
-  draggedTask.value = { ...task }
+// ── Date helpers ────────────────────────────────────────────────────────────
+function isSameDay(d1: Date, d2: Date) {
+  return d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth()    === d2.getMonth()    &&
+      d1.getDate()     === d2.getDate()
+}
+function isDueToday(deadline?: string | null) {
+  if (!deadline) return false
+  return isSameDay(new Date(), new Date(deadline))
+}
+function isOverdue(deadline?: string | null) {
+  if (!deadline) return false
+  const d = new Date(deadline)
+  return new Date().getTime() > d.getTime() && !isSameDay(new Date(), d)
 }
 
-// Handles the drop operation when a task is reordered
-async function onDrop(targetTask: task) {
-  const source = draggedTask.value
-  if (!source || source.id === targetTask.id) return
-  
-  if (source.priority !== targetTask.priority) {
-    await tasksStore.updatePriority(source, targetTask.priority)
-  } else {
-    const dropBefore = true // for now, assume "above" target; can be replaced with actual mouse position later
-    await tasksStore.moveTaskRelative(source, targetTask, dropBefore)
-  }
+function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed && isOverdue(t.deadline)) }
+function hasTodayInGroup(tasks: any[])   { return tasks.some(t => !t.completed && isDueToday(t.deadline)) }
 
-  draggedTask.value = null
+// ── Header date ─────────────────────────────────────────────────────────────
+const formattedToday = computed(() => {
+  const d = new Date()
+  const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`.toUpperCase()
+})
+
+// ── Section collapse ─────────────────────────────────────────────────────────
+const taskTimeline = ref<InstanceType<typeof TaskTimeline> | null>(null)
+const completedExpanded = ref(false)
+const priorityExpanded = ref<Record<string, boolean>>({
+  '0': true, '1': true, '2': true, '3': true, 'pinned': true
+})
+// Tracks which sections are mid-animation so overflow:hidden can be applied
+// only during the transition, preventing permanent clipping of dropdown menus.
+const animatingSections = ref<Set<string>>(new Set())
+
+function togglePriority(val: number | string) {
+  const key = val.toString()
+  priorityExpanded.value[key] = !priorityExpanded.value[key]
+
+  // Add overflow clip for the transition duration, then remove it
+  animatingSections.value = new Set([...animatingSections.value, key])
+  setTimeout(() => {
+    animatingSections.value.delete(key)
+    animatingSections.value = new Set(animatingSections.value) // trigger reactivity
+    nextTick(syncOverdueAnimations)
+  }, 240) // slightly longer than the 220ms grid transition
 }
 
-const auth = useAuthStore()
-const router = useRouter()
-const createTaskEdit = ref<any>(null)
-
-function closeModal() {
-  const modal = document.getElementById('create') as HTMLDialogElement
-  modal?.close()
-}
-
-function handleModalClose() {
-  createTaskEdit.value?.resetForm()
-}
-
-// Fetches tasks when the component is mounted; redirects to login on failure
+// ── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
     await tasksStore.fetchTasks()
+    nextTick(syncOverdueAnimations)
   } catch {
     auth.logout()
     router.push('/login')
   }
 })
+
+// ── Jump to overdue ──────────────────────────────────────────────────────────
+function jumpToOverdue() {
+  Object.keys(priorityExpanded.value).forEach(key => {
+    const tasks = key === 'pinned'
+        ? pinnedTasks.value
+        : incompleteTasks.value.filter(t => t.priority === parseInt(key))
+    if (!hasOverdueInGroup(tasks)) priorityExpanded.value[key] = false
+  })
+  if (hasOverdueInGroup(pinnedTasks.value)) priorityExpanded.value['pinned'] = true
+  tasksByPriority.value.forEach(group => {
+    if (hasOverdueInGroup(group.tasks)) priorityExpanded.value[group.priority.value.toString()] = true
+  })
+
+  const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline))
+  if (firstOverdue) {
+    nextTick(() => {
+      const el = document.getElementById('task-' + firstOverdue.id)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('highlight-pulse')
+        setTimeout(() => el.classList.remove('highlight-pulse'), 2000)
+        syncOverdueAnimations()
+      }
+    })
+  }
+}
+
+// ── Jump to a specific task from the timeline panel ─────────────────────────
+// TaskTimeline emits this when a task is clicked. We must expand the task's
+// section first (it may be collapsed), wait for Vue to render, then scroll.
+function handleJumpToTask(task: any) {
+  // Determine which section key this task lives in
+  const key = task.pinned &&
+  !isOverdue(task.deadline) &&
+  !isDueToday(task.deadline)
+      ? 'pinned'
+      : task.priority.toString()
+
+  const wasCollapsed = !priorityExpanded.value[key]
+  priorityExpanded.value[key] = true
+
+  // If the section was collapsed we need to wait for the expand animation
+  // to finish before scrollIntoView will find a visible element
+  const delay = wasCollapsed ? 250 : 0
+  setTimeout(() => {
+    nextTick(() => {
+      const el = document.getElementById('task-' + task.id)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.add('highlight-pulse')
+        setTimeout(() => el.classList.remove('highlight-pulse'), 2000)
+      }
+    })
+  }, delay)
+}
+const createTaskEdit = ref<any>(null)
+function handleModalClose() { createTaskEdit.value?.resetForm() }
+function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
+function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
 </script>
 
-<!-- View Template: Renders the task list, add task button, and modals -->
 <template>
-  <div class="w-full max-w-xl">
-    <!-- Main tasks container -->
-    <div class="bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8">
-      
-      <!-- Header section with loading indicator and title -->
-      <div class="mb-6 cursor-default">
-        <div class="flex items-center">
-          <div class="mr-4">
-            <button class="btn btn-square btn-soft btn-primary max-sm:btn-sm shadow-md" :disabled="tasksStore.loading" onclick="create.showModal()">
-              <span v-if="tasksStore.loading" class="loading loading-spinner text-primary" />
-              <Plus v-else />
-            </button>
-          </div>
-          <h1 class="text-xl max-sm:text-lg text-heading">My Tasks</h1>
+  <main class="flex-1 flex justify-center pt-10 px-5 pb-[60px]">
+    <div class="w-full max-w-[540px]">
+
+      <!-- ── Header ── -->
+      <header class="flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
+        <button
+            class="w-[38px] h-[38px] bg-surface-raised border-[1.5px] border-swoosh-border-hover rounded-sm text-swoosh-text cursor-pointer flex items-center justify-center shrink-0 transition-all hover:border-swoosh-text hover:-translate-y-px active:translate-y-px active:scale-95"
+            @click="openModal"
+        >
+          <Plus :size="18" stroke-width="2.5" />
+        </button>
+        <span class="text-[22px] font-extrabold tracking-[-0.01em] text-swoosh-text flex-1">My Tasks</span>
+        <!-- Clicking the date label resets the timeline to the current week -->
+        <div
+            class="font-mono text-xs font-bold text-swoosh-text-muted tracking-[0.04em] whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
+            @click="() => taskTimeline?.resetTimeline()"
+        >
+          {{ formattedToday }}
         </div>
-      </div>
-      
-      <!-- Skeleton loader shown while tasks are loading -->
-      <div v-if="tasksStore.loading" class="flex flex-col gap-4 min-h-96">
-        <ul class="list bg-base-100 rounded-box shadow-md border-2 border-transparent w-full">
-          <li v-for="n in 6" :key="n" class="list-row items-center">
-            <div class="skeleton w-10 h-10 rounded-lg shrink-0" />
-            <div class="flex flex-col gap-2 flex-grow">
-              <div class="skeleton h-4 w-32" />
-              <div class="skeleton h-3 w-48 opacity-50" />
-            </div>
-            <div class="skeleton w-8 h-8 rounded-btn shrink-0" />
-            <div class="skeleton w-8 h-8 rounded-btn shrink-0" />
-          </li>
-        </ul>
+      </header>
+
+      <!-- ── Overdue banner ── -->
+      <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner">
+        <span class="overdue-banner-dot"></span>
+        <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
+        <button class="overdue-banner-action" @click="jumpToOverdue">
+          View
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
 
-      <!-- Content area for task lists -->
-      <div v-else class="min-h-96 w-full">
-        <!-- List of pinned tasks -->
-        <ul v-if="pinnedTasks.length" class="list bg-base-100 rounded-box shadow-md border-2 w-full" :class="anyTaskDueToday ? 'border-info/50' : 'border-white/50'">
-          <TaskItem
-              v-for="task in pinnedTasks"
-              :key="task.id"
-              :task="task"
-          />
-        </ul>
-        
-        <!-- List of incomplete (regular) tasks grouped by priority with drag and drop support -->
-        <template v-for="(group, index) in tasksByPriority" :key="group.priority.value">
-          <div v-if="index === 0 && pinnedTasks.length" class="divider" />
-          <div v-else-if="index > 0" class="h-6" />
-          
-          <div v-if="group.priority.value !== 0" class="flex items-center gap-2 mb-2 px-2 text-xs font-bold uppercase tracking-wider" :class="group.priority.textClass">
-            <component :is="group.priority.icon" class="w-4 h-4" />
-            {{ group.priority.label }}
-          </div>
-          
-          <ul class="drop-zone list bg-base-100 rounded-box shadow-md border-2 w-full" :class="[group.priority.value !== 0 ? group.priority.borderColor : 'border-transparent']">
-            <TaskItem
-                v-for="task in group.tasks"
-                :key="task.id"
-                :task="task"
-                @drag-start="onDragStart(task)"
-                @drop="onDrop(task)"
-            />
-          </ul>
-        </template>
+      <!-- ── Timeline ── -->
+      <TaskTimeline ref="taskTimeline" @week-change="syncOverdueAnimations" @jump-to-task="handleJumpToTask" />
 
-        <!-- Empty state message when no tasks exist -->
-        <div v-if="!tasksStore.tasks.length" class="card bg-base-300 rounded-box grid h-96 place-items-center w-full">
-          <div class="opacity-50 flex flex-col items-center text-center gap-2">
-            <Rocket class="w-24 h-24"/>
-            <b>No tasks yet</b>
-            <p class="text-sm">Add a task to get started</p>
+      <!-- ── Pinned Section ── -->
+      <div v-if="pinnedTasks.length">
+        <div
+            class="section-label pinned"
+            :class="{ open: priorityExpanded.pinned }"
+            @click="togglePriority('pinned')"
+        >
+          <div class="section-label-left">
+            <Pin :size="14" />
+            <span>Pinned</span>
+            <!-- Overdue dot: LEFT = visible when EXPANDED, per mockup -->
+            <span v-if="hasOverdueInGroup(pinnedTasks) && priorityExpanded.pinned" class="overdue-dot left"></span>
+          </div>
+          <div class="section-label-right">
+            <!-- Right-column indicators: shown only when COLLAPSED -->
+            <span v-if="hasOverdueInGroup(pinnedTasks) && !priorityExpanded.pinned" class="overdue-dot right"></span>
+            <!-- FIX: today dot only appears in right column (when collapsed).
+                 The mockup never shows a today dot on the left/expanded side. -->
+            <span v-else-if="hasTodayInGroup(pinnedTasks) && !priorityExpanded.pinned" class="today-dot"></span>
+            <span class="section-count">{{ pinnedTasks.length }}</span>
+            <span class="section-toggle"></span>
           </div>
         </div>
-        
-        <!-- Section for completed tasks -->
-        <div v-else-if="completedTasks.length">
-          
-          <!-- Encouragement message when all tasks are done -->
-          <div v-if="!incompleteTasks.length && !pinnedTasks.length" class="card bg-base-300 rounded-box grid h-24 place-items-center">
-            <div class="flex opacity-50">
-              <ListChecks class="mr-2"/> All tasks completed!
+        <div class="section-body" :class="{ collapsed: !priorityExpanded.pinned, 'is-animating': animatingSections.has('pinned') }">
+          <div>
+            <div class="task-group pinned">
+              <TaskItem v-for="task in pinnedTasks" :key="task.id" :task="task" />
             </div>
           </div>
-          
-          <!-- Collapsible section for completed tasks list -->
-          <div class="collapse collapse-arrow">
-            <input type="checkbox" name="completed-tasks-list" />
-            <div class="collapse-title opacity-50">Completed ({{ completedTasks.length }})</div>
-            <!-- TODO: fix bottom padding issue -->
-            <div class="collapse-content p-0 pb-6">
-              <ul class="list bg-base-100 rounded-box shadow-md border-2 border-transparent w-full">
-                <TaskItem
-                    v-for="task in completedTasks"
-                    :key="task.id"
-                    :task="task"
-                />
-              </ul>
+        </div>
+        <div class="section-divider"></div>
+      </div>
+
+      <!-- ── Priority Sections ── -->
+      <template v-for="group in tasksByPriority" :key="group.priority.value">
+        <div
+            class="section-label"
+            :class="[group.priority.class, { open: priorityExpanded[group.priority.value] }]"
+            @click="togglePriority(group.priority.value)"
+        >
+          <div class="section-label-left">
+            <component :is="group.priority.icon" :size="14" />
+            <span>{{ group.priority.label }}</span>
+            <!-- Overdue dot: LEFT = visible when EXPANDED -->
+            <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" class="overdue-dot left"></span>
+          </div>
+          <div class="section-label-right">
+            <!-- Right-column indicators: shown only when COLLAPSED -->
+            <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" class="overdue-dot right"></span>
+            <!-- FIX: today dot only in right/collapsed position -->
+            <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" class="today-dot"></span>
+            <span class="section-count">{{ group.tasks.length }}</span>
+            <span class="section-toggle"></span>
+          </div>
+        </div>
+        <div class="section-body" :class="{ collapsed: !priorityExpanded[group.priority.value], 'is-animating': animatingSections.has(group.priority.value.toString()) }">
+          <div>
+            <!-- pinned/high/med/low get a coloured left accent — none does not -->
+            <div class="task-group" :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }">
+              <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
             </div>
           </div>
-          
+        </div>
+      </template>
+
+      <!-- ── Completed Section ── -->
+      <div v-if="completedTasks.length">
+        <div class="spacer"></div>
+        <div
+            class="collapse-header"
+            :class="{ open: completedExpanded }"
+            @click="completedExpanded = !completedExpanded"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          Completed ({{ completedTasks.length }})
+        </div>
+        <div v-if="completedExpanded" class="task-group mt-1">
+          <TaskItem v-for="task in completedTasks" :key="task.id" :task="task" />
         </div>
       </div>
+
     </div>
-  </div>
 
-  <!-- Modal dialog for creating new tasks -->
-  <dialog id="create" class="modal" @close="handleModalClose">
-    <div class="modal-box w-full max-w-xl bg-base-200 border-2 border-base-content/60 p-4 sm:p-6">
-      <div class="flex flex-row items-center ml-0 sm:ml-4 gap-2 opacity-60">
-        <CircleCheckBig /> <h3 class="text-lg font-bold">New Task</h3>
+    <!-- ── Create Task Modal ── -->
+    <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
+      <div class="modal-box bg-swoosh-surface border border-swoosh-border-hover p-0 max-w-[520px] rounded-sm overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
+        <!-- Modal header: 16px top, 20px sides, 14px bottom — matches mockup -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh">
+          <div class="flex items-center gap-2 font-mono text-[12px] tracking-[0.10em] uppercase text-swoosh-text-muted">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            New Task
+          </div>
+          <button
+              @click="closeModal"
+              class="w-7 h-7 flex items-center justify-center rounded-sm text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
+          >
+            <X :size="15" stroke-width="2" />
+          </button>
+        </div>
+        <!-- No padding wrapper — TaskEdit owns body + footer padding in create mode -->
+        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="closeModal" />
       </div>
-      <TaskEdit ref="createTaskEdit" @close="closeModal" />
-    </div>
-
-    <!-- Backdrop to close the modal when clicking outside -->
-    <form method="dialog" class="modal-backdrop">
-      <button>close</button>
-    </form>
-  </dialog>
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
+  </main>
 </template>

@@ -2,9 +2,9 @@
 import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
-import TaskMenu from './TaskMenu.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { GripVertical, Pin, PinOff, Plus } from 'lucide-vue-next'
+import { Pin } from 'lucide-vue-next'
+import TaskRating from './TaskRating.vue'
 
 const props = defineProps<{
   task?: Task
@@ -21,9 +21,9 @@ const loading = ref(false)
 const showValidation = ref(false)
 
 // Store original values to allow canceling edits
-const originalTitle = ref(props.task?.title ?? '')
-const originalNotes = ref(props.task?.notes ?? '')
-const originalPinned = ref(props.task?.pinned ?? false)
+const originalTitle    = ref(props.task?.title    ?? '')
+const originalNotes    = ref(props.task?.notes    ?? '')
+const originalPinned   = ref(props.task?.pinned   ?? false)
 const originalDeadline = ref(props.task?.deadline ?? '')
 const originalPriority = ref(props.task?.priority ?? 0)
 
@@ -36,11 +36,11 @@ function splitDeadline(deadline: string | null) {
 }
 
 const initialDeadline = splitDeadline(props.task?.deadline ?? null)
-const editedDate = ref(initialDeadline.date)
-const editedTime = ref(initialDeadline.time)
+const editedDate  = ref(initialDeadline.date)
+const editedTime  = ref(initialDeadline.time)
 
-const editedTitle = ref(props.task?.title ?? '')
-const editedNotes = ref(props.task?.notes ?? '')
+const editedTitle  = ref(props.task?.title  ?? '')
+const editedNotes  = ref(props.task?.notes  ?? '')
 const editedPinned = ref(props.task?.pinned ?? false)
 const editedRating = ref(props.task?.rating ?? 0)
 
@@ -55,7 +55,6 @@ const editedPriority = computed(() =>
 const editContainer = ref<HTMLElement | null>(null)
 
 // Combines date and time inputs into a single deadline string
-// Defaults: date set -> 11:59 PM, time set -> today
 const combinedDeadline = computed(() => {
   if (!editedDate.value && !editedTime.value) return null
 
@@ -76,7 +75,7 @@ function cyclePriority() {
   priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
 }
 
-// Handles keyboard shortcuts globally
+// Handles keyboard shortcuts (Enter to save, Escape to cancel)
 function handleGlobalKeydown(e: KeyboardEvent) {
   if (!editContainer.value) return
 
@@ -92,7 +91,6 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
     const isModifierPressed = e.ctrlKey || e.metaKey
     if (e.target instanceof HTMLTextAreaElement && !isModifierPressed) return
-
     if (isInside || !isInput) {
       e.preventDefault()
       finishEditing()
@@ -107,12 +105,31 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   }
 }
 
+// Clicks outside the inline editor (edit mode only) auto-save and close
+function handleClickOutside() {
+  if (isEdit.value) {
+    finishEditing()
+  }
+}
+
+function handleDocumentMousedown(e: MouseEvent) {
+  if (!editContainer.value) return
+  if (!editContainer.value.contains(e.target as Node)) {
+    handleClickOutside()
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown)
+  // Only wire up click-outside for inline edit mode, not the create modal
+  if (isEdit.value) {
+    document.addEventListener('mousedown', handleDocumentMousedown)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+  document.removeEventListener('mousedown', handleDocumentMousedown)
 })
 
 function cancelEditing() {
@@ -120,13 +137,13 @@ function cancelEditing() {
     emit('close')
     return
   }
-  editedTitle.value = originalTitle.value
-  editedNotes.value = originalNotes.value
+  editedTitle.value  = originalTitle.value
+  editedNotes.value  = originalNotes.value
   editedPinned.value = originalPinned.value
   editedRating.value = props.task?.rating ?? 0
   const { date, time } = splitDeadline(originalDeadline.value)
-  editedDate.value = date
-  editedTime.value = time
+  editedDate.value  = date
+  editedTime.value  = time
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === originalPriority.value)
   emit('close')
 }
@@ -135,10 +152,10 @@ function cancelEditing() {
 function resetForm() {
   if (isEdit.value) return
 
-  editedTitle.value = ''
-  editedNotes.value = ''
-  editedDate.value = ''
-  editedTime.value = ''
+  editedTitle.value  = ''
+  editedNotes.value  = ''
+  editedDate.value   = ''
+  editedTime.value   = ''
   editedPinned.value = false
   editedRating.value = 0
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === 0)
@@ -157,16 +174,12 @@ const isFormBlank = computed(() => {
       priorityIndex.value === PRIORITIES.findIndex(p => p.value === 0)
 })
 
-defineExpose({
-  resetForm,
-  isFormBlank
-})
+defineExpose({ resetForm, isFormBlank })
 
-// Saves changes made in the inline editor to the store
+// Saves changes to the store
 async function finishEditing() {
   if (loading.value) return
 
-  // If the task is already completed, nothing happens
   if (props.task?.completed) {
     emit('close')
     return
@@ -175,11 +188,11 @@ async function finishEditing() {
   const currentDeadline = combinedDeadline.value
   if (
       isEdit.value &&
-      editedTitle.value === originalTitle.value &&
-      editedNotes.value === originalNotes.value &&
-      editedPinned.value === originalPinned.value &&
-      editedRating.value === (props.task?.rating ?? 0) &&
-      currentDeadline === (originalDeadline.value || null) &&
+      editedTitle.value    === originalTitle.value &&
+      editedNotes.value    === originalNotes.value &&
+      editedPinned.value   === originalPinned.value &&
+      editedRating.value   === (props.task?.rating ?? 0) &&
+      currentDeadline      === (originalDeadline.value || null) &&
       editedPriority.value === originalPriority.value
   ) {
     emit('close')
@@ -188,7 +201,7 @@ async function finishEditing() {
 
   if (!editedTitle.value.trim()) {
     showValidation.value = true
-    if (!isEdit.value) return // Stay in modal if creation fails
+    if (!isEdit.value) return
     cancelEditing()
     return
   }
@@ -197,21 +210,21 @@ async function finishEditing() {
   try {
     if (isEdit.value && props.task) {
       await tasksStore.editTask(props.task.id, {
-        title: editedTitle.value.trim(),
-        notes: editedNotes.value || null,
-        pinned: editedPinned.value,
+        title:    editedTitle.value.trim(),
+        notes:    editedNotes.value || null,
+        pinned:   editedPinned.value,
         deadline: currentDeadline,
         priority: editedPriority.value,
-        rating: editedRating.value
+        rating:   editedRating.value
       })
     } else {
       await tasksStore.createTask({
-        title: editedTitle.value.trim(),
-        notes: editedNotes.value || null,
+        title:    editedTitle.value.trim(),
+        notes:    editedNotes.value || null,
         deadline: currentDeadline,
-        pinned: editedPinned.value,
+        pinned:   editedPinned.value,
         priority: editedPriority.value,
-        rating: editedRating.value
+        rating:   editedRating.value
       })
       emit('created')
       resetForm()
@@ -223,7 +236,6 @@ async function finishEditing() {
   }
 }
 
-// Deletes the task after confirmation
 async function remove() {
   if (isEdit.value && props.task) {
     if (confirm('Delete this task?')) {
@@ -232,22 +244,17 @@ async function remove() {
   }
 }
 
-// Toggles completion status for already completed tasks (with confirmation)
 async function toggleComplete() {
-  if(isEdit.value && props.task?.completed) {
-    if(!confirm('Mark task as incomplete?')) {
-      return
-    }
+  if (isEdit.value && props.task?.completed) {
+    if (!confirm('Mark task as incomplete?')) return
     await tasksStore.toggleComplete(props.task)
   }
 }
 
-// Resets the task's rating to 0
 function resetRating() {
   editedRating.value = 0
 }
 
-// Removes the task's deadline
 async function resetDeadline() {
   if (isEdit.value && props.task) {
     if (confirm('Remove deadline?')) {
@@ -259,51 +266,42 @@ async function resetDeadline() {
   }
 }
 
-// Moves the task to the top of the list by resetting its creation date
 async function moveToTop() {
   if (isEdit.value && props.task) {
     await tasksStore.resetCreationDate(props.task)
   }
 }
-// Handles click outside the component
-function handleClickOutside() {
-  if (isEdit.value) {
-    finishEditing()
-  }
-}
-
 </script>
 
+<!-- Component Template -->
 <template>
-  <li ref="editContainer" :class="isEdit ? 'list-row' : 'flex flex-col sm:flex-row gap-4 p-4'" @click.stop v-click-outside="handleClickOutside">
-    <div v-if="isEdit" class="flex flex-col">
-      <!-- Completion checkbox (disabled in edit mode) -->
-      <input
-          type="checkbox"
-          :checked="!!task?.completed"
-          class="checkbox"
-          :class="task?.completed ? 'checkbox-lg checkbox-primary' : 'checkbox-lg' "
-          disabled
-      />
-      <!-- Drag handle for reordering -->
-      <div v-if="!task?.completed" class="flex-1 flex items-center justify-center min-h-8 cursor-grab group" @click="finishEditing">
-        <GripVertical class="opacity-10 group-hover:opacity-50 transition-opacity duration-200" />
-      </div>
-    </div>
+  <div
+      ref="editContainer"
+      :class="[
+      isEdit
+        ? 'fade-up bg-surface-raised border-b border-swoosh px-3.5 py-4'
+        : 'flex flex-col'
+    ]"
+      @click.stop
+  >
+    <!-- Fields — modal: 18px top, 20px sides; inline: no extra padding -->
+    <div :class="isEdit ? 'flex flex-col gap-3' : 'px-5 pt-[18px] pb-0 flex flex-col gap-[13px]'">
 
-    <!-- Input fields for editing task details -->
-    <div class="flex flex-col gap-2 w-full">
+      <!-- Title Input -->
       <div class="relative">
-        <div v-if="(showValidation || isEdit) && !editedTitle.trim()" class="absolute left-0 -top-4 text-[10px] text-error font-bold uppercase px-1">
+        <div v-if="(showValidation || isEdit) && !editedTitle.trim()" class="absolute left-0 -top-4 text-[10px] text-swoosh-danger font-bold uppercase px-1">
           Title is required
         </div>
         <input
-            ref="titleInput"
             type="text"
-            class="input w-full text-base font-semibold"
-            :class="{ validator: showValidation || isEdit }"
-            maxlength="24"
-            placeholder="Title"
+            :class="[
+              'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint',
+              isEdit
+                ? 'py-[9px] px-3 text-[15px]'
+                : 'py-[10px] px-[13px] text-[18px]'
+            ]"
+            maxlength="100"
+            placeholder="Task title"
             v-model="editedTitle"
             @input="showValidation = true"
             :disabled="task?.completed"
@@ -312,72 +310,109 @@ function handleClickOutside() {
         />
       </div>
 
+      <!-- Notes Textarea -->
       <textarea
-          class="textarea textarea-bordered w-full"
-          placeholder="Notes"
-          maxlength="250"
+          :class="[
+            'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text-muted focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint resize-none leading-relaxed',
+            isEdit
+              ? 'py-[9px] px-3 text-[14px] min-h-[64px]'
+              : 'py-[10px] px-[13px] text-[14.5px] min-h-[80px]'
+          ]"
+          placeholder="Notes (optional)"
+          maxlength="500"
           v-model="editedNotes"
           :disabled="task?.completed"
       />
 
-      <div class="flex flex-wrap gap-2">
-        <input
-            type="date"
-            class="input input-bordered flex-1 min-w-[140px]"
-            v-model="editedDate"
-            :disabled="task?.completed"
-        />
-        <input
-            type="time"
-            class="input input-bordered flex-1 min-w-[100px]"
-            v-model="editedTime"
-            :disabled="task?.completed"
-        />
+      <!-- Deadline Section -->
+      <div>
+        <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[10px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Deadline</div>
+        <div class="flex gap-2">
+          <input
+              type="date"
+              :class="[
+                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
+              ]"
+              v-model="editedDate"
+              :disabled="task?.completed"
+          />
+          <input
+              type="time"
+              :class="[
+                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
+              ]"
+              v-model="editedTime"
+              :disabled="task?.completed"
+          />
+        </div>
       </div>
     </div>
 
-    <!-- Edit mode action buttons (priority and pin) -->
-    <div class="flex flex-col items-end gap-2 shrink-0">
-      <div class="flex justify-end">
-        <div class="tooltip h-0" :data-tip=PRIORITIES[priorityIndex].label>
-          <button
-              id="priority"
-              type="button"
-              @click="cyclePriority"
-              class="btn btn-ghost btn-square max-sm:btn-sm opacity-60 hover:opacity-100">
-            <component
-                :is="PRIORITIES[priorityIndex].icon"
-                class="transition-transform duration-150 active:rotate-12"
-            />
-          </button>
-        </div>
-        <label class="swap btn btn-ghost btn-square max-sm:btn-sm opacity-60 hover:opacity-100 ml-2">
-          <input type="checkbox" v-model="editedPinned" />
-          <PinOff class="swap-off" />
-          <Pin class="swap-on" />
-        </label>
+    <!-- Footer: Priority, Pin, Rating and action buttons -->
+    <!-- Modal (create): full-width with own padding so border goes edge-to-edge -->
+    <!-- Inline edit: margin-top + top border only -->
+    <div :class="[
+      'flex items-center justify-between border-t border-swoosh',
+      isEdit
+        ? 'mt-4 pt-3 pb-1'
+        : 'mt-[13px] px-5 pt-3 pb-[18px]'
+    ]">
+      <div class="flex items-center gap-[5px]">
+        <!-- Priority Cycle -->
+        <button
+            type="button"
+            @click="cyclePriority"
+            class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors"
+            :class="[
+              PRIORITIES[priorityIndex].value === 0
+                ? 'border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:border-swoosh-border-hover'
+                : PRIORITIES[priorityIndex].textClass + ' border-current/25'
+            ]"
+        >
+          <component :is="PRIORITIES[priorityIndex].icon" :size="13" fill="currentColor" />
+          <span class="uppercase tracking-wider">{{ PRIORITIES[priorityIndex].label }}</span>
+        </button>
+
+        <!-- Pin Toggle -->
+        <button
+            type="button"
+            @click="editedPinned = !editedPinned"
+            class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
+            :class="editedPinned
+              ? 'text-swoosh-pin border-swoosh-pin/25'
+              : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
+        >
+          <Pin :size="14" :fill="editedPinned ? 'currentColor' : 'none'" />
+        </button>
+
+        <!-- Rating -->
+        <TaskRating
+            :rating="editedRating"
+            :priority="editedPriority"
+            interactive
+            @update:rating="editedRating = $event"
+        />
       </div>
-      <div class="rating rating-xs">
-        <input type="radio" :name="isEdit ? 'rating-edit-' + task?.id : 'rating-create'" class="rating-hidden" :checked="editedRating === 0" @click="editedRating = 0" />
-        <input v-for="n in 5" :key="n" type="radio" :name="isEdit ? 'rating-edit-' + task?.id : 'rating-create'" class="mask mask-diamond" :checked="editedRating === n" @click="editedRating = n" />
+
+      <!-- Action Buttons -->
+      <div class="flex gap-[7px] items-center">
+        <button
+            @click="cancelEditing"
+            class="rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
+        >
+          Cancel
+        </button>
+        <button
+            @click="finishEditing"
+            class="rounded-sm border border-swoosh-text-muted bg-transparent text-swoosh-text text-[14px] font-medium transition-colors hover:bg-surface-raised px-[18px] py-[7px] disabled:opacity-40"
+            :disabled="loading"
+        >
+          <span v-if="loading" class="loading loading-spinner loading-xs"></span>
+          <span v-else>{{ isEdit ? 'Save' : 'Add task' }}</span>
+        </button>
       </div>
-      <button v-if="!isEdit" class="btn btn-primary max-sm:btn-sm mt-auto" @click="finishEditing" :disabled="loading">
-        <span v-if="loading" class="loading loading-spinner loading-sm"></span><Plus v-else /> Add
-      </button>
     </div>
-    <!-- Secondary task menu -->
-    <div v-if="isEdit" class="flex justify-end">
-      <TaskMenu
-          :is-completed="!!task?.completed"
-          :has-deadline="!!task?.deadline"
-          :has-priority="priorityIndex !== 0"
-          :has-rating="editedRating > 0"
-          @delete="remove"
-          @reset-deadline="resetDeadline"
-          @move-to-top="moveToTop"
-          @un-complete="toggleComplete"
-          @reset-rating="resetRating"
-      />
-    </div>
-  </li>
+  </div>
 </template>

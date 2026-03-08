@@ -27,76 +27,73 @@ const emit = defineEmits<{
 
 <!-- Component Template: Dropdown menu for task actions -->
 <template>
-  <!-- Main dropdown container, positioned based on completion status -->
-  <div class="dropdown" :class="isCompleted ? 'dropdown-left' : 'dropdown-right'">
+  <div class="dropdown dropdown-end">
     <!-- Trigger button for the dropdown menu -->
     <button
         tabindex="0"
         role="button"
-        class="btn btn-ghost btn-circle btn-sm group"
+        class="w-[28px] h-[28px] rounded-full flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-surface-raised transition-colors"
     >
-      <EllipsisVertical class="opacity-10 group-hover:opacity-60" />
+      <EllipsisVertical :size="18" fill="currentColor" />
     </button>
 
     <!-- Dropdown content list -->
     <ul
-        tabindex="-1"
-        class="dropdown-content menu bg-base-300 rounded-box ml-2 z-1 w-44 p-2 shadow-sm"
+        tabindex="0"
+        class="dropdown-content menu p-1.5 shadow-2xl bg-swoosh-surface-raised border border-swoosh-border-hover rounded-sm w-[180px] z-[100] gap-0.5"
     >
-      <!-- Action: Move task to the top (only for incomplete tasks) -->
-      <li v-if="!isCompleted && !pinned">
-        <a @click="emit('pin')">
-          <Pin :size="16" /> Pin Task
-        </a>
-      </li>
+      <div class="px-2 py-1.5 flex flex-col gap-0.5">
+        <!-- Action: Pin task -->
+        <li v-if="!isCompleted">
+          <button @click="emit('pin')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <Pin :size="14" /> {{ pinned ? 'Unpin task' : 'Pin task' }}
+          </button>
+        </li>
 
-      <li v-else-if="!isCompleted">
-        <a @click="emit('pin')">
-          <PinOff :size="16" /> Unpin Task
-        </a>
-      </li>
+        <!-- Action: Revert completion status -->
+        <li v-else>
+          <button @click="emit('unComplete')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <Undo2 :size="14" /> Mark incomplete
+          </button>
+        </li>
 
-      <!-- Action: Revert completion status (only for completed tasks) -->
-      <li v-else>
-        <a @click="emit('unComplete')">
-          <Undo2 :size="16" /> Mark incomplete
-        </a>
-      </li>
+        <!-- Action: Deadlines -->
+        <li v-if="!isCompleted && !!hasDeadline">
+          <button @click="emit('resetDeadline')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <CalendarOff :size="14" /> Remove deadline
+          </button>
+        </li>
+        <li v-else-if="!isCompleted">
+          <button @click="emit('edit')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <CalendarPlus :size="14" /> Add deadline
+          </button>
+        </li>
 
-      <!-- Action: Remove an existing deadline -->
-      <li v-if="!isCompleted && !!hasDeadline">
-        <a @click="emit('resetDeadline')">
-          <CalendarOff :size="16" /> Remove deadline
-        </a>
-      </li>
-      
-      <!-- Action: Open editor to add a deadline -->
-      <li v-else-if="!isCompleted">
-        <a @click="emit('edit')">
-          <CalendarPlus :size="16" /> Add deadline
-        </a>
-      </li>
-      
-      <!-- Action: Reset task priority to default -->
-      <li v-if="!isCompleted && !!hasPriority">
-        <a @click="emit('priority')">
-          <ChessPawn :size="16" /> Reset priority
-        </a>
-      </li>
+        <!-- Action: Reset priority -->
+        <li v-if="!isCompleted && !!hasPriority">
+          <button @click="emit('priority')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <ChessPawn :size="14" /> Reset priority
+          </button>
+        </li>
 
-      <!-- Action: Reset task rating to 0 -->
-      <li v-if="!isCompleted && !!hasRating">
-        <a @click="emit('resetRating')">
-          <StarOff :size="16" /> Clear rating
-        </a>
-      </li>
-      
+        <!-- Action: Reset rating -->
+        <li v-if="!isCompleted && !!hasRating">
+          <button @click="emit('resetRating')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5 rounded-sm transition-colors">
+            <StarOff :size="14" /> Clear rating
+          </button>
+        </li>
+      </div>
+
+      <div class="h-px bg-white/10 my-1 mx-2"></div>
+
       <!-- Action: Delete the task -->
-      <li>
-        <a @click="emit('delete')" class="link-error">
-          <Trash2 :size="16" /> Delete
-        </a>
-      </li>
+      <div class="px-2 pb-1.5">
+        <li>
+          <button @click="emit('delete')" class="flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium text-swoosh-danger hover:bg-swoosh-danger/10 rounded-sm transition-colors">
+            <Trash2 :size="14" /> Delete task
+          </button>
+        </li>
+      </div>
     </ul>
   </div>
 </template>

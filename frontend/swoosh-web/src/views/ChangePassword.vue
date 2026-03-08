@@ -86,110 +86,59 @@ function focusConfirmNewPassword() {
 
 <!-- View Template: Password change form with current, new, and confirm password fields -->
 <template>
-  <!-- Main password change form -->
-  <div class="w-full max-w-sm">
-    <form class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 sm:p-8" @submit.prevent="submit">
-      <!-- Current password input field with visibility toggle -->
-      <label class="fieldset">
-        <legend class="fieldset-legend">Change password for {{ auth.currentUser }}</legend>
-        <span class="label">Current Password</span>
-        <div class="join">
-          <input :type="showPassword ? 'text' : 'password'" 
-                 class="input validator join-item" 
-                 placeholder="Password" 
-                 required 
-                 v-model="password" 
-                 @keydown.enter.prevent="focusNewPassword"/>
-          <!-- Toggle button for current password visibility -->
-          <button
-              type="button"
-              class="btn btn-soft btn-square join-item"
-              :disabled="loading"
-              @click="showPassword = !showPassword"
-              tabindex="-1"
-          >
-            <Eye v-if="!showPassword" class="w-4 h-4" />
-            <EyeOff v-else class="w-4 h-4" />
-          </button>
-        </div>
-        <span class="validator-hint hidden">Required</span>
-      </label>
+  <main class="flex-1 flex justify-center pt-20 px-5">
+    <div class="w-full max-w-[360px]">
+      <header class="mb-8 text-center">
+        <h1 class="text-[24px] font-extrabold tracking-tight text-swoosh-text">Security</h1>
+        <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-widest mt-1">Change your password</p>
+      </header>
 
-      <!-- New password input field with visibility toggle -->
-      <label class="fieldset" :hidden="!password">
-        <span class="label" v-if="!!newPassword">New Password</span>
-        <div class="join">
-          <input :type="showNewPassword ? 'text' : 'password'" 
-                 class="input validator join-item" 
-                 placeholder="New Password" 
-                 required 
-                 v-model="newPassword" 
-                 ref="newPasswordInput"
-                 @keydown.enter.prevent="focusConfirmNewPassword"
-                 minlength="8" />
-          <!-- Toggle button for new password visibility -->
-          <button
-              type="button"
-              class="btn btn-soft btn-square join-item"
-              :disabled="loading"
-              @click="showNewPassword = !showNewPassword"
-              tabindex="-1"
-          >
-            <Eye v-if="!showNewPassword" class="w-4 h-4" />
-            <EyeOff v-else class="w-4 h-4" />
-          </button>
-        </div>
-      </label>
-
-      <!-- Confirm new password input field with visibility toggle -->
-      <label class="fieldset" :hidden="!newPassword">
-        <span class="label">Confirm New Password</span>
-        <div class="join">
-          <input
-              :type="showNewPassword ? 'text' : 'password'"
-              class="input join-item"
-              placeholder="Confirm password"
-              required
-              v-model="confirmNewPassword"
-              ref="confirmNewPasswordInput"
-              :class="{
-          'input-error': passwordMismatch
-        }"
-          />
-          <!-- Toggle button for confirmation password visibility -->
-          <button
-              type="button"
-              class="btn btn-soft btn-square join-item"
-              :disabled="loading"
-              @click="showNewPassword = !showNewPassword"
-              tabindex="-1"
-          >
-            <Eye v-if="!showNewPassword" class="w-4 h-4" />
-            <EyeOff v-else class="w-4 h-4" />
-          </button>
+      <form class="flex flex-col gap-4" @submit.prevent="submit">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Current Password</label>
+          <div class="relative">
+            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="••••••••" required v-model="password" />
+            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
+              <Eye v-if="!showPassword" :size="18" />
+              <EyeOff v-else :size="18" />
+            </button>
+          </div>
         </div>
 
-        <!-- Password mismatch error message -->
-        <span
-            v-if="passwordMismatch"
-            class="text-error text-sm mt-1"
-        >
-        Passwords do not match
-      </span>
-      </label>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">New Password</label>
+          <div class="relative">
+            <input :type="showNewPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Min 8 characters" required v-model="newPassword" minlength="8" />
+            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showNewPassword = !showNewPassword">
+              <Eye v-if="!showNewPassword" :size="18" />
+              <EyeOff v-else :size="18" />
+            </button>
+          </div>
+        </div>
 
-      <!-- Error message display -->
-      <div v-if="error" class="alert alert-error alert-soft mt-2">
-        {{ error }}
-      </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Confirm New Password</label>
+          <div class="relative">
+            <input :type="showNewPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Confirm new password" required v-model="confirmNewPassword" :class="{ 'border-swoosh-danger': passwordMismatch }" />
+            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showNewPassword = !showNewPassword">
+              <Eye v-if="!showNewPassword" :size="18" />
+              <EyeOff v-else :size="18" />
+            </button>
+          </div>
+          <span v-if="passwordMismatch" class="text-swoosh-danger text-[11px] ml-1">Passwords do not match</span>
+        </div>
 
-      <div class="flex flex-row mt-4">
-        <!-- Link to cancel and return to main page -->
-        <a class="btn btn-secondary btn-outline" href="/">Cancel</a>
-        <div class="flex-grow" />
-        <!-- Password change submission button -->
-        <button class="btn btn-primary" :disabled="passwordMismatch || !fieldsEntered" type="submit"><span v-if="loading" class="loading loading-spinner loading-sm"></span>{{ loading ? 'Changing Password...' : 'Change Password' }}</button>
-      </div>
-    </form>
-  </div>
+        <div v-if="error" class="text-swoosh-danger text-[13px] font-medium text-center mt-1">
+          {{ error }}
+        </div>
+
+        <div class="flex flex-col gap-2 mt-2">
+          <button type="submit" class="w-full bg-swoosh-text text-swoosh-bg py-3.5 rounded-sm font-extrabold text-[15px] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading || passwordMismatch || !fieldsEntered">
+            {{ loading ? 'Updating...' : 'Update Password' }}
+          </button>
+          <router-link to="/" class="w-full text-center py-2 text-[13px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors">Cancel</router-link>
+        </div>
+      </form>
+    </div>
+  </main>
 </template>
