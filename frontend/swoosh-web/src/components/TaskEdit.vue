@@ -284,7 +284,9 @@ async function moveToTop() {
     ]"
       @click.stop
   >
-    <div class="flex flex-col gap-3">
+    <!-- Fields — modal: 18px top, 20px sides; inline: no extra padding -->
+    <div :class="isEdit ? 'flex flex-col gap-3' : 'px-5 pt-[18px] pb-0 flex flex-col gap-[13px]'">
+
       <!-- Title Input -->
       <div class="relative">
         <div v-if="(showValidation || isEdit) && !editedTitle.trim()" class="absolute left-0 -top-4 text-[10px] text-swoosh-danger font-bold uppercase px-1">
@@ -292,7 +294,12 @@ async function moveToTop() {
         </div>
         <input
             type="text"
-            class="w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm py-3 px-3.5 text-swoosh-text text-[15.5px] font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-all placeholder:text-swoosh-text-faint"
+            :class="[
+              'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint',
+              isEdit
+                ? 'py-[9px] px-3 text-[15px]'
+                : 'py-[10px] px-[13px] text-[18px]'
+            ]"
             maxlength="100"
             placeholder="Task title"
             v-model="editedTitle"
@@ -305,7 +312,12 @@ async function moveToTop() {
 
       <!-- Notes Textarea -->
       <textarea
-          class="w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm py-2.5 px-3.5 text-swoosh-text-muted text-[13.5px] focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-all placeholder:text-swoosh-text-faint min-h-[72px] resize-none"
+          :class="[
+            'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text-muted focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint resize-none leading-relaxed',
+            isEdit
+              ? 'py-[9px] px-3 text-[14px] min-h-[64px]'
+              : 'py-[10px] px-[13px] text-[14.5px] min-h-[80px]'
+          ]"
           placeholder="Notes (optional)"
           maxlength="500"
           v-model="editedNotes"
@@ -314,17 +326,23 @@ async function moveToTop() {
 
       <!-- Deadline Section -->
       <div>
-        <div class="text-[10px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint mb-1.5 ml-1">Deadline</div>
+        <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[10px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Deadline</div>
         <div class="flex gap-2">
           <input
               type="date"
-              class="flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm py-2 px-3 text-swoosh-text text-[13px] focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-all"
+              :class="[
+                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
+              ]"
               v-model="editedDate"
               :disabled="task?.completed"
           />
           <input
               type="time"
-              class="flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm py-2 px-3 text-swoosh-text text-[13px] focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-all"
+              :class="[
+                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
+              ]"
               v-model="editedTime"
               :disabled="task?.completed"
           />
@@ -333,27 +351,40 @@ async function moveToTop() {
     </div>
 
     <!-- Footer: Priority, Pin, Rating and action buttons -->
-    <div class="flex items-center justify-between mt-4 pt-4 border-t border-swoosh">
-      <div class="flex items-center gap-2">
+    <!-- Modal (create): full-width with own padding so border goes edge-to-edge -->
+    <!-- Inline edit: margin-top + top border only -->
+    <div :class="[
+      'flex items-center justify-between border-t border-swoosh',
+      isEdit
+        ? 'mt-4 pt-3 pb-1'
+        : 'mt-[13px] px-5 pt-3 pb-[18px]'
+    ]">
+      <div class="flex items-center gap-[5px]">
         <!-- Priority Cycle -->
         <button
             type="button"
             @click="cyclePriority"
-            class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-surface-raised border border-swoosh-border text-swoosh-text-muted hover:text-swoosh-text hover:border-swoosh-text-muted transition-all active:scale-95"
-            :class="PRIORITIES[priorityIndex].textClass"
+            class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors"
+            :class="[
+              PRIORITIES[priorityIndex].value === 0
+                ? 'border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:border-swoosh-border-hover'
+                : PRIORITIES[priorityIndex].textClass + ' border-current/25'
+            ]"
         >
-          <component :is="PRIORITIES[priorityIndex].icon" :size="14" fill="currentColor" />
-          <span class="text-[11px] font-bold font-mono uppercase tracking-wider">{{ PRIORITIES[priorityIndex].label }}</span>
+          <component :is="PRIORITIES[priorityIndex].icon" :size="13" fill="currentColor" />
+          <span class="uppercase tracking-wider">{{ PRIORITIES[priorityIndex].label }}</span>
         </button>
 
         <!-- Pin Toggle -->
         <button
             type="button"
             @click="editedPinned = !editedPinned"
-            class="w-8 h-8 flex items-center justify-center rounded-sm bg-surface-raised border border-swoosh-border transition-all active:scale-95"
-            :class="editedPinned ? 'text-swoosh-pin border-swoosh-pin/40 bg-swoosh-pin/10' : 'text-swoosh-text-faint hover:text-swoosh-text-muted'"
+            class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
+            :class="editedPinned
+              ? 'text-swoosh-pin border-swoosh-pin/25'
+              : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
         >
-          <Pin :size="16" :fill="editedPinned ? 'currentColor' : 'none'" />
+          <Pin :size="14" :fill="editedPinned ? 'currentColor' : 'none'" />
         </button>
 
         <!-- Rating -->
@@ -366,16 +397,16 @@ async function moveToTop() {
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-2">
+      <div class="flex gap-[7px] items-center">
         <button
             @click="cancelEditing"
-            class="px-4 py-1.5 text-[13px] font-bold text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
+            class="rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
         >
           Cancel
         </button>
         <button
             @click="finishEditing"
-            class="px-5 py-1.5 bg-swoosh-text text-swoosh-bg text-[13px] font-extrabold rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+            class="rounded-sm border border-swoosh-text-muted bg-transparent text-swoosh-text text-[14px] font-medium transition-colors hover:bg-surface-raised px-[18px] py-[7px] disabled:opacity-40"
             :disabled="loading"
         >
           <span v-if="loading" class="loading loading-spinner loading-xs"></span>

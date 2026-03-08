@@ -305,7 +305,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             @click="togglePriority(group.priority.value)"
         >
           <div class="section-label-left">
-            <component :is="group.priority.icon" :size="14" fill="currentColor"/>
+            <component :is="group.priority.icon" :size="14" />
             <span>{{ group.priority.label }}</span>
             <!-- Overdue dot: LEFT = visible when EXPANDED -->
             <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" class="overdue-dot left"></span>
@@ -351,21 +351,22 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
 
     <!-- ── Create Task Modal ── -->
     <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
-      <div class="modal-box bg-swoosh-surface border border-swoosh-border-hover p-0 max-w-[440px] rounded-sm overflow-hidden">
-        <!-- Modal header -->
-        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-swoosh">
-          <span class="text-[15px] font-semibold text-swoosh-text">New task</span>
+      <div class="modal-box bg-swoosh-surface border border-swoosh-border-hover p-0 max-w-[520px] rounded-sm overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
+        <!-- Modal header: 16px top, 20px sides, 14px bottom — matches mockup -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh">
+          <div class="flex items-center gap-2 font-mono text-[12px] tracking-[0.10em] uppercase text-swoosh-text-muted">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            New Task
+          </div>
           <button
               @click="closeModal"
-              class="w-7 h-7 flex items-center justify-center rounded-sm text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-white/5 transition-colors"
+              class="w-7 h-7 flex items-center justify-center rounded-sm text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
           >
-            <X :size="15" stroke-width="2.5" />
+            <X :size="15" stroke-width="2" />
           </button>
         </div>
-        <!-- Modal body -->
-        <div class="p-5 pt-4">
-          <TaskEdit ref="createTaskEdit" @close="closeModal" @created="closeModal" />
-        </div>
+        <!-- No padding wrapper — TaskEdit owns body + footer padding in create mode -->
+        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="closeModal" />
       </div>
       <form method="dialog" class="modal-backdrop">
         <button>close</button>
