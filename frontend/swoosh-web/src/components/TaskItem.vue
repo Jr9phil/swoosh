@@ -72,47 +72,53 @@ function formattedDeadline() {
   if (!props.task.deadline) return null
 
   const deadline = new Date(props.task.deadline)
-  const now = new Date()
+  const current = new Date(now.value)
 
-  const diffMs = deadline.getTime() - now.getTime()
+  const diffMs = deadline.getTime() - current.getTime()
   const diffSec = Math.floor(diffMs / 1000)
-  const diffDays = Math.floor(diffSec / 86400)
-  const isToday = now.getDate() === deadline.getDate()
 
-  if (Math.abs(diffDays) > 730) {
+  // Calculate calendar day difference
+  const startOfCurrent = new Date(current.getFullYear(), current.getMonth(), current.getDate())
+  const startOfDeadline = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate())
+  const calendarDiffDays = Math.round((startOfDeadline.getTime() - startOfCurrent.getTime()) / 86400000)
+
+  if (Math.abs(calendarDiffDays) > 730) {
     return deadline.toLocaleDateString()
   }
 
   if (diffSec < 0) {
-    if (diffDays >= -1) {
+    if (calendarDiffDays === 0) {
       return 'Overdue · ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     }
-    if (diffDays >= -2) {
+    if (calendarDiffDays === -1) {
       return 'Overdue · Yesterday'
     }
-    if (diffDays >= -7) {
+    if (calendarDiffDays >= -7) {
       return 'Overdue · ' + deadline.toLocaleDateString('en-US', { weekday: 'long' })
     }
     return 'Overdue · ' + deadline.toLocaleDateString()
   }
-  if (diffDays === 0) {
-    if (isToday) return 'Today · ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    return 'Tomorrow · ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+
+  if (calendarDiffDays === 0) {
+    return 'Today · ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
   }
-  if (diffDays === 1) {
+  if (calendarDiffDays === 1) {
+    if (diffSec < 86400) {
+      return 'Tomorrow · ' + deadline.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    }
     return 'Tomorrow'
   }
-  if (diffDays < 7) {
+  if (calendarDiffDays < 7) {
     return deadline.toLocaleDateString('en-US', { weekday: 'long' })
   }
-  if (diffDays < 30) {
+  if (calendarDiffDays < 30) {
     return deadline.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric'
     })
   }
-  if (diffDays < 365) {
+  if (calendarDiffDays < 365) {
     return deadline.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
@@ -190,7 +196,6 @@ async function remove() {
   <li v-else
       :id="'task-' + task.id"
       class="task-item flex items-start gap-[13px] py-5 px-3.5 border-b border-swoosh transition-colors last:border-b-0"
-      :class="{ 'opacity-40' : task.completed }"
       :draggable="!task.completed"
       @dragstart="emit('drag-start', task)"
       @dragover.prevent
@@ -208,7 +213,7 @@ async function remove() {
     </div>
 
     <!-- Task content: title, notes, deadline badge -->
-    <div @click="startEditing" class="flex-1 min-w-0 cursor-text">
+    <div @click="startEditing" class="flex-1 min-w-0 cursor-text" :class="{ 'opacity-40' : task.completed }">
       <div class="flex items-baseline gap-2 flex-wrap">
         <span
             class="text-[15.5px] font-bold text-swoosh-text leading-[1.45] break-words"
@@ -235,7 +240,6 @@ async function remove() {
           :is-completed="!!task.completed"
           :pinned="task.pinned"
           :has-deadline="!!task.deadline"
-          :has-priority="priorityIndex !== 0"
           :has-rating="task.rating > 0"
           @delete="remove"
           @edit="startEditing"

@@ -7,7 +7,18 @@ import { X } from 'lucide-vue-next'
 const tasksStore = useTasksStore()
 const weekOffset = ref(0)
 const selectedDayOffset = ref<number | null>(null)
-const now = new Date()
+const now = ref(new Date())
+let clockInterval: any
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+  clockInterval = setInterval(() => { now.value = new Date() }, 10000)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+  if (clockInterval) clearInterval(clockInterval)
+})
 
 const slideState = ref<'idle' | 'sliding-out' | 'sliding-in' | 'hidden'>('idle')
 const slideDir = ref(0)
@@ -19,16 +30,22 @@ function isSameDay(d1: Date, d2: Date) {
       d1.getDate() === d2.getDate()
 }
 
+function isTaskOverdue(task: Task) {
+  if (!task.deadline) return false
+  return now.value.getTime() >= new Date(task.deadline).getTime()
+}
+
 const weekDays = computed(() => {
   const days = []
   for (let i = 0; i < 7; i++) {
     const dayOffset = displayOffset.value * 7 + i
-    const d = new Date(now)
-    d.setDate(now.getDate() + dayOffset)
+    const d = new Date(now.value)
+    d.setDate(now.value.getDate() + dayOffset)
 
-    const isToday = isSameDay(d, now)
+    const isToday = isSameDay(d, now.value)
     const tasksForDay = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
     const count = tasksForDay.length
+    const hasOverdue = tasksForDay.some(t => isTaskOverdue(t))
 
     days.push({
       date: d,
@@ -36,6 +53,7 @@ const weekDays = computed(() => {
       num: d.getDate(),
       isToday,
       taskCount: count,
+      hasOverdue,
       dayOffset,
       tasks: tasksForDay
     })
@@ -45,10 +63,10 @@ const weekDays = computed(() => {
 
 const selectedDay = computed(() => {
   if (selectedDayOffset.value === null) return null
-  const d = new Date(now)
-  d.setDate(now.getDate() + selectedDayOffset.value)
+  const d = new Date(now.value)
+  d.setDate(now.value.getDate() + selectedDayOffset.value)
 
-  const isToday = isSameDay(d, now)
+  const isToday = isSameDay(d, now.value)
   const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]
   const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
@@ -125,10 +143,7 @@ const emit = defineEmits<{
   (e: 'jump-to-task', task: Task): void
 }>()
 
-async function changeWeek(dir: number) {
-  const next = weekOffset.value + dir
-  if (next < -1 || next > 1) return
-
+async function animateToOffset(next: number, dir: number) {
   slideDir.value = dir
   slideState.value = 'sliding-out'
   closeDayPanel()
@@ -148,16 +163,31 @@ async function changeWeek(dir: number) {
   slideState.value = 'idle'
 }
 
-function resetTimeline() {
-  if (weekOffset.value === 0) return
-  const dir = weekOffset.value > 0 ? -1 : 1
-  changeWeek(dir).then(() => {
-    weekOffset.value = 0
-    displayOffset.value = 0
-  })
+async function changeWeek(dir: number) {
+  const next = weekOffset.value + dir
+  if (next < -4 || next > 4) return
+
+  await animateToOffset(next, dir)
 }
 
-defineExpose({ resetTimeline })
+async function resetTimeline() {
+  if (weekOffset.value === 0) return
+  const dir = weekOffset.value > 0 ? -1 : 1
+  await animateToOffset(0, dir)
+}
+
+async function focusOffset(offset: number) {
+  const targetWeek = Math.floor(offset / 7)
+  const boundedWeek = Math.max(-4, Math.min(4, targetWeek))
+
+  if (boundedWeek !== weekOffset.value) {
+    const dir = boundedWeek > weekOffset.value ? 1 : -1
+    await animateToOffset(boundedWeek, dir)
+  }
+  selectedDayOffset.value = offset
+}
+
+defineExpose({ resetTimeline, focusOffset })
 
 function handleKeyDown(e: KeyboardEvent) {
   if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
@@ -167,11 +197,11 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeyDown)
+  // handled above
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeyDown)
+  // handled above
 })
 </script>
 
@@ -208,14 +238,15 @@ onUnmounted(() => {
           <div v-if="day.taskCount > 0"
                class="day-count min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1 border border-swoosh-border-hover bg-swoosh-surface-raised"
                :class="{ 
-               'text-[#7090f0] border-[#648cff]/35 bg-[#648cff]/10 today-border-pulse': day.isToday,
-               'text-swoosh-text-muted': !day.isToday && day.taskCount < 4,
-               'text-swoosh-high border-swoosh-high/30 bg-swoosh-high/10': !day.isToday && day.taskCount >= 4
+               'overdue-timeline-count': day.hasOverdue,
+               'text-[#7090f0] border-[#648cff]/35 bg-[#648cff]/10 today-border-pulse': day.isToday && !day.hasOverdue,
+               'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
+               'text-swoosh-high border-swoosh-high/30 bg-swoosh-high/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
              }"
           >
             {{ day.taskCount }}
           </div>
-          <div v-else class="text-swoosh-text-faint text-[10px]">·</div>
+          <div v-else class="text-swoosh-text-faint text-[10px] h-5 flex items-center justify-center">·</div>
         </div>
       </div>
     </div>
@@ -238,8 +269,8 @@ onUnmounted(() => {
                 @click="jumpToTask(task)"
             >
               <div class="w-[7px] h-[7px] rotate-45 rounded-[1px] shrink-0" :class="getPriorityClass(task)"></div>
-              <span class="flex-1 text-[13.5px] font-medium text-swoosh-text group-hover:text-swoosh-text">{{ task.title }}</span>
-              <span class="font-mono text-[11px] text-swoosh-text-faint">{{ formatTime(task.deadline) }}</span>
+              <span class="flex-1 text-[13.5px] font-medium" :class="isTaskOverdue(task) ? 'text-swoosh-danger' : 'text-swoosh-text group-hover:text-swoosh-text'">{{ task.title }}</span>
+              <span class="font-mono text-[11px]" :class="isTaskOverdue(task) ? 'text-swoosh-danger' : 'text-swoosh-text-faint'">{{ formatTime(task.deadline) }}</span>
             </div>
           </template>
           <div v-else class="py-4 px-3.5 text-[13px] text-swoosh-text-faint font-mono">No tasks due this day</div>
@@ -274,6 +305,12 @@ onUnmounted(() => {
 
 .day-cell.today-selected {
   outline-color: rgba(100, 140, 255, 0.5);
+}
+
+.overdue-timeline-count {
+  color: #ee4444;
+  background-color: rgba(210, 50, 50, 0.12);
+  border-color: rgba(210, 50, 50, 0.38);
 }
 
 .day-panel-wrap {

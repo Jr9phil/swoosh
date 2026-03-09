@@ -25,7 +25,7 @@ function syncOverdueAnimations() {
   const todayPhase = -(performance.now() % 2400)
 
   document.querySelectorAll(
-      '.overdue-dot, .badge.overdue, .overdue-banner, .overdue-banner-dot, .today-dot, .today-border-pulse'
+      '.overdue-dot, .badge.overdue, .overdue-banner, .overdue-banner-dot, .today-dot, .today-border-pulse, .overdue-timeline-count'
   ).forEach(el => {
     if (!(el instanceof HTMLElement)) return
 
@@ -34,7 +34,7 @@ function syncOverdueAnimations() {
       anim = `overdueGlow 1.1s ease-in-out ${phase}ms infinite`
     } else if (el.classList.contains('badge') && el.classList.contains('overdue')) {
       anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
-    } else if (el.classList.contains('overdue-banner')) {
+    } else if (el.classList.contains('overdue-banner') || el.classList.contains('overdue-timeline-count')) {
       anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
     } else if (el.classList.contains('today-dot')) {
       anim = `todayPulse 2.4s ease-in-out ${todayPhase}ms infinite`
@@ -42,9 +42,7 @@ function syncOverdueAnimations() {
       anim = `todayBorderPulse 2.4s ease-in-out ${todayPhase}ms infinite`
     }
 
-    if (anim) {
-      el.style.removeProperty('animation')
-      void el.offsetWidth // force reflow to restart animation
+    if (anim && el.style.animation === '') {
       el.style.setProperty('animation', anim)
     }
   })
@@ -149,14 +147,25 @@ function togglePriority(val: number | string) {
 }
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
+let syncInterval: any
+let observer: MutationObserver | null = null
 onMounted(async () => {
   try {
     await tasksStore.fetchTasks()
     nextTick(syncOverdueAnimations)
+    syncInterval = setInterval(syncOverdueAnimations, 1000)
+
+    observer = new MutationObserver(() => syncOverdueAnimations())
+    observer.observe(document.body, { childList: true, subtree: true })
   } catch {
     auth.logout()
     router.push('/login')
   }
+})
+
+onUnmounted(() => {
+  if (syncInterval) clearInterval(syncInterval)
+  if (observer) observer.disconnect()
 })
 
 // ── Jump to overdue ──────────────────────────────────────────────────────────
@@ -174,6 +183,15 @@ function jumpToOverdue() {
 
   const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline))
   if (firstOverdue) {
+    // 1. Focus the timeline on this task's day
+    const d = new Date(firstOverdue.deadline!)
+    const today = new Date()
+    today.setHours(0,0,0,0)
+    d.setHours(0,0,0,0)
+    const offset = Math.round((d.getTime() - today.getTime()) / 86400000)
+    taskTimeline.value?.focusOffset(offset)
+
+    // 2. Jump to the task in the list
     nextTick(() => {
       const el = document.getElementById('task-' + firstOverdue.id)
       if (el) {
