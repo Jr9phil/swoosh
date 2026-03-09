@@ -393,6 +393,7 @@ async function moveToTop() {
             :priority="editedPriority"
             interactive
             @update:rating="editedRating = $event"
+            class="ml-[7px]"
         />
       </div>
 
