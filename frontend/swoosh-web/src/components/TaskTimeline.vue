@@ -72,7 +72,14 @@ const selectedDay = computed(() => {
   const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
 
   const tasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
-      .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
+      .sort((a, b) => {
+        const timeA = new Date(a.deadline!).getTime()
+        const timeB = new Date(b.deadline!).getTime()
+        if (timeA !== timeB) return timeA - timeB
+
+        if (b.priority !== a.priority) return b.priority - a.priority
+        return b.rating - a.rating
+      })
 
   return {
     label,
