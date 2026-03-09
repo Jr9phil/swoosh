@@ -417,3 +417,24 @@ async function moveToTop() {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Ensure date/time input icons (calendar/clock) adapt to dark theme */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+/* Fallback/Enhancement for WebKit browsers to ensure icons are visible */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+</style>

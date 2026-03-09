@@ -92,6 +92,7 @@
 ───────────────────────────────────────────────────────── */
 @layer base {
     body {
+        color-scheme: dark;
         background: var(--color-swoosh-bg);
         color: var(--color-swoosh-text);
         font-family: var(--font-sans);
