@@ -196,7 +196,6 @@ async function remove() {
   <li v-else
       :id="'task-' + task.id"
       class="task-item flex items-start gap-[13px] py-5 px-3.5 border-b border-swoosh transition-colors last:border-b-0"
-      :class="{ 'opacity-40' : task.completed }"
       :draggable="!task.completed"
       @dragstart="emit('drag-start', task)"
       @dragover.prevent
@@ -214,7 +213,7 @@ async function remove() {
     </div>
 
     <!-- Task content: title, notes, deadline badge -->
-    <div @click="startEditing" class="flex-1 min-w-0 cursor-text">
+    <div @click="startEditing" class="flex-1 min-w-0 cursor-text" :class="{ 'opacity-40' : task.completed }">
       <div class="flex items-baseline gap-2 flex-wrap">
         <span
             class="text-[15.5px] font-bold text-swoosh-text leading-[1.45] break-words"
