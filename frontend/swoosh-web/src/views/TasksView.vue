@@ -11,8 +11,9 @@ import { PRIORITIES } from '../types/priority'
 import { useRouter } from 'vue-router'
 import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
+import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
-import { Plus, Pin, X } from 'lucide-vue-next'
+import { Plus, Pin, X, ListPlus, CheckCircle } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
@@ -95,6 +96,9 @@ const completedTasks = computed(() =>
 const overdueCount = computed(() =>
     tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
 )
+
+const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
+const isEverythingCompleted = computed(() => tasksStore.tasks.length > 0 && incompleteTasks.value.length === 0 && pinnedTasks.value.length === 0)
 
 // ── Date helpers ────────────────────────────────────────────────────────────
 function isSameDay(d1: Date, d2: Date) {
@@ -271,10 +275,46 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       </div>
 
       <!-- ── Timeline ── -->
-      <TaskTimeline ref="taskTimeline" @week-change="syncOverdueAnimations" @jump-to-task="handleJumpToTask" />
+      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @week-change="syncOverdueAnimations" @jump-to-task="handleJumpToTask" />
 
-      <!-- ── Pinned Section ── -->
-      <div v-if="pinnedTasks.length">
+      <!-- ── Loading State ── -->
+      <div v-if="tasksStore.loading" class="space-y-8">
+        <div>
+          <div class="section-label skeleton animate-pulse h-[34px] w-32 bg-white/5 rounded-sm mb-4"></div>
+          <div class="space-y-px">
+            <TaskSkeleton v-for="i in 3" :key="i" />
+          </div>
+        </div>
+        <div>
+          <div class="section-label skeleton animate-pulse h-[34px] w-40 bg-white/5 rounded-sm mb-4"></div>
+          <div class="space-y-px">
+            <TaskSkeleton v-for="i in 2" :key="i" />
+          </div>
+        </div>
+      </div>
+
+      <template v-else>
+        <!-- ── No tasks yet ── -->
+        <div v-if="isEverythingEmpty" class="flex flex-col items-center justify-center py-24 text-center">
+          <div class="w-[72px] h-[72px] rounded-full bg-white/5 flex items-center justify-center mb-6">
+            <ListPlus :size="32" stroke-width="1.5" class="text-swoosh-text-faint" />
+          </div>
+          <h3 class="text-[18px] font-bold text-swoosh-text mb-1">No tasks yet</h3>
+          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">Create a new task to get started </p>
+          <button class="btn bg-surface-raised border-[1.5px] border-swoosh-border-hover rounded-sm text-swoosh-text cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
+        </div>
+
+        <!-- ── All tasks completed ── -->
+        <div v-else-if="isEverythingCompleted" class="flex flex-col items-center justify-center py-16 text-center">
+          <div class="w-[72px] h-[72px] rounded-full bg-swoosh-low/5 flex items-center justify-center mb-6">
+            <CheckCircle :size="32" stroke-width="1.5" class="text-swoosh-low/40" />
+          </div>
+          <h3 class="text-[18px] font-bold text-swoosh-text mb-1">All tasks completed</h3>
+          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">You're all caught up for now</p>
+        </div>
+
+        <!-- ── Pinned Section ── -->
+        <div v-if="pinnedTasks.length">
         <div
             class="section-label pinned"
             :class="{ open: priorityExpanded.pinned }"
@@ -355,6 +395,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
           <TaskItem v-for="task in completedTasks" :key="task.id" :task="task" />
         </div>
       </div>
+    </template>
 
     </div>
 
