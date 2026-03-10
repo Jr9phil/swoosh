@@ -4,6 +4,10 @@ import { useTasksStore } from '../stores/tasks'
 import type { Task } from '../types/task'
 import { X } from 'lucide-vue-next'
 
+const props = defineProps<{
+  loading?: boolean
+}>()
+
 const tasksStore = useTasksStore()
 const weekOffset = ref(0)
 const selectedDayOffset = ref<number | null>(null)
@@ -216,6 +220,7 @@ onUnmounted(() => {
   <div class="timeline-wrapper mb-8">
     <div style="overflow: hidden; border-radius: 4px;">
       <div
+          v-if="!loading"
           class="grid grid-cols-7 gap-1 timeline-container transition-all duration-150"
           :class="{ 
           'opacity-0': slideState === 'sliding-out' || slideState === 'hidden',
@@ -254,6 +259,13 @@ onUnmounted(() => {
             {{ day.taskCount }}
           </div>
           <div v-else class="text-swoosh-text-faint text-[10px] h-5 flex items-center justify-center">·</div>
+        </div>
+      </div>
+      <div v-else class="grid grid-cols-7 gap-1">
+        <div v-for="i in 7" :key="i" class="flex flex-col items-center gap-[5px] pt-[11px] pb-[11px] px-[5px] rounded-sm bg-white/5 animate-pulse">
+          <div class="h-2 w-8 bg-white/10 rounded-full mb-1"></div>
+          <div class="h-6 w-6 bg-white/10 rounded-full"></div>
+          <div class="h-3 w-3 bg-white/10 rounded-full mt-1"></div>
         </div>
       </div>
     </div>
