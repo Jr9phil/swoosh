@@ -48,9 +48,6 @@
 
 /* ─────────────────────────────────────────────────────────
    Keyframes — outside all layers.
-   CSS animations referenced by JS-injected `animation`
-   properties must be in the global scope, not inside a
-   cascade layer, or they will not be found reliably.
 ───────────────────────────────────────────────────────── */
 @keyframes btnStamp {
     0%   { transform: scale(1); }
@@ -67,9 +64,9 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes overdueBadge {
-    0%   { border-color: rgba(210,50,50,.2);  box-shadow: none; }
-    50%  { border-color: rgba(255,80,80,.75); box-shadow: 0 0 6px rgba(238,68,68,.25); }
-    100% { border-color: rgba(210,50,50,.2);  box-shadow: none; }
+    0%   { background: rgba(238,68,68,0.05); border-color: rgba(210,50,50,.2);  box-shadow: none; }
+    50%  { background: rgba(238,68,68,0.15); border-color: rgba(255,80,80,.75); box-shadow: 0 0 8px rgba(238,68,68,.3); }
+    100% { background: rgba(238,68,68,0.05); border-color: rgba(210,50,50,.2);  box-shadow: none; }
 }
 @keyframes overdueGlow {
     0%   { filter: brightness(0.6) drop-shadow(0 0 0px #ee4444); transform: scale(1); }
@@ -115,9 +112,7 @@
     .check-pop { animation: checkPop .2s cubic-bezier(.34,1.56,.64,1) both; }
     .fade-up   { animation: fadeUp .18s ease both; }
 
-    /* ── Section body — animated collapse via CSS grid trick ──
-       overflow is NOT set permanently — it would clip dropdown menus.
-       .is-animating adds it only for the ~220ms transition duration. */
+    /* ── Section body — animated collapse via CSS grid trick ── */
     .section-body {
         display: grid;
         grid-template-rows: 1fr;
@@ -175,10 +170,7 @@
     .section-label.low    .section-count { background: var(--color-swoosh-low); }
     .section-label.none   .section-count { background: var(--color-swoosh-text-muted); }
 
-    /* ── Section toggle +/− character
-       FIX: previous implementation used ::before + ::after bar geometry
-       to animate a graphic cross, which looked wrong during transition.
-       The mockup uses plain text characters — simple and clean. ── */
+    /* ── Section toggle +/− character ── */
     .section-toggle {
         font-family: var(--font-mono);
         font-size: 16px; font-weight: 400;
@@ -212,16 +204,10 @@
     .task-actions:focus-within { opacity: 1; }
     /* Elevate the row above siblings within the same group */
     li:has(.task-actions:focus-within) { position: relative; z-index: 10; }
-    /* Elevate the entire task-group above subsequent sections when a dropdown
-       is open — the dropdown escapes the group's bounds and would otherwise
-       be painted over by the next section which is later in the DOM */
     .task-group:has(.task-actions:focus-within) { position: relative; z-index: 50; }
     @media (max-width: 480px) { .task-actions { opacity: 1; } }
 
-    /* ── Task item hover background
-       Tailwind v4 does not auto-generate hover: variants for classes defined
-       inside @layer utilities, so hover:bg-surface on the <li> never fires.
-       This explicit rule replicates the mockup's .task-item:hover style. ── */
+    /* ── Task item hover background ── */
     li.task-item:hover {
         background: var(--color-swoosh-surface);
         border-radius: var(--radius-r-sm);
@@ -231,13 +217,11 @@
     .overdue-dot {
         width: 7px; height: 7px; border-radius: 99px;
         background: #ee4444; flex-shrink: 0; transition: opacity .15s;
+        opacity: 1;
     }
     .overdue-dot.left  { margin-left: 2px; }
     .overdue-dot.right { margin-left: 0; }
-
-    /* FIX: today dots appear only in the RIGHT column (when section is collapsed).
-       The mockup does not show a today dot on the left/when-expanded side.
-       Template updated to match — only renders today-dot in the right slot. */
+    
     .today-dot {
         width: 6px; height: 6px; border-radius: 99px;
         background: #7898ff; flex-shrink: 0; transition: opacity .15s;
@@ -298,20 +282,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────
-   Rating diamonds — intentionally OUTSIDE @layer utilities.
-   CLASS NAME: .task-rating (NOT .rating).
-   DaisyUI ships a .rating component that applies opacity:0.2
-   to all children when no radio input is checked. Any div
-   inside a .rating wrapper gets faded out by daisyUI's CSS
-   regardless of inline styles. Renaming avoids the collision.
-
-   In Tailwind v4, styles inside @layer utilities participate
-   in the cascade layer system. Any unlayered CSS (including
-   Tailwind's own generated utilities on parent elements) has
-   higher implicit priority and can silently override layered
-   styles. Moving diamond styles out of the layer gives them
-   "unlayered" (highest) cascade priority, so their fill
-   colors are never overridden.
+   Rating diamonds
 ───────────────────────────────────────────────────────── */
 .task-rating {
     display: flex;
@@ -320,11 +291,6 @@
     align-items: center;
 }
 
-/* Diamond shape geometry only — colors applied via inline style in TaskRating.vue.
-   Tailwind v4 purges rules for class names that only appear as dynamic string
-   expressions (e.g. `'filled ' + priorityClass`), so color rules driven by
-   class names are silently dropped from the output bundle. Inline styles are
-   immune to purging. */
 .diamond {
     width: 8px; height: 8px;
     transform: rotate(45deg); border-radius: 1px;
