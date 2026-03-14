@@ -41,8 +41,9 @@ builder.Services.AddHostedService<ReencryptionService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend",
-        p => p.SetIsOriginAllowed(origin => 
-                origin.StartsWith("https://swoosh-demo"))
+        p => p.SetIsOriginAllowed(origin =>
+                origin.StartsWith("https://swoosh-demo") ||
+                (builder.Environment.IsDevelopment() && origin.StartsWith("http://localhost")))
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
