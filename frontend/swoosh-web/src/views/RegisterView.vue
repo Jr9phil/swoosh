@@ -89,27 +89,27 @@ function focusConfirmPassword() {
       </header>
 
       <form class="flex flex-col gap-4" @submit.prevent="submit">
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Email</label>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
           <input type="email" class="swoosh-input" placeholder="Enter your email" required v-model="email" />
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Password</label>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
           <div class="relative">
             <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Min 8 characters" required v-model="password" minlength="8" />
-            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
+            <button type="button" class="pw-toggle" @click="showPassword = !showPassword">
               <Eye v-if="!showPassword" :size="18" />
               <EyeOff v-else :size="18" />
             </button>
           </div>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Confirm Password</label>
+        <div class="auth-field">
+          <label class="auth-label">Confirm Password</label>
           <div class="relative">
             <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Confirm password" required v-model="confirmPassword" :class="{ 'border-error': passwordMismatch }" />
-            <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
+            <button type="button" class="pw-toggle" @click="showPassword = !showPassword">
               <Eye v-if="!showPassword" :size="18" />
               <EyeOff v-else :size="18" />
             </button>
@@ -121,7 +121,7 @@ function focusConfirmPassword() {
           {{ error }}
         </div>
 
-        <button type="submit" class="w-full bg-base-content text-base-100 py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading || passwordMismatch || !fieldsEntered">
+        <button type="submit" class="auth-submit-btn rounded-sm mt-2" :disabled="loading || passwordMismatch || !fieldsEntered">
           {{ loading ? 'Creating account...' : 'Create Account' }}
         </button>
 

@@ -218,7 +218,7 @@ onUnmounted(() => {
 
 <template>
   <div class="timeline-wrapper mb-8">
-    <div style="overflow: hidden; border-radius: 4px;">
+    <div class="timeline-clip">
       <div
           v-if="!loading"
           class="grid grid-cols-7 gap-1 timeline-container transition-all duration-150"
@@ -301,6 +301,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.timeline-clip {
+  overflow: hidden;
+  border-radius: 4px;
+}
+
 .timeline-container {
   user-select: none;
 }
