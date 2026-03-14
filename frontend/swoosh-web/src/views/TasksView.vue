@@ -13,7 +13,7 @@ import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
-import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
+import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
@@ -210,7 +210,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       <!-- ── Header ── -->
       <header class="flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
         <button
-            class="w-[38px] h-[38px] bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer flex items-center justify-center shrink-0 transition-all hover:border-base-content hover:-translate-y-px active:translate-y-px active:scale-95"
+            class="icon-btn rounded-sm"
             @click="openModal"
         >
           <Plus :size="18" stroke-width="2.5" />
@@ -257,21 +257,21 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       <template v-else>
         <!-- ── No tasks yet ── -->
         <div v-if="isEverythingEmpty" class="flex flex-col items-center justify-center py-24 text-center">
-          <div class="w-[72px] h-[72px] rounded-full bg-white/5 flex items-center justify-center mb-6">
+          <div class="empty-state-icon bg-white/5">
             <ListPlus :size="32" stroke-width="1.5" class="text-swoosh-text-faint" />
           </div>
-          <h3 class="text-[18px] font-bold text-base-content mb-1">No tasks yet</h3>
-          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">Create a new task to get started </p>
+          <h3 class="empty-state-title">No tasks yet</h3>
+          <p class="empty-state-text">Create a new task to get started</p>
           <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
         </div>
 
         <!-- ── All tasks completed ── -->
         <div v-else-if="isEverythingCompleted" class="flex flex-col items-center justify-center py-16 text-center">
-          <div class="w-[72px] h-[72px] rounded-full bg-success/5 flex items-center justify-center mb-6">
+          <div class="empty-state-icon bg-success/5">
             <CheckCircle :size="32" stroke-width="1.5" class="text-success/40" />
           </div>
-          <h3 class="text-[18px] font-bold text-base-content mb-1">All tasks completed</h3>
-          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">You're all caught up for now</p>
+          <h3 class="empty-state-title">All tasks completed</h3>
+          <p class="empty-state-text">You're all caught up for now</p>
         </div>
 
         <!-- ── Pinned Section ── -->
@@ -290,8 +290,6 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
           <div class="section-label-right">
             <!-- Right-column indicators: shown only when COLLAPSED -->
             <span v-if="hasOverdueInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
-            <!-- FIX: today dot only appears in right column (when collapsed).
-                 The mockup never shows a today dot on the left/expanded side. -->
             <span v-else-if="hasTodayInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:today="'dot'" class="today-dot"></span>
             <span class="section-count">{{ pinnedTasks.length }}</span>
             <span class="section-toggle"></span>
@@ -323,7 +321,6 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
           <div class="section-label-right">
             <!-- Right-column indicators: shown only when COLLAPSED -->
             <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
-            <!-- FIX: today dot only in right/collapsed position -->
             <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:today="'dot'" class="today-dot"></span>
             <span class="section-count">{{ group.tasks.length }}</span>
             <span class="section-toggle"></span>
@@ -347,9 +344,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             :class="{ open: completedExpanded }"
             @click="completedExpanded = !completedExpanded"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+          <ChevronRight :size="13" stroke-width="2.5" />
           Completed ({{ completedTasks.length }})
         </div>
         <div v-if="completedExpanded" class="task-group mt-1">
@@ -366,7 +361,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
         <!-- Modal header: 16px top, 20px sides, 14px bottom — matches mockup -->
         <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh">
           <div class="flex items-center gap-2 font-mono text-[12px] tracking-[0.10em] uppercase text-swoosh-text-muted">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <CheckSquare :size="15" stroke-width="2" />
             New Task
           </div>
           <button

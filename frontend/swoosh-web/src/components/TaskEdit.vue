@@ -294,12 +294,8 @@ async function moveToTop() {
         </div>
         <input
             type="text"
-            :class="[
-              'w-full bg-base-100 border border-swoosh-border rounded-sm text-base-content font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors placeholder:text-swoosh-text-faint',
-              isEdit
-                ? 'py-[9px] px-3 text-[15px]'
-                : 'py-[10px] px-[13px] text-[18px]'
-            ]"
+            class="task-edit-input rounded-sm w-full text-base-content font-bold"
+            :class="isEdit ? 'py-[9px] px-3 text-[15px]' : 'py-[10px] px-[13px] text-[18px]'"
             maxlength="100"
             placeholder="Task title"
             v-model="editedTitle"
@@ -312,12 +308,8 @@ async function moveToTop() {
 
       <!-- Notes Textarea -->
       <textarea
-          :class="[
-            'w-full bg-base-100 border border-swoosh-border rounded-sm text-swoosh-text-muted focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors placeholder:text-swoosh-text-faint resize-none leading-relaxed',
-            isEdit
-              ? 'py-[9px] px-3 text-[14px] min-h-[64px]'
-              : 'py-[10px] px-[13px] text-[14.5px] min-h-[80px]'
-          ]"
+          class="task-edit-input rounded-sm w-full text-swoosh-text-muted resize-none leading-relaxed"
+          :class="isEdit ? 'py-[9px] px-3 text-[14px] min-h-[64px]' : 'py-[10px] px-[13px] text-[14.5px] min-h-[80px]'"
           placeholder="Notes (optional)"
           maxlength="500"
           v-model="editedNotes"
@@ -330,19 +322,15 @@ async function moveToTop() {
         <div class="flex gap-2">
           <input
               type="date"
-              :class="[
-                'flex-1 bg-base-100 border border-swoosh-border rounded-sm text-base-content focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors font-mono',
-                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
-              ]"
+              class="task-edit-input rounded-sm flex-1 text-base-content font-mono"
+              :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
               v-model="editedDate"
               :disabled="task?.completed"
           />
           <input
               type="time"
-              :class="[
-                'flex-1 bg-base-100 border border-swoosh-border rounded-sm text-base-content focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors font-mono',
-                isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
-              ]"
+              class="task-edit-input rounded-sm flex-1 text-base-content font-mono"
+              :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
               v-model="editedTime"
               :disabled="task?.completed"
           />

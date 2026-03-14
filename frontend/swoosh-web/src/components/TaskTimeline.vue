@@ -218,7 +218,7 @@ onUnmounted(() => {
 
 <template>
   <div class="timeline-wrapper mb-8">
-    <div style="overflow: hidden; border-radius: 4px;">
+    <div class="timeline-clip">
       <div
           v-if="!loading"
           class="grid grid-cols-7 gap-1 timeline-container transition-all duration-150"
@@ -236,7 +236,7 @@ onUnmounted(() => {
         <div
             v-for="day in weekDays"
             :key="day.date.getTime()"
-            class="day-cell flex flex-col items-center gap-[5px] pt-[11px] pb-[11px] px-[5px] rounded-sm cursor-pointer"
+            class="day-cell"
             :class="{ 
             'bg-base-200': day.isToday,
             'selected': selectedDayOffset === day.dayOffset,
@@ -263,7 +263,7 @@ onUnmounted(() => {
         </div>
       </div>
       <div v-else class="grid grid-cols-7 gap-1">
-        <div v-for="i in 7" :key="i" class="flex flex-col items-center gap-[5px] pt-[11px] pb-[11px] px-[5px] rounded-sm bg-white/5 animate-pulse">
+        <div v-for="i in 7" :key="i" class="day-cell-skeleton bg-white/5 animate-pulse">
           <div class="h-2 w-8 bg-white/10 rounded-full mb-1"></div>
           <div class="h-6 w-6 bg-white/10 rounded-full"></div>
           <div class="h-3 w-3 bg-white/10 rounded-full mt-1"></div>
@@ -301,15 +301,30 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.timeline-clip {
+  overflow: hidden;
+  border-radius: 4px;
+}
+
 .timeline-container {
   user-select: none;
 }
 
+.day-cell,
+.day-cell-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 5px;
+  border-radius: 2px;
+}
+
 .day-cell {
-  /* Override Tailwind's transition-colors — it includes outline-color, which
-     causes a flash when .selected adds an outline: the width snaps to 1.5px
-     instantly while the color fades in from transparent. Only background-color
-     needs to transition here. */
+  cursor: pointer;
+  /* Only transition background-color — transition-colors would include outline-color,
+     causing a flash when .selected adds an outline: the width snaps to 1.5px
+     instantly while the color fades in from transparent. */
   transition: background-color 150ms;
 }
 

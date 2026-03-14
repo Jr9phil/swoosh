@@ -195,7 +195,7 @@ async function remove() {
   <!-- Display Mode -->
   <li v-else
       :id="'task-' + task.id"
-      class="task-item flex items-start gap-[13px] py-5 px-3.5 border-b border-swoosh transition-colors last:border-b-0"
+      class="task-item"
       :draggable="!task.completed"
       @dragstart="emit('drag-start', task)"
       @dragover.prevent
