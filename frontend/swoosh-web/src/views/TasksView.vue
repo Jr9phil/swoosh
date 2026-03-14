@@ -13,7 +13,7 @@ import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
-import { Plus, Pin, X, ListPlus, CheckCircle } from 'lucide-vue-next'
+import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
@@ -210,12 +210,12 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       <!-- ── Header ── -->
       <header class="flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
         <button
-            class="w-[38px] h-[38px] bg-surface-raised border-[1.5px] border-swoosh-border-hover rounded-sm text-swoosh-text cursor-pointer flex items-center justify-center shrink-0 transition-all hover:border-swoosh-text hover:-translate-y-px active:translate-y-px active:scale-95"
+            class="w-[38px] h-[38px] bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer flex items-center justify-center shrink-0 transition-all hover:border-base-content hover:-translate-y-px active:translate-y-px active:scale-95"
             @click="openModal"
         >
           <Plus :size="18" stroke-width="2.5" />
         </button>
-        <span class="text-[22px] font-extrabold tracking-[-0.01em] text-swoosh-text flex-1">My Tasks</span>
+        <span class="text-[22px] font-extrabold tracking-[-0.01em] text-base-content flex-1">My Tasks</span>
         <!-- Clicking the date label resets the timeline to the current week -->
         <div
             class="font-mono text-xs font-bold text-swoosh-text-muted tracking-[0.04em] whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
@@ -231,7 +231,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
         <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
         <button class="overdue-banner-action" @click="jumpToOverdue">
           View
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
+          <ChevronRight :size="12"/>
         </button>
       </div>
 
@@ -260,17 +260,17 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
           <div class="w-[72px] h-[72px] rounded-full bg-white/5 flex items-center justify-center mb-6">
             <ListPlus :size="32" stroke-width="1.5" class="text-swoosh-text-faint" />
           </div>
-          <h3 class="text-[18px] font-bold text-swoosh-text mb-1">No tasks yet</h3>
+          <h3 class="text-[18px] font-bold text-base-content mb-1">No tasks yet</h3>
           <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">Create a new task to get started </p>
-          <button class="btn bg-surface-raised border-[1.5px] border-swoosh-border-hover rounded-sm text-swoosh-text cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
+          <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
         </div>
 
         <!-- ── All tasks completed ── -->
         <div v-else-if="isEverythingCompleted" class="flex flex-col items-center justify-center py-16 text-center">
-          <div class="w-[72px] h-[72px] rounded-full bg-swoosh-low/5 flex items-center justify-center mb-6">
-            <CheckCircle :size="32" stroke-width="1.5" class="text-swoosh-low/40" />
+          <div class="w-[72px] h-[72px] rounded-full bg-success/5 flex items-center justify-center mb-6">
+            <CheckCircle :size="32" stroke-width="1.5" class="text-success/40" />
           </div>
-          <h3 class="text-[18px] font-bold text-swoosh-text mb-1">All tasks completed</h3>
+          <h3 class="text-[18px] font-bold text-base-content mb-1">All tasks completed</h3>
           <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">You're all caught up for now</p>
         </div>
 
@@ -362,7 +362,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
 
     <!-- ── Create Task Modal ── -->
     <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
-      <div class="modal-box bg-swoosh-surface border border-swoosh-border-hover p-0 max-w-[520px] rounded-sm overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
+      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] rounded-sm overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
         <!-- Modal header: 16px top, 20px sides, 14px bottom — matches mockup -->
         <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh">
           <div class="flex items-center gap-2 font-mono text-[12px] tracking-[0.10em] uppercase text-swoosh-text-muted">

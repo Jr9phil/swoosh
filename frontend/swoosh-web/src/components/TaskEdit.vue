@@ -279,7 +279,7 @@ async function moveToTop() {
       ref="editContainer"
       :class="[
       isEdit
-        ? 'fade-up bg-surface-raised border-b border-swoosh px-3.5 py-4'
+        ? 'fade-up bg-base-300 border-b border-swoosh px-3.5 py-4'
         : 'flex flex-col'
     ]"
       @click.stop
@@ -289,13 +289,13 @@ async function moveToTop() {
 
       <!-- Title Input -->
       <div class="relative">
-        <div v-if="(showValidation || isEdit) && !editedTitle.trim()" class="absolute left-0 -top-4 text-[10px] text-swoosh-danger font-bold uppercase px-1">
+        <div v-if="(showValidation || isEdit) && !editedTitle.trim()" class="absolute left-0 -top-4 text-[10px] text-error font-bold uppercase px-1">
           Title is required
         </div>
         <input
             type="text"
             :class="[
-              'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint',
+              'w-full bg-base-100 border border-swoosh-border rounded-sm text-base-content font-bold focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors placeholder:text-swoosh-text-faint',
               isEdit
                 ? 'py-[9px] px-3 text-[15px]'
                 : 'py-[10px] px-[13px] text-[18px]'
@@ -313,7 +313,7 @@ async function moveToTop() {
       <!-- Notes Textarea -->
       <textarea
           :class="[
-            'w-full bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text-muted focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors placeholder:text-swoosh-text-faint resize-none leading-relaxed',
+            'w-full bg-base-100 border border-swoosh-border rounded-sm text-swoosh-text-muted focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors placeholder:text-swoosh-text-faint resize-none leading-relaxed',
             isEdit
               ? 'py-[9px] px-3 text-[14px] min-h-[64px]'
               : 'py-[10px] px-[13px] text-[14.5px] min-h-[80px]'
@@ -331,7 +331,7 @@ async function moveToTop() {
           <input
               type="date"
               :class="[
-                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                'flex-1 bg-base-100 border border-swoosh-border rounded-sm text-base-content focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors font-mono',
                 isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
               ]"
               v-model="editedDate"
@@ -340,7 +340,7 @@ async function moveToTop() {
           <input
               type="time"
               :class="[
-                'flex-1 bg-swoosh-surface-input border border-swoosh-border rounded-sm text-swoosh-text focus:outline-none focus:border-swoosh-border-hover focus:bg-surface transition-colors font-mono',
+                'flex-1 bg-base-100 border border-swoosh-border rounded-sm text-base-content focus:outline-none focus:border-swoosh-border-hover focus:bg-base-200 transition-colors font-mono',
                 isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'
               ]"
               v-model="editedTime"
@@ -381,7 +381,7 @@ async function moveToTop() {
             @click="editedPinned = !editedPinned"
             class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
             :class="editedPinned
-              ? 'text-swoosh-pin border-swoosh-pin/25'
+              ? 'text-secondary border-secondary/25'
               : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
         >
           <Pin :size="14" :fill="editedPinned ? 'currentColor' : 'none'" />
@@ -407,7 +407,7 @@ async function moveToTop() {
         </button>
         <button
             @click="finishEditing"
-            class="rounded-sm border border-swoosh-text-muted bg-transparent text-swoosh-text text-[14px] font-medium transition-colors hover:bg-surface-raised px-[18px] py-[7px] disabled:opacity-40"
+            class="rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40"
             :disabled="loading"
         >
           <span v-if="loading" class="loading loading-spinner loading-xs"></span>

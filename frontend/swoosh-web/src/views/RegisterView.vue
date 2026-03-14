@@ -84,7 +84,7 @@ function focusConfirmPassword() {
   <main class="flex-1 flex justify-center pt-20 px-5">
     <div class="w-full max-w-[360px]">
       <header class="mb-8 text-center">
-        <h1 class="text-[24px] font-extrabold tracking-tight text-swoosh-text">Join Swoosh</h1>
+        <h1 class="text-[24px] font-extrabold tracking-tight text-base-content">Join Swoosh</h1>
         <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-widest mt-1">Start organizing today</p>
       </header>
 
@@ -108,20 +108,20 @@ function focusConfirmPassword() {
         <div class="flex flex-col gap-1.5">
           <label class="text-[11px] font-bold font-mono tracking-widest uppercase text-swoosh-text-faint ml-1">Confirm Password</label>
           <div class="relative">
-            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Confirm password" required v-model="confirmPassword" :class="{ 'border-swoosh-danger': passwordMismatch }" />
+            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="Confirm password" required v-model="confirmPassword" :class="{ 'border-error': passwordMismatch }" />
             <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="showPassword = !showPassword">
               <Eye v-if="!showPassword" :size="18" />
               <EyeOff v-else :size="18" />
             </button>
           </div>
-          <span v-if="passwordMismatch" class="text-swoosh-danger text-[11px] ml-1">Passwords do not match</span>
+          <span v-if="passwordMismatch" class="text-error text-[11px] ml-1">Passwords do not match</span>
         </div>
 
-        <div v-if="error" class="text-swoosh-danger text-[13px] font-medium text-center mt-1">
+        <div v-if="error" class="text-error text-[13px] font-medium text-center mt-1">
           {{ error }}
         </div>
 
-        <button type="submit" class="w-full bg-swoosh-text text-swoosh-bg py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading || passwordMismatch || !fieldsEntered">
+        <button type="submit" class="w-full bg-base-content text-base-100 py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading || passwordMismatch || !fieldsEntered">
           {{ loading ? 'Creating account...' : 'Create Account' }}
         </button>
 

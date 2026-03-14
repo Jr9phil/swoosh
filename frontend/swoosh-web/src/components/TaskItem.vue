@@ -216,7 +216,7 @@ async function remove() {
     <div @click="startEditing" class="flex-1 min-w-0 cursor-text" :class="{ 'opacity-40' : task.completed }">
       <div class="flex items-baseline gap-2 flex-wrap">
         <span
-            class="text-[15.5px] font-bold text-swoosh-text leading-[1.45] break-words"
+            class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words"
             :class="{ 'line-through text-swoosh-text-muted' : task.completed }"
         >
           {{ task.title }}
