@@ -26,7 +26,7 @@ let clockInterval: ReturnType<typeof setInterval>
 // ── Computed task groups ────────────────────────────────────────────────────
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && (!t.pinned || isOverdue(t.deadline) || isDueToday(t.deadline)))
+        .filter(t => !t.completed && !t.pinned)
         .slice()
         .sort((a, b) => {
           const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
@@ -47,7 +47,7 @@ const tasksByPriority = computed(() =>
 
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline) && !isDueToday(t.deadline))
+        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline))
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
