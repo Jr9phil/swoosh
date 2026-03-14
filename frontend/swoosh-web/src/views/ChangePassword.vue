@@ -89,8 +89,8 @@ function focusConfirmNewPassword() {
   <main class="flex-1 flex justify-center pt-20 px-5">
     <div class="w-full max-w-[360px]">
       <header class="mb-8 text-center">
-        <h1 class="text-[24px] font-extrabold tracking-tight text-base-content">Security</h1>
-        <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-widest mt-1">Change your password</p>
+        <h1 class="auth-page-title">Security</h1>
+        <p class="auth-page-subtitle">Change your password</p>
       </header>
 
       <form class="flex flex-col gap-4" @submit.prevent="submit">

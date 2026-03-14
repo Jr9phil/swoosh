@@ -257,21 +257,21 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       <template v-else>
         <!-- ── No tasks yet ── -->
         <div v-if="isEverythingEmpty" class="flex flex-col items-center justify-center py-24 text-center">
-          <div class="w-[72px] h-[72px] rounded-full bg-white/5 flex items-center justify-center mb-6">
+          <div class="empty-state-icon bg-white/5">
             <ListPlus :size="32" stroke-width="1.5" class="text-swoosh-text-faint" />
           </div>
-          <h3 class="text-[18px] font-bold text-base-content mb-1">No tasks yet</h3>
-          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">Create a new task to get started </p>
+          <h3 class="empty-state-title">No tasks yet</h3>
+          <p class="empty-state-text">Create a new task to get started</p>
           <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
         </div>
 
         <!-- ── All tasks completed ── -->
         <div v-else-if="isEverythingCompleted" class="flex flex-col items-center justify-center py-16 text-center">
-          <div class="w-[72px] h-[72px] rounded-full bg-success/5 flex items-center justify-center mb-6">
+          <div class="empty-state-icon bg-success/5">
             <CheckCircle :size="32" stroke-width="1.5" class="text-success/40" />
           </div>
-          <h3 class="text-[18px] font-bold text-base-content mb-1">All tasks completed</h3>
-          <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-[0.1em]">You're all caught up for now</p>
+          <h3 class="empty-state-title">All tasks completed</h3>
+          <p class="empty-state-text">You're all caught up for now</p>
         </div>
 
         <!-- ── Pinned Section ── -->
