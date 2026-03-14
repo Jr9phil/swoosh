@@ -24,12 +24,13 @@
     /* Colors with no DaisyUI equivalent */
     --color-swoosh-text-muted: #a8acb8;
     --color-swoosh-text-faint: #6a6e7a;
-    --color-swoosh-border: rgba(255, 255, 255, 0.12);
-    --color-swoosh-border-hover: rgba(255, 255, 255, 0.22);
+    --color-swoosh-border: rgba(255, 255, 255, 0.16);
+    --color-swoosh-border-hover: rgba(255, 255, 255, 0.28);
     --color-swoosh-today: #648cff;
 
-    --radius-r: 4px;
-    --radius-r-sm: 3px;
+    --radius-r: 10px;
+    --radius-r-sm: 6px;
+    --radius-r-pill: 999px;
 }
 
 [data-theme="swoosh"] {
@@ -123,6 +124,7 @@
         grid-template-rows: 1fr;
         transition: grid-template-rows .22s ease, opacity .18s ease;
         opacity: 1;
+        padding: 2px 0 4px;
     }
     .section-body.collapsed {
         grid-template-rows: 0fr;
@@ -136,35 +138,47 @@
     /* ── Section labels ── */
     .section-label {
         display: flex; align-items: center; justify-content: space-between;
-        font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;
-        letter-spacing: 0.09em; text-transform: uppercase;
-        margin-top: 20px; margin-bottom: 8px;
-        opacity: 0.75; cursor: pointer; user-select: none;
+        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        margin-top: 28px; margin-bottom: 10px;
+        gap: 10px;
+        opacity: 0.85; cursor: pointer; user-select: none;
         transition: opacity .15s;
     }
+    /* Art deco flanking line — expands when section is collapsed */
+    .section-label::after {
+        content: '';
+        flex: 0; width: 0; opacity: 0; overflow: hidden;
+        height: 1px;
+        background: currentColor;
+        order: 2;
+        transition: opacity .15s, flex .15s;
+    }
+    .section-label:not(.open)::after { flex: 1; width: auto; opacity: 0.25; overflow: visible; }
     .section-label:hover { opacity: 1; }
-    .section-label svg   { width: 14px; height: 14px; flex-shrink: 0; }
+    .section-label svg   { width: 11px; height: 11px; flex-shrink: 0; }
 
-    .section-label.pinned { color: var(--color-secondary); opacity: 0.7; }
-    .section-label.high   { color: var(--color-warning);   opacity: 0.7; }
-    .section-label.med    { color: var(--color-info);      opacity: 0.7; }
-    .section-label.low    { color: var(--color-success);   opacity: 0.7; }
+    .section-label.pinned { color: var(--color-secondary); opacity: 0.8; }
+    .section-label.high   { color: var(--color-warning);   opacity: 0.8; }
+    .section-label.med    { color: var(--color-info);       opacity: 0.8; }
+    .section-label.low    { color: var(--color-success);    opacity: 0.8; }
     .section-label.none   { color: var(--color-swoosh-text-muted); }
     .section-label.pinned:hover,
     .section-label.high:hover,
     .section-label.med:hover,
     .section-label.low:hover { opacity: 1; }
 
-    .section-label-left  { display: flex; align-items: center; gap: 6px; }
-    .section-label-right { display: flex; align-items: center; gap: 7px; }
+    .section-label-left  { display: flex; align-items: center; gap: 6px; order: 1; }
+    .section-label-right { display: flex; align-items: center; gap: 7px; order: 3; min-width: 64px; justify-content: flex-end; flex-shrink: 0; }
 
     /* ── Section count pill — visible only when the section is collapsed ── */
     .section-count {
-        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        display: inline-flex; align-items: center;
+        font-family: var(--font-mono); font-size: 9px; font-weight: 700;
         opacity: 0; pointer-events: none;
         transition: opacity .15s;
-        border-radius: 99px; padding: 1px 7px;
-        color: var(--color-base-100); margin-right: 2px;
+        border-radius: 99px; padding: 2px 7px;
+        color: var(--color-base-100); letter-spacing: 0.04em;
     }
     .section-label:not(.open) .section-count { opacity: 1; }
     .section-label.pinned .section-count { background: var(--color-secondary); }
@@ -176,28 +190,44 @@
     /* ── Section toggle +/− character ── */
     .section-toggle {
         font-family: var(--font-mono);
-        font-size: 16px; font-weight: 400;
+        font-size: 14px; font-weight: 400;
         opacity: 0.45; flex-shrink: 0;
-        line-height: 1; width: 14px; text-align: center;
+        line-height: 1; width: 18px; text-align: center;
         transition: opacity .15s;
     }
     .section-label:hover .section-toggle { opacity: 0.7; }
     .section-label:not(.open) .section-toggle::before { content: '+'; }
     .section-label.open       .section-toggle::before { content: '−'; }
 
-    .section-divider { height: 1px; background: var(--color-swoosh-border); margin: 18px 0 14px; }
+    .section-divider {
+        height: 1px; background: var(--color-swoosh-border); margin: 28px 0 0;
+        position: relative;
+    }
+    /* Art deco diamond ornament */
+    .section-divider::after {
+        content: '◆';
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 8px; color: var(--color-swoosh-text-faint);
+        background: var(--color-base-100);
+        padding: 0 8px;
+        opacity: 0.5;
+    }
 
     /* ── Task groups — each priority level gets a coloured left accent ── */
     .task-group {
         border-radius: var(--radius-r);
-        overflow: visible; margin-bottom: 3px;
+        overflow: visible; margin-bottom: 0;
         animation: fadeUp .18s ease both;
         position: relative;
+        border: 1px solid var(--color-swoosh-border);
+        background: var(--color-base-200);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.3);
     }
-    .task-group.pinned { border-left: 4px solid color-mix(in srgb, var(--color-secondary) 80%, transparent); }
-    .task-group.high   { border-left: 4px solid color-mix(in srgb, var(--color-warning)   85%, transparent); }
-    .task-group.med    { border-left: 4px solid color-mix(in srgb, var(--color-info)       80%, transparent); }
-    .task-group.low    { border-left: 4px solid color-mix(in srgb, var(--color-success)    80%, transparent); }
+    .task-group.pinned { border-left: 4px solid rgba(144,112,192,0.9); }
+    .task-group.high   { border-left: 4px solid rgba(224,112,80,0.9); }
+    .task-group.med    { border-left: 4px solid rgba(96,144,208,0.9); }
+    .task-group.low    { border-left: 4px solid rgba(80,184,128,0.9); }
 
     /* ── Task action menu — hidden until row hover ── */
     .task-actions { opacity: 0; transition: opacity .15s; }
@@ -215,7 +245,7 @@
         display: flex;
         align-items: flex-start;
         gap: 13px;
-        padding-block: 20px;
+        padding-block: 16px;
         padding-inline: 14px;
         border-bottom: 1px solid var(--color-swoosh-border);
     }
@@ -224,10 +254,11 @@
 
     /* ── Task item hover background ── */
     li.task-item { transition: background-color 150ms; }
-    li.task-item:hover {
-        background: var(--color-base-200);
-        border-radius: var(--radius-r-sm);
-    }
+    li.task-item:hover { background: var(--color-base-300); }
+    /* Round hover bg to match the card corners without needing overflow:hidden */
+    li.task-item:first-child { border-radius: calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px) 0 0; }
+    li.task-item:last-child  { border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px); }
+    li.task-item:only-child  { border-radius: calc(var(--radius-r) - 1px); }
 
     /* ── Overdue / today dots on section labels ── */
     .overdue-dot {
@@ -246,9 +277,11 @@
     /* ── Overdue banner ── */
     .overdue-banner {
         display: flex; align-items: center; gap: 9px;
-        padding: 8px 12px; margin-bottom: 14px;
-        border-radius: var(--radius-r-sm); background: transparent;
-        border: 1.5px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+        padding: 9px 16px; margin-bottom: 18px;
+        border-radius: 9999px;
+        background: rgba(238,68,68,.06);
+        border: 1px solid rgba(238,68,68,.4);
+        box-shadow: 0 0 0 3px rgba(238,68,68,.08);
         cursor: default;
     }
     .overdue-banner-dot {
@@ -270,17 +303,17 @@
     .overdue-banner-action:hover { opacity: 1; }
 
     /* ── Deadline badges on task rows ── */
-    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+    .badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
     .badge {
         display: inline-flex; align-items: center; gap: 4px;
-        font-size: 12px; font-family: var(--font-mono);
-        padding: 3px 9px; border-radius: 4px;
+        font-size: 10px; font-family: var(--font-mono); font-weight: 700;
+        padding: 3px 10px; border-radius: 9999px;
         background: var(--color-base-300);
         border: 1px solid var(--color-swoosh-border-hover);
         color: var(--color-swoosh-text-muted);
-        font-weight: 500; line-height: 1;
+        text-transform: uppercase; letter-spacing: 0.07em;
     }
-    .badge svg { width: 11px; height: 11px; flex-shrink: 0; }
+    .badge svg { width: 10px; height: 10px; flex-shrink: 0; }
     .badge.overdue {
         background: color-mix(in srgb, var(--color-error) 12%, transparent);
         color: var(--color-error);
@@ -294,12 +327,13 @@
 
     /* ── Completed section header ── */
     .collapse-header {
-        display: flex; align-items: center; gap: 6px; padding: 8px 0; cursor: pointer;
-        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
-        color: var(--color-swoosh-text-muted); user-select: none;
-        text-transform: uppercase; font-weight: 600; transition: color .15s;
+        display: flex; align-items: center; gap: 6px; padding: 10px 0; cursor: pointer;
+        font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+        color: var(--color-swoosh-text-faint); user-select: none;
+        text-transform: uppercase; font-weight: 700; transition: color .15s;
     }
-    .collapse-header svg { width: 13px; height: 13px; transition: transform .2s; }
+    .collapse-header:hover { color: var(--color-swoosh-text-muted); }
+    .collapse-header svg { width: 11px; height: 11px; transition: transform .2s; }
     .collapse-header.open svg { transform: rotate(90deg); }
 
     .spacer { height: 18px; }
@@ -336,7 +370,7 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
    Checkbox
 ───────────────────────────────────────────────────────── */
 .swoosh-check {
-    width: 23px; height: 23px; border-radius: 6px;
+    width: 23px; height: 23px; border-radius: 9999px;
     border: 2.5px solid var(--color-swoosh-border-hover);
     appearance: none; cursor: pointer;
     background: transparent;
@@ -465,23 +499,25 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 .pw-toggle:hover { color: var(--color-swoosh-text-muted); }
 
 /* ─────────────────────────────────────────────────────────
-   Icon button (square, bordered)
+   Icon button (circle, bordered) — used for the + add button
 ───────────────────────────────────────────────────────── */
 .icon-btn {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
     background: var(--color-base-300);
-    border: 1.5px solid var(--color-swoosh-border-hover);
+    border: 2px solid var(--color-swoosh-border-hover);
     color: var(--color-base-content);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: border-color 0.15s, transform 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.03);
 }
-.icon-btn:hover  { border-color: var(--color-base-content); transform: translateY(-1px); }
-.icon-btn:active { transform: translateY(1px) scale(0.95); }
+.icon-btn:hover  { border-color: var(--color-base-content); box-shadow: 0 0 0 4px rgba(255,255,255,0.06); transform: translateY(-1px); }
+.icon-btn:active { transform: translateY(1px); }
 
 /* ─────────────────────────────────────────────────────────
    Task edit fields
@@ -497,3 +533,17 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
     background: var(--color-base-200);
 }
 .task-edit-input::placeholder { color: var(--color-swoosh-text-faint); }
+
+/* ─────────────────────────────────────────────────────────
+   Page header — art deco double-rule
+───────────────────────────────────────────────────────── */
+.page-header {
+    position: relative;
+}
+.page-header::after {
+    content: '';
+    position: absolute; left: 0; bottom: -4px;
+    width: 100%; height: 1px;
+    background: var(--color-swoosh-border);
+    opacity: 0.5;
+}

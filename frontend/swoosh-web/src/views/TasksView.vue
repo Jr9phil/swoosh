@@ -208,17 +208,17 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
     <div class="w-full max-w-[540px]">
 
       <!-- ── Header ── -->
-      <header class="flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
+      <header class="page-header flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
         <button
-            class="icon-btn rounded-sm"
+            class="icon-btn"
             @click="openModal"
         >
           <Plus :size="18" stroke-width="2.5" />
         </button>
-        <span class="text-[22px] font-extrabold tracking-[-0.01em] text-base-content flex-1">My Tasks</span>
+        <span class="text-[18px] font-bold tracking-[0.18em] uppercase text-base-content flex-1">My Tasks</span>
         <!-- Clicking the date label resets the timeline to the current week -->
         <div
-            class="font-mono text-xs font-bold text-swoosh-text-muted tracking-[0.04em] whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
+            class="font-mono text-[11px] font-bold text-swoosh-text-muted tracking-[0.10em] uppercase whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
             @click="() => taskTimeline?.resetTimeline()"
         >
           {{ formattedToday }}
@@ -357,16 +357,16 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
 
     <!-- ── Create Task Modal ── -->
     <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
-      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] rounded-sm overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
-        <!-- Modal header: 16px top, 20px sides, 14px bottom — matches mockup -->
-        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh">
-          <div class="flex items-center gap-2 font-mono text-[12px] tracking-[0.10em] uppercase text-swoosh-text-muted">
-            <CheckSquare :size="15" stroke-width="2" />
+      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
+        <!-- Modal header -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
+          <div class="flex items-center gap-2 font-mono text-[10px] tracking-[0.14em] uppercase text-swoosh-text-muted">
+            <CheckSquare :size="13" stroke-width="2" />
             New Task
           </div>
           <button
               @click="closeModal"
-              class="w-7 h-7 flex items-center justify-center rounded-sm text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
+              class="w-7 h-7 flex items-center justify-center rounded-[6px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
           >
             <X :size="15" stroke-width="2" />
           </button>

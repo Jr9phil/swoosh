@@ -237,18 +237,18 @@ onUnmounted(() => {
             v-for="day in weekDays"
             :key="day.date.getTime()"
             class="day-cell"
-            :class="{ 
-            'bg-base-200': day.isToday,
+            :class="{
+            'bg-base-200 !border-swoosh-border': day.isToday,
             'selected': selectedDayOffset === day.dayOffset,
             'today-selected': day.isToday && selectedDayOffset === day.dayOffset
           }"
             @click="toggleDay(day.dayOffset)"
         >
-          <span class="font-mono text-[10px] tracking-widest uppercase text-swoosh-text-muted">{{ day.name }}</span>
-          <span class="text-[23px] font-semibold leading-none" :class="day.isToday ? 'text-swoosh-text' : 'text-swoosh-text-muted'">{{ day.num }}</span>
+          <span class="font-mono text-[9px] tracking-[0.10em] uppercase" :class="day.isToday ? 'text-swoosh-text-muted' : 'text-swoosh-text-faint'">{{ day.name }}</span>
+          <span class="text-[24px] font-bold leading-none font-mono" :class="day.isToday ? 'text-base-content' : 'text-swoosh-text-faint'">{{ day.num }}</span>
 
           <div v-if="day.taskCount > 0"
-               class="day-count min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1 border border-swoosh-border-hover bg-base-300"
+               class="day-count min-w-[22px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold font-mono px-1.5 border border-swoosh-border-hover bg-base-300"
                :class="{ 
                'overdue-timeline-count': day.hasOverdue,
                'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
@@ -273,8 +273,8 @@ onUnmounted(() => {
 
     <!-- Day Panel -->
     <div class="day-panel-wrap" :class="{ 'open': selectedDayOffset !== null }">
-      <div class="day-panel mt-3 border border-swoosh-border-hover rounded-sm bg-base-200 overflow-hidden">
-        <div class="day-panel-header flex items-center justify-between py-2.5 px-3.5 border-b border-swoosh-border">
+      <div class="day-panel mt-3 border border-swoosh-border-hover rounded-[10px] bg-base-200 overflow-hidden shadow-[0_0_0_3px_rgba(255,255,255,0.03),0_8px_24px_rgba(0,0,0,0.4)]">
+        <div class="day-panel-header flex items-center justify-between py-2.5 px-3.5 border-b border-swoosh-border bg-base-300">
           <span class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase text-swoosh-text-muted">{{ selectedDay?.label }}</span>
           <button class="w-5 h-5 flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="closeDayPanel">
             <X :size="12" stroke-width="2.5" />
@@ -303,7 +303,7 @@ onUnmounted(() => {
 <style scoped>
 .timeline-clip {
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .timeline-container {
@@ -316,8 +316,9 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  padding: 11px 5px;
-  border-radius: 2px;
+  padding: 10px 4px;
+  border-radius: 6px;
+  border: 1px solid transparent;
 }
 
 .day-cell {
@@ -329,17 +330,16 @@ onUnmounted(() => {
 }
 
 .day-cell:hover {
-  background: var(--color-base-200);
+  background: var(--color-base-300);
 }
 
 .day-cell.selected {
   background: var(--color-base-300);
-  outline: 1.5px solid var(--color-swoosh-border-hover);
-  outline-offset: -1.5px;
+  border-color: var(--color-swoosh-border-hover);
 }
 
 .day-cell.today-selected {
-  outline-color: color-mix(in srgb, var(--color-swoosh-today) 50%, transparent);
+  border-color: color-mix(in srgb, var(--color-swoosh-today) 50%, transparent);
 }
 
 .overdue-timeline-count {

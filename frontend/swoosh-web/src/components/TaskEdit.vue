@@ -279,7 +279,7 @@ async function moveToTop() {
       ref="editContainer"
       :class="[
       isEdit
-        ? 'fade-up bg-base-300 border-b border-swoosh px-3.5 py-4'
+        ? 'fade-up bg-base-300 border-b border-swoosh px-3.5 py-4 rounded-[10px] my-1'
         : 'flex flex-col'
     ]"
       @click.stop
