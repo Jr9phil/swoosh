@@ -67,7 +67,7 @@ const activeMenuItems = computed(() => menuItems.value.filter(item => item.show)
 
 const baseItemClass = 'flex items-center gap-2.5 px-2 py-1.5 w-full text-left text-[13px] font-medium rounded-sm transition-colors'
 const defaultItemClass = `${baseItemClass} text-swoosh-text-muted hover:text-swoosh-text hover:bg-white/5`
-const dangerItemClass = `${baseItemClass} text-swoosh-danger hover:bg-swoosh-danger/10`
+const dangerItemClass = `${baseItemClass} text-error hover:bg-error/10`
 </script>
 
 <!-- Component Template: Dropdown menu for task actions -->
@@ -77,7 +77,7 @@ const dangerItemClass = `${baseItemClass} text-swoosh-danger hover:bg-swoosh-dan
     <button
         tabindex="0"
         role="button"
-        class="w-[28px] h-[28px] rounded-full flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-surface-raised transition-colors"
+        class="w-[28px] h-[28px] rounded-full flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-base-300 transition-colors"
     >
       <EllipsisVertical :size="18" fill="currentColor" />
     </button>
@@ -85,7 +85,7 @@ const dangerItemClass = `${baseItemClass} text-swoosh-danger hover:bg-swoosh-dan
     <!-- Dropdown content list -->
     <ul
         tabindex="0"
-        class="dropdown-content menu p-1.5 shadow-2xl bg-swoosh-surface-raised border border-swoosh-border-hover rounded-sm w-[180px] z-[100] gap-0.5"
+        class="dropdown-content menu p-1.5 shadow-2xl bg-base-300 border border-swoosh-border-hover rounded-sm w-[180px] z-[100] gap-0.5"
     >
       <div class="px-2 py-1.5 flex flex-col gap-0.5">
         <li v-for="item in activeMenuItems" :key="item.label">

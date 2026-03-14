@@ -14,11 +14,11 @@ const emit = defineEmits<{
 
 // Hard-coded colour values
 const COLORS = {
-  high:   '#e07050',
-  med:    '#6090d0',
-  low:    '#50b880',
-  accent: '#9070c0', // pinned
-  muted:  '#a8acb8', // no priority / interactive editor
+  high:   'var(--color-warning)',
+  med:    'var(--color-info)',
+  low:    'var(--color-success)',
+  accent: 'var(--color-secondary)',
+  muted:  'var(--color-swoosh-text-muted)',
   empty:  '#3a3d46',
 } as const
 

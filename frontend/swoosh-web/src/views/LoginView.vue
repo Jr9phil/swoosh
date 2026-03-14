@@ -65,7 +65,7 @@ function focusPassword() {
   <main class="flex-1 flex justify-center pt-20 px-5">
     <div class="w-full max-w-[360px]">
       <header class="mb-8 text-center">
-        <h1 class="text-[24px] font-extrabold tracking-tight text-swoosh-text">Swoosh</h1>
+        <h1 class="text-[24px] font-extrabold tracking-tight text-base-content">Swoosh</h1>
         <p class="text-[13px] text-swoosh-text-faint font-mono uppercase tracking-widest mt-1">Ultraminimalist Tasks</p>
       </header>
 
@@ -86,11 +86,11 @@ function focusPassword() {
           </div>
         </div>
 
-        <div v-if="error" class="text-swoosh-danger text-[13px] font-medium text-center mt-1">
+        <div v-if="error" class="text-error text-[13px] font-medium text-center mt-1">
           {{ error }}
         </div>
 
-        <button type="submit" class="w-full bg-swoosh-text text-swoosh-bg py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading">
+        <button type="submit" class="w-full bg-base-content text-base-100 py-3.5 rounded-sm font-extrabold text-[15px] mt-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50" :disabled="loading">
           {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
 

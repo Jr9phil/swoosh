@@ -109,10 +109,10 @@ function formatTime(deadline: string | null | undefined) {
 }
 
 function getPriorityClass(task: Task) {
-  if (task.pinned) return 'bg-swoosh-pin'
-  if (task.priority === 3) return 'bg-swoosh-high'
-  if (task.priority === 2) return 'bg-swoosh-med'
-  if (task.priority === 1) return 'bg-swoosh-low'
+  if (task.pinned) return 'bg-secondary'
+  if (task.priority === 3) return 'bg-warning'
+  if (task.priority === 2) return 'bg-info'
+  if (task.priority === 1) return 'bg-success'
   return 'bg-swoosh-text-faint'
 }
 
@@ -238,7 +238,7 @@ onUnmounted(() => {
             :key="day.date.getTime()"
             class="day-cell flex flex-col items-center gap-[5px] pt-[11px] pb-[11px] px-[5px] rounded-sm cursor-pointer"
             :class="{ 
-            'bg-swoosh-surface': day.isToday,
+            'bg-base-200': day.isToday,
             'selected': selectedDayOffset === day.dayOffset,
             'today-selected': day.isToday && selectedDayOffset === day.dayOffset
           }"
@@ -248,12 +248,12 @@ onUnmounted(() => {
           <span class="text-[23px] font-semibold leading-none" :class="day.isToday ? 'text-swoosh-text' : 'text-swoosh-text-muted'">{{ day.num }}</span>
 
           <div v-if="day.taskCount > 0"
-               class="day-count min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1 border border-swoosh-border-hover bg-swoosh-surface-raised"
+               class="day-count min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1 border border-swoosh-border-hover bg-base-300"
                :class="{ 
                'overdue-timeline-count': day.hasOverdue,
                'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
                'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
-               'text-swoosh-high border-swoosh-high/30 bg-swoosh-high/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
+               'text-warning border-warning/30 bg-warning/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
              }"
                v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
           >
@@ -273,7 +273,7 @@ onUnmounted(() => {
 
     <!-- Day Panel -->
     <div class="day-panel-wrap" :class="{ 'open': selectedDayOffset !== null }">
-      <div class="day-panel mt-3 border border-swoosh-border-hover rounded-sm bg-swoosh-surface overflow-hidden">
+      <div class="day-panel mt-3 border border-swoosh-border-hover rounded-sm bg-base-200 overflow-hidden">
         <div class="day-panel-header flex items-center justify-between py-2.5 px-3.5 border-b border-swoosh-border">
           <span class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase text-swoosh-text-muted">{{ selectedDay?.label }}</span>
           <button class="w-5 h-5 flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="closeDayPanel">
@@ -285,12 +285,12 @@ onUnmounted(() => {
             <div
                 v-for="task in selectedDay.tasks"
                 :key="task.id"
-                class="day-panel-task flex items-center gap-3 py-2.5 px-3.5 border-b border-swoosh-border last:border-b-0 cursor-pointer hover:bg-swoosh-surface-raised transition-colors group"
+                class="day-panel-task flex items-center gap-3 py-2.5 px-3.5 border-b border-swoosh-border last:border-b-0 cursor-pointer hover:bg-base-300 transition-colors group"
                 @click="jumpToTask(task)"
             >
               <div class="w-[7px] h-[7px] rotate-45 rounded-[1px] shrink-0" :class="getPriorityClass(task)"></div>
-              <span class="flex-1 text-[13.5px] font-medium" :class="isTaskOverdue(task) ? 'text-swoosh-danger' : 'text-swoosh-text group-hover:text-swoosh-text'">{{ task.title }}</span>
-              <span class="font-mono text-[11px]" :class="isTaskOverdue(task) ? 'text-swoosh-danger' : 'text-swoosh-text-faint'">{{ formatTime(task.deadline) }}</span>
+              <span class="flex-1 text-[13.5px] font-medium" :class="isTaskOverdue(task) ? 'text-error' : 'text-base-content group-hover:text-base-content'">{{ task.title }}</span>
+              <span class="font-mono text-[11px]" :class="isTaskOverdue(task) ? 'text-error' : 'text-swoosh-text-faint'">{{ formatTime(task.deadline) }}</span>
             </div>
           </template>
           <div v-else class="py-4 px-3.5 text-[13px] text-swoosh-text-faint font-mono">No tasks due this day</div>
@@ -314,11 +314,11 @@ onUnmounted(() => {
 }
 
 .day-cell:hover {
-  background: var(--color-swoosh-surface);
+  background: var(--color-base-200);
 }
 
 .day-cell.selected {
-  background: var(--color-swoosh-surface-raised);
+  background: var(--color-base-300);
   outline: 1.5px solid var(--color-swoosh-border-hover);
   outline-offset: -1.5px;
 }
@@ -328,9 +328,9 @@ onUnmounted(() => {
 }
 
 .overdue-timeline-count {
-  color: var(--color-swoosh-danger);
-  background-color: color-mix(in srgb, var(--color-swoosh-danger) 12%, transparent);
-  border-color: color-mix(in srgb, var(--color-swoosh-danger) 38%, transparent);
+  color: var(--color-error);
+  background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-error) 38%, transparent);
 }
 
 .day-panel-wrap {
