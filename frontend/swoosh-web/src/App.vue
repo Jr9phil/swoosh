@@ -34,10 +34,10 @@ function changePassword() {
       <!-- Floating Action Button (FAB) menu for user-related actions -->
       <div class="fab">
         <div>
-          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-info max-sm:btn-md"><User /></div>
+          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-outline max-sm:btn-md"><User /></div>
         </div>
 
-        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-info max-sm:btn-md"><User /></span></div>
+        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-outline max-sm:btn-md"><User /></span></div>
 
         <div>Logout <button class="btn btn-lg btn-circle max-sm:btn-md" @click="logout"><LogOut /></button></div>
         <div>Change Password <button class="btn btn-lg btn-circle max-sm:btn-md" @click="changePassword"><KeyRound /></button></div>
