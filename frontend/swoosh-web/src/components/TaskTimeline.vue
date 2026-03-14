@@ -251,7 +251,7 @@ onUnmounted(() => {
                class="day-count min-w-[20px] h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1 border border-swoosh-border-hover bg-swoosh-surface-raised"
                :class="{ 
                'overdue-timeline-count': day.hasOverdue,
-               'text-[#7090f0] border-[#648cff]/35 bg-[#648cff]/10 today-border-pulse': day.isToday && !day.hasOverdue,
+               'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
                'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
                'text-swoosh-high border-swoosh-high/30 bg-swoosh-high/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
              }"
@@ -324,13 +324,13 @@ onUnmounted(() => {
 }
 
 .day-cell.today-selected {
-  outline-color: rgba(100, 140, 255, 0.5);
+  outline-color: color-mix(in srgb, var(--color-swoosh-today) 50%, transparent);
 }
 
 .overdue-timeline-count {
-  color: #ee4444;
-  background-color: rgba(210, 50, 50, 0.12);
-  border-color: rgba(210, 50, 50, 0.38);
+  color: var(--color-swoosh-danger);
+  background-color: color-mix(in srgb, var(--color-swoosh-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-swoosh-danger) 38%, transparent);
 }
 
 .day-panel-wrap {

@@ -47,7 +47,7 @@ const tasksByPriority = computed(() =>
 
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline))
+        .filter(t => !t.completed && t.pinned)
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
