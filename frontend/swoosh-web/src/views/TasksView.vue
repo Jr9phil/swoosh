@@ -19,45 +19,14 @@ const tasksStore = useTasksStore()
 const auth = useAuthStore()
 const router = useRouter()
 
-// Sync all pulsing elements
-const PULSE_DURATION = 1100
-function syncOverdueAnimations() {
-  const phase      = -(performance.now() % PULSE_DURATION)
-  const todayPhase = -(performance.now() % 2400)
-
-  document.querySelectorAll(
-      '.overdue-dot, .badge.overdue, .overdue-banner, .overdue-banner-dot, .today-dot, .today-border-pulse, .overdue-timeline-count'
-  ).forEach(el => {
-    if (!(el instanceof HTMLElement)) return
-
-    let anim = ''
-    if (el.classList.contains('overdue-dot') || el.classList.contains('overdue-banner-dot')) {
-      anim = `overdueGlow 1.1s ease-in-out ${phase}ms infinite`
-    } else if (el.classList.contains('badge') && el.classList.contains('overdue')) {
-      anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
-    } else if (el.classList.contains('overdue-banner') || el.classList.contains('overdue-timeline-count')) {
-      anim = `overdueBadge 1.1s ease-in-out ${phase}ms infinite`
-    } else if (el.classList.contains('today-dot')) {
-      anim = `todayPulse 2.4s ease-in-out ${todayPhase}ms infinite`
-    } else if (el.classList.contains('today-border-pulse')) {
-      anim = `todayBorderPulse 2.4s ease-in-out ${todayPhase}ms infinite`
-    }
-
-    if (anim && el.style.animation === '') {
-      el.style.setProperty('animation', anim)
-    }
-  })
-}
-
-// Re-sync when the task list changes (new tasks loaded, tasks completed, etc.)
-watch(() => tasksStore.tasks, () => {
-  nextTick(syncOverdueAnimations)
-}, { deep: true })
+// Reactive current time — updated every second for live deadline/overdue updates
+const now = ref(Date.now())
+let clockInterval: ReturnType<typeof setInterval>
 
 // ── Computed task groups ────────────────────────────────────────────────────
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && (!t.pinned || isOverdue(t.deadline) || isDueToday(t.deadline)))
+        .filter(t => !t.completed && !t.pinned)
         .slice()
         .sort((a, b) => {
           const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
@@ -78,7 +47,7 @@ const tasksByPriority = computed(() =>
 
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline) && !isDueToday(t.deadline))
+        .filter(t => !t.completed && t.pinned && !isOverdue(t.deadline))
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
@@ -108,12 +77,13 @@ function isSameDay(d1: Date, d2: Date) {
 }
 function isDueToday(deadline?: string | null) {
   if (!deadline) return false
-  return isSameDay(new Date(), new Date(deadline))
+  const d = new Date(deadline)
+  return isSameDay(new Date(now.value), d) && now.value <= d.getTime()
 }
 function isOverdue(deadline?: string | null) {
   if (!deadline) return false
   const d = new Date(deadline)
-  return new Date().getTime() > d.getTime() && !isSameDay(new Date(), d)
+  return now.value > d.getTime()
 }
 
 function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed && isOverdue(t.deadline)) }
@@ -146,21 +116,14 @@ function togglePriority(val: number | string) {
   setTimeout(() => {
     animatingSections.value.delete(key)
     animatingSections.value = new Set(animatingSections.value) // trigger reactivity
-    nextTick(syncOverdueAnimations)
   }, 240) // slightly longer than the 220ms grid transition
 }
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
-let syncInterval: any
-let observer: MutationObserver | null = null
 onMounted(async () => {
+  clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
   try {
     await tasksStore.fetchTasks()
-    nextTick(syncOverdueAnimations)
-    syncInterval = setInterval(syncOverdueAnimations, 1000)
-
-    observer = new MutationObserver(() => syncOverdueAnimations())
-    observer.observe(document.body, { childList: true, subtree: true })
   } catch {
     auth.logout()
     router.push('/login')
@@ -168,8 +131,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (syncInterval) clearInterval(syncInterval)
-  if (observer) observer.disconnect()
+  if (clockInterval) clearInterval(clockInterval)
 })
 
 // ── Jump to overdue ──────────────────────────────────────────────────────────
@@ -202,7 +164,6 @@ function jumpToOverdue() {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         el.classList.add('highlight-pulse')
         setTimeout(() => el.classList.remove('highlight-pulse'), 2000)
-        syncOverdueAnimations()
       }
     })
   }
@@ -265,8 +226,8 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       </header>
 
       <!-- ── Overdue banner ── -->
-      <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner">
-        <span class="overdue-banner-dot"></span>
+      <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">
+        <span class="overdue-banner-dot" v-animate-sync:overdue="'dot'"></span>
         <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
         <button class="overdue-banner-action" @click="jumpToOverdue">
           View
@@ -275,7 +236,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       </div>
 
       <!-- ── Timeline ── -->
-      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @week-change="syncOverdueAnimations" @jump-to-task="handleJumpToTask" />
+      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @jump-to-task="handleJumpToTask" />
 
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">
@@ -324,14 +285,14 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             <Pin :size="14" />
             <span>Pinned</span>
             <!-- Overdue dot: LEFT = visible when EXPANDED, per mockup -->
-            <span v-if="hasOverdueInGroup(pinnedTasks) && priorityExpanded.pinned" class="overdue-dot left"></span>
+            <span v-if="hasOverdueInGroup(pinnedTasks) && priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
           </div>
           <div class="section-label-right">
             <!-- Right-column indicators: shown only when COLLAPSED -->
-            <span v-if="hasOverdueInGroup(pinnedTasks) && !priorityExpanded.pinned" class="overdue-dot right"></span>
+            <span v-if="hasOverdueInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
             <!-- FIX: today dot only appears in right column (when collapsed).
                  The mockup never shows a today dot on the left/expanded side. -->
-            <span v-else-if="hasTodayInGroup(pinnedTasks) && !priorityExpanded.pinned" class="today-dot"></span>
+            <span v-else-if="hasTodayInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:today="'dot'" class="today-dot"></span>
             <span class="section-count">{{ pinnedTasks.length }}</span>
             <span class="section-toggle"></span>
           </div>
@@ -357,13 +318,13 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             <component :is="group.priority.icon" :size="14" fill="currentColor" />
             <span>{{ group.priority.label }}</span>
             <!-- Overdue dot: LEFT = visible when EXPANDED -->
-            <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" class="overdue-dot left"></span>
+            <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
           </div>
           <div class="section-label-right">
             <!-- Right-column indicators: shown only when COLLAPSED -->
-            <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" class="overdue-dot right"></span>
+            <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
             <!-- FIX: today dot only in right/collapsed position -->
-            <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" class="today-dot"></span>
+            <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:today="'dot'" class="today-dot"></span>
             <span class="section-count">{{ group.tasks.length }}</span>
             <span class="section-toggle"></span>
           </div>

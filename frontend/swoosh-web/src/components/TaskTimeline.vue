@@ -255,6 +255,7 @@ onUnmounted(() => {
                'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
                'text-swoosh-high border-swoosh-high/30 bg-swoosh-high/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
              }"
+               v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
           >
             {{ day.taskCount }}
           </div>
