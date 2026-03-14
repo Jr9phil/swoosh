@@ -24,6 +24,7 @@
     --color-swoosh-low: #50b880;
     --color-swoosh-danger: #ee4444;
     --color-swoosh-pin: #9070c0;
+    --color-swoosh-today: #648cff;
 
     --radius-r: 4px;
     --radius-r-sm: 3px;
@@ -47,7 +48,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────
-   Keyframes — outside all layers.
+   Keyframes
 ───────────────────────────────────────────────────────── */
 @keyframes btnStamp {
     0%   { transform: scale(1); }
@@ -64,24 +65,28 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes overdueBadge {
-    0%   { background: rgba(238,68,68,0.05); border-color: rgba(210,50,50,.2);  box-shadow: none; }
-    50%  { background: rgba(238,68,68,0.15); border-color: rgba(255,80,80,.75); box-shadow: 0 0 8px rgba(238,68,68,.3); }
-    100% { background: rgba(238,68,68,0.05); border-color: rgba(210,50,50,.2);  box-shadow: none; }
+    0%, 100% {
+        background: color-mix(in srgb, var(--color-swoosh-danger)  5%, transparent);
+        border-color: color-mix(in srgb, var(--color-swoosh-danger) 20%, transparent);
+        box-shadow: none;
+    }
+    50% {
+        background: color-mix(in srgb, var(--color-swoosh-danger) 15%, transparent);
+        border-color: color-mix(in srgb, var(--color-swoosh-danger) 75%, transparent);
+        box-shadow: 0 0 8px color-mix(in srgb, var(--color-swoosh-danger) 30%, transparent);
+    }
 }
 @keyframes overdueGlow {
-    0%   { filter: brightness(0.6) drop-shadow(0 0 0px #ee4444); transform: scale(1); }
-    50%  { filter: brightness(1.8) drop-shadow(0 0 6px #ff6060); transform: scale(1.35); }
-    100% { filter: brightness(0.6) drop-shadow(0 0 0px #ee4444); transform: scale(1); }
+    0%, 100% { filter: brightness(0.6) drop-shadow(0 0 0px var(--color-swoosh-danger)); transform: scale(1); }
+    50%       { filter: brightness(1.8) drop-shadow(0 0 6px var(--color-swoosh-danger)); transform: scale(1.35); }
 }
 @keyframes todayPulse {
-    0%   { filter: brightness(0.7); }
-    50%  { filter: brightness(1.3); }
-    100% { filter: brightness(0.7); }
+    0%, 100% { filter: brightness(0.7); }
+    50%       { filter: brightness(1.3); }
 }
 @keyframes todayBorderPulse {
-    0%   { border-color: rgba(100,140,255,.18); }
-    50%  { border-color: rgba(100,140,255,.65); }
-    100% { border-color: rgba(100,140,255,.18); }
+    0%, 100% { border-color: color-mix(in srgb, var(--color-swoosh-today) 18%, transparent); }
+    50%       { border-color: color-mix(in srgb, var(--color-swoosh-today) 65%, transparent); }
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -125,7 +130,7 @@
         pointer-events: none;
     }
     .section-body.is-animating { overflow: hidden; }
-    /* Required: inner div must have min-height:0 for 0fr to work */
+    /* Inner div must have min-height: 0 for grid 0fr collapse to work */
     .section-body > div { min-height: 0; }
 
     /* ── Section labels ── */
@@ -143,7 +148,6 @@
     .section-label.pinned { color: var(--color-swoosh-pin);  opacity: 0.7; }
     .section-label.high   { color: var(--color-swoosh-high); opacity: 0.7; }
     .section-label.med    { color: var(--color-swoosh-med);  opacity: 0.7; }
-    /* FIX: low priority label color was missing entirely */
     .section-label.low    { color: var(--color-swoosh-low);  opacity: 0.7; }
     .section-label.none   { color: var(--color-swoosh-text-muted); }
     .section-label.pinned:hover,
@@ -154,19 +158,18 @@
     .section-label-left  { display: flex; align-items: center; gap: 6px; }
     .section-label-right { display: flex; align-items: center; gap: 7px; }
 
-    /* ── Section count pill (shown only when collapsed) ── */
+    /* ── Section count pill — visible only when the section is collapsed ── */
     .section-count {
         font-family: var(--font-mono); font-size: 10px; font-weight: 700;
         opacity: 0; pointer-events: none;
         transition: opacity .15s;
         border-radius: 99px; padding: 1px 7px;
-        color: #0e0f11; margin-right: 2px;
+        color: var(--color-swoosh-bg); margin-right: 2px;
     }
     .section-label:not(.open) .section-count { opacity: 1; }
     .section-label.pinned .section-count { background: var(--color-swoosh-pin); }
     .section-label.high   .section-count { background: var(--color-swoosh-high); }
     .section-label.med    .section-count { background: var(--color-swoosh-med); }
-    /* FIX: low section count background was missing */
     .section-label.low    .section-count { background: var(--color-swoosh-low); }
     .section-label.none   .section-count { background: var(--color-swoosh-text-muted); }
 
@@ -184,20 +187,19 @@
 
     .section-divider { height: 1px; background: var(--color-swoosh-border); margin: 18px 0 14px; }
 
-    /* ── Task groups ── */
+    /* ── Task groups — each priority level gets a coloured left accent ── */
     .task-group {
         border-radius: var(--radius-r);
         overflow: visible; margin-bottom: 3px;
         animation: fadeUp .18s ease both;
         position: relative;
     }
-    /* Mockup only accents pinned/high/med — no background tinting, no bar on low or none */
-    .task-group.pinned { border-left: 4px solid rgba(144,112,192,0.8); }
-    .task-group.high   { border-left: 4px solid rgba(224,112,80,0.85); }
-    .task-group.med    { border-left: 4px solid rgba(96,144,208,0.8);  }
-    .task-group.low    { border-left: 4px solid rgba(80,184,128,0.8);  }
+    .task-group.pinned { border-left: 4px solid color-mix(in srgb, var(--color-swoosh-pin)  80%, transparent); }
+    .task-group.high   { border-left: 4px solid color-mix(in srgb, var(--color-swoosh-high) 85%, transparent); }
+    .task-group.med    { border-left: 4px solid color-mix(in srgb, var(--color-swoosh-med)  80%, transparent); }
+    .task-group.low    { border-left: 4px solid color-mix(in srgb, var(--color-swoosh-low)  80%, transparent); }
 
-    /* ── Task action menu — invisible until row hover ── */
+    /* ── Task action menu — hidden until row hover ── */
     .task-actions { opacity: 0; transition: opacity .15s; }
     li:hover .task-actions { opacity: 1; }
     /* Keep visible while the dropdown is open (cursor may leave the li briefly) */
@@ -216,15 +218,15 @@
     /* ── Overdue / today dots on section labels ── */
     .overdue-dot {
         width: 7px; height: 7px; border-radius: 99px;
-        background: #ee4444; flex-shrink: 0; transition: opacity .15s;
+        background: var(--color-swoosh-danger); flex-shrink: 0; transition: opacity .15s;
         opacity: 1;
     }
     .overdue-dot.left  { margin-left: 2px; }
     .overdue-dot.right { margin-left: 0; }
-    
+
     .today-dot {
         width: 6px; height: 6px; border-radius: 99px;
-        background: #7898ff; flex-shrink: 0; transition: opacity .15s;
+        background: var(--color-swoosh-today); flex-shrink: 0; transition: opacity .15s;
     }
 
     /* ── Overdue banner ── */
@@ -232,21 +234,22 @@
         display: flex; align-items: center; gap: 9px;
         padding: 8px 12px; margin-bottom: 14px;
         border-radius: var(--radius-r-sm); background: transparent;
-        border: 1.5px solid rgba(238,68,68,.35); cursor: default;
+        border: 1.5px solid color-mix(in srgb, var(--color-swoosh-danger) 35%, transparent);
+        cursor: default;
     }
     .overdue-banner-dot {
         width: 6px; height: 6px; border-radius: 99px;
-        background: #ee4444; flex-shrink: 0;
+        background: var(--color-swoosh-danger); flex-shrink: 0;
     }
     .overdue-banner-text {
         flex: 1; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-        letter-spacing: 0.06em; text-transform: uppercase; color: #ee4444;
+        letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-swoosh-danger);
     }
     .overdue-banner-action {
         display: inline-flex; align-items: center;
         font-family: var(--font-mono); font-size: 10px; font-weight: 700;
         letter-spacing: 0.08em; text-transform: uppercase;
-        color: #ee4444; opacity: 0.5;
+        color: var(--color-swoosh-danger); opacity: 0.5;
         cursor: pointer; border: none; background: none; padding: 0;
         transition: opacity .15s;
     }
@@ -264,9 +267,16 @@
         font-weight: 500; line-height: 1;
     }
     .badge svg { width: 11px; height: 11px; flex-shrink: 0; }
-    /* Note: overdue badge animation is injected by syncOverdueAnimations() in JS */
-    .badge.overdue   { background: rgba(210,50,50,.12); color: #ee4444; border-color: rgba(210,50,50,.38); }
-    .badge.due-today { background: rgba(100,140,255,.10); color: #7898ff; border-color: rgba(100,140,255,.32); }
+    .badge.overdue {
+        background: color-mix(in srgb, var(--color-swoosh-danger) 12%, transparent);
+        color: var(--color-swoosh-danger);
+        border-color: color-mix(in srgb, var(--color-swoosh-danger) 38%, transparent);
+    }
+    .badge.due-today {
+        background: color-mix(in srgb, var(--color-swoosh-today) 10%, transparent);
+        color: var(--color-swoosh-today);
+        border-color: color-mix(in srgb, var(--color-swoosh-today) 32%, transparent);
+    }
 
     /* ── Completed section header ── */
     .collapse-header {
