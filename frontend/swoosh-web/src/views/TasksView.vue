@@ -13,7 +13,7 @@ import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
-import { Plus, Pin, X, ListPlus, CheckCircle } from 'lucide-vue-next'
+import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
@@ -231,7 +231,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
         <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
         <button class="overdue-banner-action" @click="jumpToOverdue">
           View
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;margin-left:4px"><polyline points="9 18 15 12 9 6"/></svg>
+          <ChevronRight :size="12"/>
         </button>
       </div>
 
