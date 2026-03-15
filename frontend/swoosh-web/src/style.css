@@ -138,7 +138,7 @@
     /* ── Section labels ── */
     .section-label {
         display: flex; align-items: center; justify-content: space-between;
-        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        font-family: var(--font-mono); font-size: 11px; font-weight: 700;
         letter-spacing: 0.18em; text-transform: uppercase;
         margin-top: 28px; margin-bottom: 10px;
         gap: 10px;
@@ -174,7 +174,7 @@
     /* ── Section count pill — visible only when the section is collapsed ── */
     .section-count {
         display: inline-flex; align-items: center;
-        font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
         opacity: 0; pointer-events: none;
         transition: opacity .15s;
         border-radius: 99px; padding: 2px 7px;
@@ -254,6 +254,8 @@
 
     /* ── Task item hover background ── */
     li.task-item { transition: background-color 150ms; }
+    /* Center checkbox with title when there is no sub-content below the title */
+    li.task-item.title-only { align-items: center; }
     li.task-item:hover { background: var(--color-base-300); }
     /* Round hover bg to match the card corners without needing overflow:hidden */
     li.task-item:first-child { border-radius: calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px) 0 0; }
@@ -294,7 +296,7 @@
     }
     .overdue-banner-action {
         display: inline-flex; align-items: center;
-        font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+        font-family: var(--font-mono); font-size: 11px; font-weight: 700;
         letter-spacing: 0.08em; text-transform: uppercase;
         color: var(--color-error); opacity: 0.5;
         cursor: pointer; border: none; background: none; padding: 0;
@@ -306,14 +308,14 @@
     .badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
     .badge {
         display: inline-flex; align-items: center; gap: 4px;
-        font-size: 10px; font-family: var(--font-mono); font-weight: 700;
+        font-size: 11px; font-family: var(--font-mono); font-weight: 700;
         padding: 3px 10px; border-radius: 9999px;
         background: var(--color-base-300);
         border: 1px solid var(--color-swoosh-border-hover);
         color: var(--color-swoosh-text-muted);
         text-transform: uppercase; letter-spacing: 0.07em;
     }
-    .badge svg { width: 10px; height: 10px; flex-shrink: 0; }
+    .badge svg { width: 11px; height: 11px; flex-shrink: 0; }
     .badge.overdue {
         background: color-mix(in srgb, var(--color-error) 12%, transparent);
         color: var(--color-error);

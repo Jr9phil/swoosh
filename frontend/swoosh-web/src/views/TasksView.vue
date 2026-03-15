@@ -360,7 +360,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
       <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
         <!-- Modal header -->
         <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
-          <div class="flex items-center gap-2 font-mono text-[10px] tracking-[0.14em] uppercase text-swoosh-text-muted">
+          <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase text-swoosh-text-muted">
             <CheckSquare :size="13" stroke-width="2" />
             New Task
           </div>
