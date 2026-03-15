@@ -201,6 +201,31 @@ const createTaskEdit = ref<any>(null)
 function handleModalClose() { createTaskEdit.value?.resetForm() }
 function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
 function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
+
+// ── Skeleton data — realistic mix of variants and widths ──────────────────────
+const skeletonSections = [
+  {
+    labelWidth: '88px',
+    items: [
+      { variant: 'badge'   as const, titleWidth: '72%' },
+      { variant: 'default' as const, titleWidth: '52%' },
+      { variant: 'notes'   as const, titleWidth: '80%' },
+    ],
+  },
+  {
+    labelWidth: '72px',
+    items: [
+      { variant: 'default' as const, titleWidth: '64%' },
+      { variant: 'badge'   as const, titleWidth: '76%' },
+    ],
+  },
+  {
+    labelWidth: '104px',
+    items: [
+      { variant: 'default' as const, titleWidth: '48%' },
+    ],
+  },
+]
 </script>
 
 <template>
@@ -240,16 +265,27 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
 
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">
-        <div>
-          <div class="section-label skeleton animate-pulse h-[34px] w-32 bg-white/5 rounded-sm mb-4"></div>
-          <div class="space-y-px">
-            <TaskSkeleton v-for="i in 3" :key="i" />
+        <div v-for="(section, si) in skeletonSections" :key="si">
+          <!-- Section header skeleton — mirrors real section-label structure -->
+          <div class="flex items-center justify-between py-[10px]">
+            <div class="flex items-center gap-2">
+              <div class="w-[9px] h-[9px] rounded-sm sk-block" :style="{ animationDelay: `${-si * 200}ms` }"></div>
+              <div class="h-[9px] rounded-sm sk-block" :style="{ width: section.labelWidth, animationDelay: `${-(si * 200 + 80)}ms` }"></div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-[16px] rounded-full sk-block" :style="{ animationDelay: `${-(si * 200 + 160)}ms` }"></div>
+              <div class="w-4 h-[9px] rounded-sm sk-block" :style="{ animationDelay: `${-(si * 200 + 240)}ms` }"></div>
+            </div>
           </div>
-        </div>
-        <div>
-          <div class="section-label skeleton animate-pulse h-[34px] w-40 bg-white/5 rounded-sm mb-4"></div>
-          <div class="space-y-px">
-            <TaskSkeleton v-for="i in 2" :key="i" />
+          <!-- Task card skeleton -->
+          <div class="task-group">
+            <TaskSkeleton
+              v-for="(item, ii) in section.items"
+              :key="ii"
+              :variant="item.variant"
+              :title-width="item.titleWidth"
+              :index="si * 4 + ii"
+            />
           </div>
         </div>
       </div>
@@ -380,3 +416,21 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
     </dialog>
   </main>
 </template>
+
+<style scoped>
+.sk-block {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 2s linear infinite;
+}
+
+@keyframes sk-shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+</style>
