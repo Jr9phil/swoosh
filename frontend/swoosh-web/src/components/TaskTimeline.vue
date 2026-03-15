@@ -81,6 +81,7 @@ const selectedDay = computed(() => {
         const timeB = new Date(b.deadline!).getTime()
         if (timeA !== timeB) return timeA - timeB
 
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
         if (b.priority !== a.priority) return b.priority - a.priority
         return b.rating - a.rating
       })
