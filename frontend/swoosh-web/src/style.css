@@ -560,3 +560,55 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
     background: var(--color-swoosh-border);
     opacity: 0.5;
 }
+
+/* ─────────────────────────────────────────────────────────
+   Large screen scaling (1280px+)
+───────────────────────────────────────────────────────── */
+@media (min-width: 1280px) {
+    .task-item,
+    .task-skeleton {
+        padding-block: 18px;
+        padding-inline: 18px;
+        gap: 15px;
+    }
+    .section-label {
+        margin-top: 32px;
+        margin-bottom: 12px;
+    }
+    .icon-btn {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Extra large screen scaling (1920px+)
+───────────────────────────────────────────────────────── */
+@media (min-width: 1920px) {
+    body {
+        font-size: 18px;
+    }
+    .task-item,
+    .task-skeleton {
+        padding-block: 20px;
+        padding-inline: 20px;
+        gap: 16px;
+    }
+    .section-label {
+        font-size: 12px;
+        margin-top: 36px;
+        margin-bottom: 14px;
+    }
+    .icon-btn {
+        width: 46px;
+        height: 46px;
+    }
+    .badge {
+        font-size: 12.5px;
+        padding: 4px 12px;
+    }
+    .swoosh-check {
+        width: 25px;
+        height: 25px;
+    }
+}

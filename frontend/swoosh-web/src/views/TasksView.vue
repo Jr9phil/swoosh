@@ -233,8 +233,8 @@ const skeletonSections = [
 </script>
 
 <template>
-  <main class="flex-1 flex justify-center pt-6 px-5 pb-[60px]">
-    <div class="w-full max-w-[540px]">
+  <main class="flex-1 flex justify-center pt-6 px-5 pb-[60px] xl:pt-8 xl:px-10 xl:pb-[70px]">
+    <div class="w-full max-w-[540px] xl:max-w-[700px] 2xl:max-w-[840px]">
 
       <!-- ── Header ── -->
       <header class="page-header flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
@@ -244,7 +244,7 @@ const skeletonSections = [
         >
           <Plus :size="18" stroke-width="2.5" />
         </button>
-        <span class="text-[18px] font-bold tracking-[0.18em] uppercase text-base-content flex-1">My Tasks</span>
+        <span class="text-[18px] xl:text-[20px] font-bold tracking-[0.18em] uppercase text-base-content flex-1">My Tasks</span>
         <!-- Clicking the date label resets the timeline to the current week -->
         <div
             class="font-mono text-[11px] font-bold text-swoosh-text-muted tracking-[0.10em] uppercase whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
@@ -404,7 +404,7 @@ const skeletonSections = [
 
     <!-- ── Create Task Modal ── -->
     <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
-      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
+      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] xl:max-w-[640px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
         <!-- Modal header -->
         <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
           <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase text-swoosh-text-muted">
