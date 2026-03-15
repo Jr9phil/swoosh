@@ -279,7 +279,7 @@ async function moveToTop() {
       ref="editContainer"
       :class="[
       isEdit
-        ? 'fade-up bg-base-300 border-b border-swoosh px-3.5 py-4'
+        ? 'fade-up bg-base-300 px-3.5 py-4 rounded-[10px] my-1'
         : 'flex flex-col'
     ]"
       @click.stop
@@ -318,7 +318,7 @@ async function moveToTop() {
 
       <!-- Deadline Section -->
       <div>
-        <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[10px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Deadline</div>
+        <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[11px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Deadline</div>
         <div class="flex gap-2">
           <input
               type="date"

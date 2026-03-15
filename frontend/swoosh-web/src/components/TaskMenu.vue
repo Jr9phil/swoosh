@@ -77,7 +77,7 @@ const dangerItemClass = `${baseItemClass} text-error hover:bg-error/10`
     <button
         tabindex="0"
         role="button"
-        class="w-[28px] h-[28px] rounded-full flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-base-300 transition-colors"
+        class="w-[32px] h-[32px] rounded-[6px] flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
     >
       <EllipsisVertical :size="18" fill="currentColor" />
     </button>
@@ -85,7 +85,7 @@ const dangerItemClass = `${baseItemClass} text-error hover:bg-error/10`
     <!-- Dropdown content list -->
     <ul
         tabindex="0"
-        class="dropdown-content menu p-1.5 shadow-2xl bg-base-300 border border-swoosh-border-hover rounded-sm w-[180px] z-[100] gap-0.5"
+        class="dropdown-content menu p-1.5 shadow-2xl bg-base-300 border border-swoosh-border-hover rounded-[10px] w-[180px] z-[100] gap-0.5"
     >
       <div class="px-2 py-1.5 flex flex-col gap-0.5">
         <li v-for="item in activeMenuItems" :key="item.label">
