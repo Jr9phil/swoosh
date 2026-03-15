@@ -81,6 +81,7 @@ const selectedDay = computed(() => {
         const timeB = new Date(b.deadline!).getTime()
         if (timeA !== timeB) return timeA - timeB
 
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
         if (b.priority !== a.priority) return b.priority - a.priority
         return b.rating - a.rating
       })
@@ -244,8 +245,8 @@ onUnmounted(() => {
           }"
             @click="toggleDay(day.dayOffset)"
         >
-          <span class="font-mono text-[10px] tracking-[0.10em] uppercase" :class="day.isToday ? 'text-swoosh-text-muted' : 'text-swoosh-text-faint'">{{ day.name }}</span>
-          <span class="text-[24px] font-bold leading-none font-mono" :class="day.isToday ? 'text-base-content' : 'text-swoosh-text-faint'">{{ day.num }}</span>
+          <span class="font-mono text-[10px] xl:text-[11px] tracking-[0.10em] uppercase" :class="day.isToday ? 'text-swoosh-text-muted' : 'text-swoosh-text-faint'">{{ day.name }}</span>
+          <span class="text-[24px] xl:text-[28px] 2xl:text-[32px] font-bold leading-none font-mono" :class="day.isToday ? 'text-base-content' : 'text-swoosh-text-faint'">{{ day.num }}</span>
 
           <div v-if="day.taskCount > 0"
                class="day-count min-w-[22px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1.5 border border-swoosh-border-hover bg-base-300"
@@ -319,6 +320,20 @@ onUnmounted(() => {
   padding: 10px 4px;
   border-radius: 6px;
   border: 1px solid transparent;
+}
+
+@media (min-width: 1280px) {
+  .day-cell, .day-cell-skeleton {
+    padding: 12px 6px;
+    gap: 6px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .day-cell, .day-cell-skeleton {
+    padding: 16px 8px;
+    gap: 8px;
+  }
 }
 
 .day-cell {
