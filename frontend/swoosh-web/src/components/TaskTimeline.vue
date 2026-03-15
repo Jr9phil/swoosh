@@ -264,9 +264,9 @@ onUnmounted(() => {
       </div>
       <div v-else class="grid grid-cols-7 gap-1">
         <div v-for="i in 7" :key="i" class="day-cell-skeleton bg-white/5 animate-pulse">
-          <div class="h-2 w-8 bg-white/10 rounded-full mb-1"></div>
-          <div class="h-6 w-6 bg-white/10 rounded-full"></div>
-          <div class="h-3 w-3 bg-white/10 rounded-full mt-1"></div>
+          <div class="h-2 w-8 bg-white/10 rounded mb-1"></div>
+          <div class="h-6 w-6 bg-white/10 rounded"></div>
+          <div class="h-3 w-3 bg-white/10 rounded mt-1"></div>
         </div>
       </div>
     </div>
