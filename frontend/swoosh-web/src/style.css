@@ -173,11 +173,11 @@
 
     /* ── Section count pill — visible only when the section is collapsed ── */
     .section-count {
-        display: inline-flex; align-items: center;
+        display: inline-flex; align-items: center; justify-content: center;
         font-family: var(--font-mono); font-size: 10px; font-weight: 700;
         opacity: 0; pointer-events: none;
         transition: opacity .15s;
-        border-radius: 99px; padding: 2px 7px;
+        border-radius: 99px; padding: 2px 8px; min-width: 24px;
         color: var(--color-base-100); letter-spacing: 0.04em;
     }
     .section-label:not(.open) .section-count { opacity: 1; }
