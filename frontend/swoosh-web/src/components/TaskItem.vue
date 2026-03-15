@@ -172,6 +172,12 @@ async function resetRating() {
   await tasksStore.resetRating(props.task)
 }
 
+// Resets the task's priority to none
+async function resetPriority() {
+  if (props.task.priority === 0) return
+  await tasksStore.resetPriority(props.task)
+}
+
 // Removes the task's deadline
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
@@ -227,7 +233,7 @@ async function remove() {
       <p v-if="!task.completed && task.notes" class="text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words line-clamp-2">{{ task.notes }}</p>
       <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
       <div v-if="!task.completed && task.deadline" class="badges">
-        <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : null">
+        <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'badge' } : null">
           <Calendar v-if="!deadlineExpired" :size="11" />
           <Clock v-else :size="11" />
           {{ formattedDeadline() }}
@@ -242,12 +248,14 @@ async function remove() {
           :pinned="task.pinned"
           :has-deadline="!!task.deadline"
           :has-rating="task.rating > 0"
+          :priority="task.priority"
           @delete="remove"
           @edit="startEditing"
           @reset-deadline="resetDeadline"
           @pin="togglePinned"
           @un-complete="toggleComplete"
           @reset-rating="resetRating"
+          @reset-priority="resetPriority"
       />
     </div>
   </li>

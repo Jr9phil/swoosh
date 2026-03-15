@@ -45,6 +45,10 @@ const tasksByPriority = computed(() =>
         .reverse()
 )
 
+const onlyNoPriority = computed(() =>
+    tasksByPriority.value.length === 1 && tasksByPriority.value[0].priority.value === 0
+)
+
 const pinnedTasks = computed(() =>
     tasksStore.tasks
         .filter(t => !t.completed && t.pinned)
@@ -320,7 +324,6 @@ const skeletonSections = [
           <div class="section-label-left">
             <Pin :size="14" fill="currentColor"/>
             <span>Pinned</span>
-            <!-- Overdue dot: LEFT = visible when EXPANDED, per mockup -->
             <span v-if="hasOverdueInGroup(pinnedTasks) && priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
           </div>
           <div class="section-label-right">
@@ -343,33 +346,41 @@ const skeletonSections = [
 
       <!-- ── Priority Sections ── -->
       <template v-for="group in tasksByPriority" :key="group.priority.value">
-        <div
-            class="section-label"
-            :class="[group.priority.class, { open: priorityExpanded[group.priority.value] }]"
-            @click="togglePriority(group.priority.value)"
-        >
-          <div class="section-label-left">
-            <component :is="group.priority.icon" :size="14" fill="currentColor" />
-            <span>{{ group.priority.label }}</span>
-            <!-- Overdue dot: LEFT = visible when EXPANDED -->
-            <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
+        <!-- When the only group is no-priority, render tasks directly without a header -->
+        <template v-if="onlyNoPriority">
+          <div class="task-group mt-8">
+            <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
           </div>
-          <div class="section-label-right">
-            <!-- Right-column indicators: shown only when COLLAPSED -->
-            <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
-            <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:today="'dot'" class="today-dot"></span>
-            <span class="section-count">{{ group.tasks.length }}</span>
-            <span class="section-toggle"></span>
-          </div>
-        </div>
-        <div class="section-body" :class="{ collapsed: !priorityExpanded[group.priority.value], 'is-animating': animatingSections.has(group.priority.value.toString()) }">
-          <div>
-            <!-- pinned/high/med/low get a coloured left accent — none does not -->
-            <div class="task-group" :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }">
-              <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
+        </template>
+        <template v-else>
+          <div
+              class="section-label"
+              :class="[group.priority.class, { open: priorityExpanded[group.priority.value] }]"
+              @click="togglePriority(group.priority.value)"
+          >
+            <div class="section-label-left">
+              <component :is="group.priority.icon" :size="14" fill="currentColor" />
+              <span>{{ group.priority.label }}</span>
+              <!-- Overdue dot: LEFT = visible when EXPANDED -->
+              <span v-if="hasOverdueInGroup(group.tasks) && priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
+            </div>
+            <div class="section-label-right">
+              <!-- Right-column indicators: shown only when COLLAPSED -->
+              <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
+              <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:today="'dot'" class="today-dot"></span>
+              <span class="section-count">{{ group.tasks.length }}</span>
+              <span class="section-toggle"></span>
             </div>
           </div>
-        </div>
+          <div class="section-body" :class="{ collapsed: !priorityExpanded[group.priority.value], 'is-animating': animatingSections.has(group.priority.value.toString()) }">
+            <div>
+              <!-- pinned/high/med/low get a coloured left accent — none does not -->
+              <div class="task-group" :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }">
+                <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
+              </div>
+            </div>
+          </div>
+        </template>
       </template>
 
       <!-- ── Completed Section ── -->

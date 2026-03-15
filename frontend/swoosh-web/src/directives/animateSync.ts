@@ -14,7 +14,8 @@ const SYNC_GROUPS = {
         duration: 2400,
         animations: {
             dot:    'todayPulse 2.4s ease-in-out',
-            border: 'todayBorderPulse 2.4s ease-in-out'
+            border: 'todayBorderPulse 2.4s ease-in-out',
+            badge:  'todayBadgePulse 2.4s ease-in-out'
         }
     }
 }
