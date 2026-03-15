@@ -282,7 +282,7 @@ function closeModal() { (document.getElementById('create_modal') as HTMLDialogEl
             @click="togglePriority('pinned')"
         >
           <div class="section-label-left">
-            <Pin :size="14" />
+            <Pin :size="14" fill="currentColor"/>
             <span>Pinned</span>
             <!-- Overdue dot: LEFT = visible when EXPANDED, per mockup -->
             <span v-if="hasOverdueInGroup(pinnedTasks) && priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot left"></span>
