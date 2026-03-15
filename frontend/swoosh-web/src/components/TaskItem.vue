@@ -172,6 +172,12 @@ async function resetRating() {
   await tasksStore.resetRating(props.task)
 }
 
+// Resets the task's priority to none
+async function resetPriority() {
+  if (props.task.priority === 0) return
+  await tasksStore.resetPriority(props.task)
+}
+
 // Removes the task's deadline
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
@@ -242,12 +248,14 @@ async function remove() {
           :pinned="task.pinned"
           :has-deadline="!!task.deadline"
           :has-rating="task.rating > 0"
+          :priority="task.priority"
           @delete="remove"
           @edit="startEditing"
           @reset-deadline="resetDeadline"
           @pin="togglePinned"
           @un-complete="toggleComplete"
           @reset-rating="resetRating"
+          @reset-priority="resetPriority"
       />
     </div>
   </li>

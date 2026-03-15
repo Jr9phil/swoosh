@@ -6,12 +6,14 @@
 <script setup lang="ts">
 import { Trash2, EllipsisVertical, Pin, CalendarOff, CalendarPlus, Undo2, Diamond } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { PRIORITIES } from '../types/priority'
 
 const props = defineProps<{
   isCompleted: boolean
   hasDeadline: boolean
   hasRating: boolean
   pinned: boolean
+  priority: number
 }>()
 
 const emit = defineEmits<{
@@ -21,7 +23,10 @@ const emit = defineEmits<{
   (e: 'unComplete'): void
   (e: 'edit'): void
   (e: 'resetRating'): void
+  (e: 'resetPriority'): void
 }>()
+
+const priorityIcon = computed(() => PRIORITIES.find(p => p.value === props.priority)?.icon ?? PRIORITIES[0].icon)
 
 interface MenuItem {
   label: string
@@ -60,6 +65,12 @@ const menuItems = computed<MenuItem[]>(() => [
     icon: Diamond,
     action: () => emit('resetRating'),
     show: !props.isCompleted && props.hasRating
+  },
+  {
+    label: 'Reset priority',
+    icon: priorityIcon.value,
+    action: () => emit('resetPriority'),
+    show: !props.isCompleted && props.priority > 0
   }
 ])
 

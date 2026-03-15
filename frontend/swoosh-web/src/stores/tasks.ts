@@ -190,6 +190,20 @@ export const useTasksStore = defineStore('tasks', {
             if (index !== -1) {
                 this.tasks[index].rating = 0
             }
+        },
+
+        // Resets a task's priority to 0 (none)
+        async resetPriority(task: Task) {
+            const updated = {
+                ...task,
+                priority: 0
+            }
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === task.id)
+            if (index !== -1) {
+                this.tasks[index].priority = 0
+            }
         }
     }
 })
