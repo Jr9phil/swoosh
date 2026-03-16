@@ -35,8 +35,16 @@ function isSameDay(d1: Date, d2: Date) {
 }
 
 function isTaskOverdue(task: Task) {
-  if (!task.deadline) return false
+  if (!task.deadline || task.completed) return false
   return now.value.getTime() >= new Date(task.deadline).getTime()
+}
+
+function isPastDay(d: Date) {
+  const today = new Date(now.value)
+  today.setHours(0, 0, 0, 0)
+  const dayStart = new Date(d)
+  dayStart.setHours(0, 0, 0, 0)
+  return dayStart < today
 }
 
 const weekDays = computed(() => {
@@ -47,9 +55,14 @@ const weekDays = computed(() => {
     d.setDate(now.value.getDate() + dayOffset)
 
     const isToday = isSameDay(d, now.value)
-    const tasksForDay = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+    const isPast = isPastDay(d)
+    const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+    const completedTasks = isPast
+      ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
+      : []
+    const tasksForDay = [...incompleteTasks, ...completedTasks]
     const count = tasksForDay.length
-    const hasOverdue = tasksForDay.some(t => isTaskOverdue(t))
+    const hasOverdue = incompleteTasks.some(t => isTaskOverdue(t))
 
     days.push({
       date: d,
@@ -75,16 +88,25 @@ const selectedDay = computed(() => {
   const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
 
-  const tasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
-      .sort((a, b) => {
-        const timeA = new Date(a.deadline!).getTime()
-        const timeB = new Date(b.deadline!).getTime()
-        if (timeA !== timeB) return timeA - timeB
+  const isPast = isPastDay(d)
+  const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+  const completedTasks = isPast
+    ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
+    : []
 
-        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
-        if (b.priority !== a.priority) return b.priority - a.priority
-        return b.rating - a.rating
-      })
+  const sortByDeadline = (a: Task, b: Task) => {
+    const timeA = a.deadline ? new Date(a.deadline).getTime() : 0
+    const timeB = b.deadline ? new Date(b.deadline).getTime() : 0
+    if (timeA !== timeB) return timeA - timeB
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+    if (b.priority !== a.priority) return b.priority - a.priority
+    return b.rating - a.rating
+  }
+
+  const tasks = [
+    ...incompleteTasks.sort(sortByDeadline),
+    ...completedTasks.sort((a, b) => new Date(a.completed!).getTime() - new Date(b.completed!).getTime())
+  ]
 
   return {
     label,
@@ -289,9 +311,9 @@ onUnmounted(() => {
                 class="day-panel-task flex items-center gap-3 py-2.5 px-3.5 border-b border-swoosh-border last:border-b-0 cursor-pointer hover:bg-base-300 transition-colors group"
                 @click="jumpToTask(task)"
             >
-              <div class="w-[7px] h-[7px] rotate-45 rounded-[1px] shrink-0" :class="getPriorityClass(task)"></div>
-              <span class="flex-1 text-[13.5px] font-medium" :class="isTaskOverdue(task) ? 'text-error' : 'text-base-content group-hover:text-base-content'">{{ task.title }}</span>
-              <span class="font-mono text-[11px]" :class="isTaskOverdue(task) ? 'text-error' : 'text-swoosh-text-faint'">{{ formatTime(task.deadline) }}</span>
+              <div class="w-[7px] h-[7px] rotate-45 rounded-[1px] shrink-0" :class="task.completed ? 'bg-swoosh-text-faint opacity-40' : getPriorityClass(task)"></div>
+              <span class="flex-1 text-[13.5px] font-medium" :class="task.completed ? 'line-through text-swoosh-text-faint' : isTaskOverdue(task) ? 'text-error' : 'text-base-content group-hover:text-base-content'">{{ task.title }}</span>
+              <span class="font-mono text-[11px]" :class="task.completed ? 'text-swoosh-text-faint opacity-60' : isTaskOverdue(task) ? 'text-error' : 'text-swoosh-text-faint'">{{ task.completed ? formatTime(task.completed) : formatTime(task.deadline) }}</span>
             </div>
           </template>
           <div v-else class="py-4 px-3.5 text-[13px] text-swoosh-text-faint font-mono">No tasks due this day</div>
