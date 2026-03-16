@@ -7,6 +7,7 @@ export interface Task {
     pinned: boolean
     priority: number
     rating: number
+    icon?: number | null
     createdAt: string
 }
 
@@ -17,4 +18,5 @@ export interface CreateTask {
     pinned?: boolean
     priority?: number
     rating?: number
+    icon?: number | null
 }

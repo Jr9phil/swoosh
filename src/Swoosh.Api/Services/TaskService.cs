@@ -66,6 +66,7 @@ public class TaskService : ITaskService
                     Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                     Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                     Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
+                    Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
                     CreatedAt = t.CreatedAt
                 };
 
@@ -96,6 +97,7 @@ public class TaskService : ITaskService
                 Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
                 Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                 Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
+                Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
                 CreatedAt = t.CreatedAt
             })
             .FirstOrDefaultAsync();
@@ -124,6 +126,7 @@ public class TaskService : ITaskService
             EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
             EncryptedPriority = encryptedPriority.Ciphertext,
             EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext,
+            EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null,
             KeyVersion = keyVersion,
             CreatedAt = DateTime.UtcNow
         };
@@ -141,6 +144,7 @@ public class TaskService : ITaskService
             Pinned = dto.Pinned,
             Priority = dto.Priority,
             Rating = dto.Rating,
+            Icon = dto.Icon,
             CreatedAt = task.CreatedAt
         };
     }
@@ -169,6 +173,7 @@ public class TaskService : ITaskService
         task.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
         task.EncryptedPriority = encryptedPriority.Ciphertext;
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
+        task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
 
         await _db.SaveChangesAsync();
