@@ -12,6 +12,7 @@ public class TaskItem
     public string EncryptedPinned { get; set; } = null!;
     public string EncryptedPriority { get; set; } = null!;
     public string? EncryptedRating { get; set; }
+    public string? EncryptedIcon { get; set; }
     
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

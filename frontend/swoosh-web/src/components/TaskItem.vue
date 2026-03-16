@@ -11,6 +11,7 @@ import TaskMenu from './TaskMenu.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TaskEdit from './TaskEdit.vue'
 import TaskRating from './TaskRating.vue'
+import TaskIcon from './TaskIcon.vue'
 import {
   Trash2,
   EllipsisVertical,
@@ -222,11 +223,14 @@ async function remove() {
     <!-- Task content: title, notes, deadline badge -->
     <div @click="startEditing" class="flex-1 min-w-0 cursor-text" :class="{ 'opacity-40' : task.completed }">
       <div class="flex items-center justify-between gap-3">
-        <span
-            class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words"
-            :class="{ 'line-through text-swoosh-text-muted' : task.completed }"
-        >
-          {{ task.title }}
+        <span class="flex items-center gap-1.5 min-w-0">
+          <span
+              class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words"
+              :class="{ 'line-through text-swoosh-text-muted' : task.completed }"
+          >
+            {{ task.title }}
+          </span>
+          <TaskIcon v-if="task.icon != null" :value="task.icon" />
         </span>
         <TaskRating v-if="!task.completed" :rating="task.rating" :priority="task.priority" :pinned="task.pinned" />
       </div>

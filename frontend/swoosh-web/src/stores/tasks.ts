@@ -145,29 +145,31 @@ export const useTasksStore = defineStore('tasks', {
             if (index !== -1) this.tasks[index].createdAt = newCreatedAt
         },
 
-        // Edits multiple task fields at once (title, notes, pinned, deadline, priority, rating)
+        // Edits multiple task fields at once (title, notes, pinned, deadline, priority, rating, icon)
         async editTask(
-            taskId: string, 
-            payload: { 
-                title: string, 
-                notes?: string | null, 
-                pinned?: boolean, 
+            taskId: string,
+            payload: {
+                title: string,
+                notes?: string | null,
+                pinned?: boolean,
                 deadline?: string | null,
                 priority?: number,
                 rating: number,
+                icon?: number | null,
             }
             ) {
             await api.put(`/tasks/${taskId}`, payload)
-            
+
             const task = this.tasks.find(t => t.id === taskId)
             if (task) {
                 task.title = payload.title
                 task.notes = payload.notes ?? null
-                
-                if(payload.pinned !== undefined) task.pinned = payload.pinned
+
+                if (payload.pinned !== undefined) task.pinned = payload.pinned
                 if (payload.priority !== undefined) task.priority = payload.priority
                 task.rating = payload.rating
-                
+                task.icon = payload.icon ?? null
+
                 task.deadline = payload.deadline ?? null
             }
         },

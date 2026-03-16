@@ -15,6 +15,7 @@ public class TaskDto
     public bool Pinned { get; set; }
     public int Priority { get; set; }
     public int Rating { get; set; }
+    public int? Icon { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }
@@ -35,6 +36,8 @@ public class CreateTaskDto
 
     [Range(0, 5)]
     public int Rating { get; set; } = 0;
+
+    public int? Icon { get; set; } = null;
 }
 
 public class UpdateTaskDto
@@ -51,4 +54,6 @@ public class UpdateTaskDto
 
     [Range(0, 5)]
     public int Rating { get; set; } = 0;
+
+    public int? Icon { get; set; } = null;
 }

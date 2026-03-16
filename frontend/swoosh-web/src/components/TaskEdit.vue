@@ -3,8 +3,10 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin } from 'lucide-vue-next'
+import { Pin, X } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
+import TaskIcon from './TaskIcon.vue'
+import { TASK_ICONS } from '../types/icon'
 
 const props = defineProps<{
   task?: Task
@@ -159,6 +161,7 @@ function resetForm() {
   editedPinned.value = false
   editedRating.value = 0
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === 0)
+  selectedIcon.value = null
   showValidation.value = false
 }
 
@@ -193,7 +196,8 @@ async function finishEditing() {
       editedPinned.value   === originalPinned.value &&
       editedRating.value   === (props.task?.rating ?? 0) &&
       currentDeadline      === (originalDeadline.value || null) &&
-      editedPriority.value === originalPriority.value
+      editedPriority.value === originalPriority.value &&
+      selectedIcon.value   === (props.task?.icon ?? null)
   ) {
     emit('close')
     return
@@ -215,7 +219,8 @@ async function finishEditing() {
         pinned:   editedPinned.value,
         deadline: currentDeadline,
         priority: editedPriority.value,
-        rating:   editedRating.value
+        rating:   editedRating.value,
+        icon:     selectedIcon.value
       })
     } else {
       await tasksStore.createTask({
@@ -224,7 +229,8 @@ async function finishEditing() {
         deadline: currentDeadline,
         pinned:   editedPinned.value,
         priority: editedPriority.value,
-        rating:   editedRating.value
+        rating:   editedRating.value,
+        icon:     selectedIcon.value
       })
       emit('created')
       resetForm()
@@ -254,6 +260,9 @@ async function toggleComplete() {
 function resetRating() {
   editedRating.value = 0
 }
+
+const selectedIcon = ref<number | null>(props.task?.icon ?? null)
+const showIconPicker = ref(false)
 
 async function resetDeadline() {
   if (isEdit.value && props.task) {
@@ -374,6 +383,46 @@ async function moveToTop() {
         >
           <Pin :size="14" :fill="editedPinned ? 'currentColor' : 'none'" />
         </button>
+
+        <!-- Icon Picker -->
+        <div class="relative" v-click-outside="() => showIconPicker = false">
+          <button
+              type="button"
+              @click="showIconPicker = !showIconPicker"
+              class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
+              :class="selectedIcon !== null
+                ? 'border-current/25 ' + TASK_ICONS.find(i => i.value === selectedIcon)?.color
+                : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
+          >
+            <TaskIcon v-if="selectedIcon !== null" :value="selectedIcon" />
+            <X v-else :size="14" />
+          </button>
+          <div
+              v-if="showIconPicker"
+              class="absolute bottom-full left-0 mb-2 z-50 bg-base-300 border border-swoosh rounded-[8px] p-2 grid grid-cols-6 gap-1 w-[168px]"
+          >
+            <!-- No icon -->
+            <button
+                type="button"
+                @click="selectedIcon = null; showIconPicker = false"
+                class="col-span-6 flex items-center justify-center gap-1.5 rounded-sm py-1 mb-1 text-[11px] font-mono uppercase tracking-wider transition-colors hover:bg-base-200"
+                :class="selectedIcon === null ? 'bg-base-200 text-base-content' : 'text-swoosh-text-faint'"
+            >
+              <X :size="11" />
+              No icon
+            </button>
+            <button
+                v-for="icon in TASK_ICONS"
+                :key="icon.value"
+                type="button"
+                @click="selectedIcon = icon.value; showIconPicker = false"
+                class="w-7 h-7 flex items-center justify-center rounded-sm transition-colors hover:bg-base-200"
+                :class="[icon.color, selectedIcon === icon.value ? 'bg-base-200' : '']"
+            >
+              <component :is="icon.icon" :size="15" />
+            </button>
+          </div>
+        </div>
 
         <!-- Rating -->
         <TaskRating
