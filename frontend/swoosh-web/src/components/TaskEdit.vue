@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin, X } from 'lucide-vue-next'
+import { Pin, X, Check } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -351,7 +351,7 @@ async function moveToTop() {
     <!-- Modal (create): full-width with own padding so border goes edge-to-edge -->
     <!-- Inline edit: margin-top + top border only -->
     <div :class="[
-      'flex items-center justify-between border-t border-swoosh',
+      'flex flex-wrap items-center gap-y-2 border-t border-swoosh',
       isEdit
         ? 'mt-4 pt-3 pb-1'
         : 'mt-[13px] px-5 pt-3 pb-[18px]'
@@ -435,16 +435,36 @@ async function moveToTop() {
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-[7px] items-center">
+      <div class="ml-auto flex gap-[7px] items-center">
+
+        <!-- Conjoined icon buttons — small screens only -->
+        <div class="flex sm:hidden rounded-sm overflow-hidden border border-swoosh">
+          <button
+              @click="cancelEditing"
+              class="w-8 h-8 flex items-center justify-center border-r border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-base-200 transition-colors"
+          >
+            <X :size="14" />
+          </button>
+          <button
+              @click="finishEditing"
+              class="w-8 h-8 flex items-center justify-center text-base-content hover:bg-base-200 transition-colors disabled:opacity-40"
+              :disabled="loading"
+          >
+            <span v-if="loading" class="loading loading-spinner loading-xs"></span>
+            <Check v-else :size="14" />
+          </button>
+        </div>
+
+        <!-- Text buttons — sm and up -->
         <button
             @click="cancelEditing"
-            class="rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
+            class="hidden sm:block rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
         >
           Cancel
         </button>
         <button
             @click="finishEditing"
-            class="rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40"
+            class="hidden sm:block rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40"
             :disabled="loading"
         >
           <span v-if="loading" class="loading loading-spinner loading-xs"></span>
