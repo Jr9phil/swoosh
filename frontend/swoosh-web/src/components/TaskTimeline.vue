@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import type { Task } from '../types/task'
 import { X } from 'lucide-vue-next'
@@ -112,6 +112,13 @@ const selectedDay = computed(() => {
     label,
     tasks
   }
+})
+
+// Keep a frozen copy of the last non-null selectedDay so the panel content
+// doesn't vanish mid-close-animation when selectedDayOffset becomes null.
+const frozenSelectedDay = ref<{ label: string; tasks: Task[] } | null>(null)
+watch(selectedDay, (val) => {
+  if (val !== null) frozenSelectedDay.value = val
 })
 
 function toggleDay(offset: number) {
@@ -298,15 +305,15 @@ onUnmounted(() => {
     <div class="day-panel-wrap" :class="{ 'open': selectedDayOffset !== null }">
       <div class="day-panel mt-3 border border-swoosh-border-hover rounded-[10px] bg-base-200 overflow-hidden shadow-[0_0_0_3px_rgba(255,255,255,0.03),0_8px_24px_rgba(0,0,0,0.4)]">
         <div class="day-panel-header flex items-center justify-between py-2.5 px-3.5 border-b border-swoosh-border bg-base-300">
-          <span class="font-mono text-[11px] font-bold tracking-[0.1em] uppercase text-swoosh-text-muted">{{ selectedDay?.label }}</span>
+          <span class="font-mono text-[11px] font-bold tracking-[0.1em] uppercase text-swoosh-text-muted">{{ frozenSelectedDay?.label }}</span>
           <button class="w-5 h-5 flex items-center justify-center text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors" @click="closeDayPanel">
             <X :size="12" stroke-width="2.5" />
           </button>
         </div>
         <div class="day-panel-tasks">
-          <template v-if="selectedDay?.tasks.length">
+          <template v-if="frozenSelectedDay?.tasks.length">
             <div
-                v-for="task in selectedDay.tasks"
+                v-for="task in frozenSelectedDay.tasks"
                 :key="task.id"
                 class="day-panel-task flex items-center gap-3 py-2.5 px-3.5 border-b border-swoosh-border last:border-b-0 cursor-pointer hover:bg-base-300 transition-colors group"
                 @click="jumpToTask(task)"
