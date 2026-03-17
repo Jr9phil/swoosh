@@ -237,7 +237,7 @@ async function remove() {
       <p v-if="!task.completed && task.notes" class="text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words line-clamp-2">{{ task.notes }}</p>
       <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
       <div v-if="!task.completed && task.deadline" class="badges">
-        <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'badge' } : null">
+        <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
           <Calendar v-if="!deadlineExpired" :size="11" />
           <Clock v-else :size="11" />
           {{ formattedDeadline() }}
