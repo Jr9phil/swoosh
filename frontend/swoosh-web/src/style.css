@@ -379,6 +379,18 @@
 /* Slightly larger interactive diamonds in the modal/editor */
 dialog.modal .rdiamond { width: 10px; height: 10px; }
 
+.rating-clear {
+    margin-left: 2px;
+    width: 14px; height: 14px;
+    font-size: 13px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-swoosh-text-faint);
+    background: none; border: none; padding: 0;
+    cursor: pointer; border-radius: 2px;
+    transition: color .1s;
+}
+.rating-clear:hover { color: var(--color-swoosh-text-muted); }
+
 /* ─────────────────────────────────────────────────────────
    Checkbox
 ───────────────────────────────────────────────────────── */

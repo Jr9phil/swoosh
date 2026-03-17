@@ -51,5 +51,11 @@ function setRating(n: number) {
         :style="diamondStyle(n)"
         @click="setRating(n)"
     />
+    <button
+        v-if="interactive && rating > 0"
+        class="rating-clear"
+        title="Clear rating"
+        @click="emit('update:rating', 0)"
+    >×</button>
   </div>
 </template>
