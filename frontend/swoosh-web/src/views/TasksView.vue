@@ -206,6 +206,11 @@ function handleModalClose() { createTaskEdit.value?.resetForm() }
 function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
 function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
 
+function handleCreateTaskForDate(date: string) {
+  openModal()
+  nextTick(() => { createTaskEdit.value?.setDate(date) })
+}
+
 // ── Skeleton data — realistic mix of variants and widths ──────────────────────
 const skeletonSections = [
   {
@@ -265,7 +270,7 @@ const skeletonSections = [
       </div>
 
       <!-- ── Timeline ── -->
-      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @jump-to-task="handleJumpToTask" />
+      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
 
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">

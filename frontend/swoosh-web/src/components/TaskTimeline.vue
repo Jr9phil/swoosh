@@ -182,7 +182,16 @@ async function handleTouchEnd(e: TouchEvent) {
 const emit = defineEmits<{
   (e: 'week-change'): void
   (e: 'jump-to-task', task: Task): void
+  (e: 'create-task-for-date', date: string): void
 }>()
+
+function handleDayDblClick(day: { date: Date; dayOffset: number }) {
+  if (isPastDay(day.date)) return
+  const yyyy = day.date.getFullYear()
+  const mm = String(day.date.getMonth() + 1).padStart(2, '0')
+  const dd = String(day.date.getDate()).padStart(2, '0')
+  emit('create-task-for-date', `${yyyy}-${mm}-${dd}`)
+}
 
 async function animateToOffset(next: number, dir: number) {
   slideDir.value = dir
@@ -273,6 +282,7 @@ onUnmounted(() => {
             'today-selected': day.isToday && selectedDayOffset === day.dayOffset
           }"
             @click="toggleDay(day.dayOffset)"
+            @dblclick.stop="handleDayDblClick(day)"
         >
           <span class="font-mono text-[10px] xl:text-[11px] tracking-[0.10em] uppercase" :class="day.isToday ? 'text-swoosh-text-muted' : 'text-swoosh-text-faint'">{{ day.name }}</span>
           <span class="text-[24px] xl:text-[28px] 2xl:text-[32px] font-bold leading-none font-mono" :class="day.isToday ? 'text-base-content' : 'text-swoosh-text-faint'">{{ day.num }}</span>
