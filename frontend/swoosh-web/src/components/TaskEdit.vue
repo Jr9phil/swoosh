@@ -437,18 +437,36 @@ async function moveToTop() {
       </div>
 
       <!-- Action Buttons -->
-      <div class="ml-auto flex gap-[7px] items-center">
+      <div class="ml-auto w-full min-[380px]:w-auto flex gap-[7px] items-center">
 
-        <!-- Conjoined icon buttons — small screens only -->
-        <div class="flex sm:hidden rounded-sm overflow-hidden border border-swoosh">
+        <!-- Full-width text buttons — only when row wraps (very small screens) -->
+        <button
+            @click="cancelEditing"
+            class="flex-1 min-[380px]:hidden rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
+        >
+          Cancel
+        </button>
+        <button
+            @click="finishEditing"
+            class="flex-1 min-[380px]:hidden rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40"
+            :disabled="loading"
+        >
+          <span v-if="loading" class="loading loading-spinner loading-xs"></span>
+          <span v-else>{{ isEdit ? 'Save' : 'Add task' }}</span>
+        </button>
+
+        <!-- Conjoined icon buttons — mobile (380px–sm) -->
+        <div class="hidden min-[380px]:flex sm:hidden rounded-sm overflow-hidden border border-swoosh">
           <button
               @click="cancelEditing"
+              title="Cancel"
               class="w-8 h-8 flex items-center justify-center border-r border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-base-200 transition-colors"
           >
             <X :size="14" />
           </button>
           <button
               @click="finishEditing"
+              :title="isEdit ? 'Save' : 'Add task'"
               class="w-8 h-8 flex items-center justify-center text-base-content hover:bg-base-200 transition-colors disabled:opacity-40"
               :disabled="loading"
           >
