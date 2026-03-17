@@ -177,7 +177,11 @@ const isFormBlank = computed(() => {
       priorityIndex.value === PRIORITIES.findIndex(p => p.value === 0)
 })
 
-defineExpose({ resetForm, isFormBlank })
+function setDate(dateStr: string) {
+  editedDate.value = dateStr
+}
+
+defineExpose({ resetForm, isFormBlank, setDate })
 
 // Saves changes to the store
 async function finishEditing() {
