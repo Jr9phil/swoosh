@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin, X, Check } from 'lucide-vue-next'
+import { Pin, X, Check, Ban } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -361,6 +361,7 @@ async function moveToTop() {
         <button
             type="button"
             @click="cyclePriority"
+            title="Priority level"
             class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors"
             :class="[
               PRIORITIES[priorityIndex].value === 0
@@ -376,6 +377,7 @@ async function moveToTop() {
         <button
             type="button"
             @click="editedPinned = !editedPinned"
+            :title="editedPinned ? 'Unpin' : 'Pin'"
             class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
             :class="editedPinned
               ? 'text-secondary border-secondary/25'
@@ -389,13 +391,14 @@ async function moveToTop() {
           <button
               type="button"
               @click="showIconPicker = !showIconPicker"
+              title="Select icon"
               class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
               :class="selectedIcon !== null
                 ? 'border-current/25 ' + TASK_ICONS.find(i => i.value === selectedIcon)?.color
                 : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
           >
             <TaskIcon v-if="selectedIcon !== null" :value="selectedIcon" />
-            <X v-else :size="14" />
+            <Ban v-else :size="14" />
           </button>
           <div
               v-if="showIconPicker"
@@ -408,7 +411,7 @@ async function moveToTop() {
                 class="col-span-6 flex items-center justify-center gap-1.5 rounded-sm py-1 mb-1 text-[11px] font-mono uppercase tracking-wider transition-colors hover:bg-base-200"
                 :class="selectedIcon === null ? 'bg-base-200 text-base-content' : 'text-swoosh-text-faint'"
             >
-              <X :size="11" />
+              <Ban :size="11" />
               No icon
             </button>
             <button
@@ -430,7 +433,6 @@ async function moveToTop() {
             :priority="editedPriority"
             interactive
             @update:rating="editedRating = $event"
-            class="ml-[7px]"
         />
       </div>
 
