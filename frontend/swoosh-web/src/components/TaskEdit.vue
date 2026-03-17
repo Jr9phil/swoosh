@@ -374,7 +374,7 @@ async function moveToTop() {
             ]"
         >
           <component :is="PRIORITIES[priorityIndex].icon" :size="13" fill="currentColor" />
-          <span class="uppercase tracking-wider">{{ PRIORITIES[priorityIndex].label }}</span>
+          <span class="uppercase tracking-wider">{{ PRIORITIES[priorityIndex].shortLabel }}</span>
         </button>
 
         <!-- Pin Toggle -->
