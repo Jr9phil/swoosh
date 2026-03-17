@@ -362,6 +362,13 @@
     align-items: center;
 }
 
+.task-rating--interactive {
+    padding: 5px 8px 5px 10px;
+    border-radius: 9999px;
+    cursor: default;
+}
+.task-rating--clearable:hover { background: var(--color-base-200); }
+
 .diamond {
     width: 8px; height: 8px;
     transform: rotate(45deg); border-radius: 1px;
@@ -380,16 +387,20 @@
 dialog.modal .rdiamond { width: 10px; height: 10px; }
 
 .rating-clear {
-    margin-left: 2px;
-    width: 14px; height: 14px;
-    font-size: 13px; line-height: 1;
+    margin-left: 1px;
+    width: 22px; height: 22px;
+    font-size: 18px;
     display: flex; align-items: center; justify-content: center;
+    padding-bottom: 2px; /* compensate for × character sitting above visual center */
     color: var(--color-swoosh-text-faint);
-    background: none; border: none; padding: 0;
-    cursor: pointer; border-radius: 2px;
+    background: none; border: none; padding: 0 0 2px;
+    cursor: pointer;
     transition: color .1s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 .rating-clear:hover { color: var(--color-swoosh-text-muted); }
+.rating-clear:active { color: var(--color-swoosh-text); }
 
 /* ─────────────────────────────────────────────────────────
    Checkbox

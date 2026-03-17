@@ -43,7 +43,7 @@ function setRating(n: number) {
 </script>
 
 <template>
-  <div v-if="rating > 0 || interactive" class="task-rating">
+  <div v-if="rating > 0 || interactive" :class="['task-rating', { 'task-rating--interactive': interactive, 'task-rating--clearable': interactive && rating > 0 }]">
     <div
         v-for="n in 5"
         :key="n"

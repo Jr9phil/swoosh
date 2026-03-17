@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin, X, Check } from 'lucide-vue-next'
+import { Pin, X, Check, Ban } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -361,6 +361,7 @@ async function moveToTop() {
         <button
             type="button"
             @click="cyclePriority"
+            title="Priority level"
             class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors"
             :class="[
               PRIORITIES[priorityIndex].value === 0
@@ -376,6 +377,7 @@ async function moveToTop() {
         <button
             type="button"
             @click="editedPinned = !editedPinned"
+            :title="editedPinned ? 'Unpin' : 'Pin'"
             class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
             :class="editedPinned
               ? 'text-secondary border-secondary/25'
@@ -389,13 +391,14 @@ async function moveToTop() {
           <button
               type="button"
               @click="showIconPicker = !showIconPicker"
+              title="Select icon"
               class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
               :class="selectedIcon !== null
                 ? 'border-current/25 ' + TASK_ICONS.find(i => i.value === selectedIcon)?.color
                 : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
           >
             <TaskIcon v-if="selectedIcon !== null" :value="selectedIcon" />
-            <X v-else :size="14" />
+            <Ban v-else :size="14" />
           </button>
           <div
               v-if="showIconPicker"
@@ -408,7 +411,7 @@ async function moveToTop() {
                 class="col-span-6 flex items-center justify-center gap-1.5 rounded-sm py-1 mb-1 text-[11px] font-mono uppercase tracking-wider transition-colors hover:bg-base-200"
                 :class="selectedIcon === null ? 'bg-base-200 text-base-content' : 'text-swoosh-text-faint'"
             >
-              <X :size="11" />
+              <Ban :size="11" />
               No icon
             </button>
             <button
@@ -430,23 +433,40 @@ async function moveToTop() {
             :priority="editedPriority"
             interactive
             @update:rating="editedRating = $event"
-            class="ml-[7px]"
         />
       </div>
 
       <!-- Action Buttons -->
-      <div class="ml-auto flex gap-[7px] items-center">
+      <div class="ml-auto w-full min-[380px]:w-auto flex gap-[7px] items-center">
 
-        <!-- Conjoined icon buttons — small screens only -->
-        <div class="flex sm:hidden rounded-sm overflow-hidden border border-swoosh">
+        <!-- Full-width text buttons — only when row wraps (very small screens) -->
+        <button
+            @click="cancelEditing"
+            class="flex-1 min-[380px]:hidden rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]"
+        >
+          Cancel
+        </button>
+        <button
+            @click="finishEditing"
+            class="flex-1 min-[380px]:hidden rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40"
+            :disabled="loading"
+        >
+          <span v-if="loading" class="loading loading-spinner loading-xs"></span>
+          <span v-else>{{ isEdit ? 'Save' : 'Add task' }}</span>
+        </button>
+
+        <!-- Conjoined icon buttons — mobile (380px–sm) -->
+        <div class="hidden min-[380px]:flex sm:hidden rounded-sm overflow-hidden border border-swoosh">
           <button
               @click="cancelEditing"
+              title="Cancel"
               class="w-8 h-8 flex items-center justify-center border-r border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:bg-base-200 transition-colors"
           >
             <X :size="14" />
           </button>
           <button
               @click="finishEditing"
+              :title="isEdit ? 'Save' : 'Add task'"
               class="w-8 h-8 flex items-center justify-center text-base-content hover:bg-base-200 transition-colors disabled:opacity-40"
               :disabled="loading"
           >
