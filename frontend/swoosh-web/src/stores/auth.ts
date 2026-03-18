@@ -31,6 +31,10 @@ export const useAuthStore = defineStore('auth', {
         async changePassword(currentPassword: string, newPassword: string) {
           await api.post('/auth/change-password', { currentPassword, newPassword })  
         },
+        // Deletes the user's account and all associated data after verifying credentials
+        async deleteAccount(email: string, password: string) {
+            await api.delete('/auth/account', { data: { email, password } })
+        },
         // Clears authentication state and removes stored tokens/user info
         logout() {
             this.token = null
