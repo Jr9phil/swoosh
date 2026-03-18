@@ -206,4 +206,33 @@ public class AuthController : ControllerBase
         
         return NoContent();
     }
+
+    //Delete Account
+    [Authorize]
+    [HttpDelete("account")]
+    public async Task<IActionResult> DeleteAccount(DeleteAccountDto dto)
+    {
+        var userId = UserContext.GetUserId(User);
+
+        var user = await _db.Users.FindAsync(userId);
+        if (user == null)
+            return Unauthorized();
+
+        if (!string.Equals(user.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+            return BadRequest("Email or password is incorrect");
+
+        if (!_auth.Verify(dto.Password, user.PasswordHash))
+            return BadRequest("Email or password is incorrect");
+
+        var tasks = await _db.Tasks
+            .Where(t => t.UserId == userId)
+            .ToListAsync();
+
+        _db.Tasks.RemoveRange(tasks);
+        _db.Users.Remove(user);
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

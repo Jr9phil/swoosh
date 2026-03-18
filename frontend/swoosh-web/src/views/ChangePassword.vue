@@ -137,6 +137,7 @@ function focusConfirmNewPassword() {
             {{ loading ? 'Updating...' : 'Update Password' }}
           </button>
           <router-link to="/" class="w-full text-center py-2 text-[13px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors">Cancel</router-link>
+          <router-link to="/deleteAccount" class="w-full text-center py-2 text-[13px] text-red-500 hover:text-red-400 transition-colors">Delete Account</router-link>
         </div>
       </form>
     </div>
