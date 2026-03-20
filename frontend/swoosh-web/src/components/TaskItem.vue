@@ -1,7 +1,7 @@
-<!-- 
+<!--
   TaskItem.vue
   Represents a single task in the list.
-  Handles inline editing, completion toggling, pinning, priority management, and drag-and-drop.
+  Handles inline editing, completion toggling, pinning, and priority management.
 -->
 <script setup lang="ts">
 import type { Task } from '../types/task'
@@ -62,11 +62,6 @@ const isDueToday = computed(() => {
 })
 
 const tasksStore = useTasksStore()
-
-const emit = defineEmits<{
-  (e: 'drag-start', task: Task): void
-  (e: 'drop', task: Task): void
-}>()
 
 // Formats the deadline into a human-readable relative string
 function formattedDeadline() {
@@ -204,10 +199,6 @@ async function remove() {
       :id="'task-' + task.id"
       class="task-item"
       :class="{ 'title-only': !task.completed && !task.notes && !task.deadline }"
-      :draggable="!task.completed"
-      @dragstart="emit('drag-start', task)"
-      @dragover.prevent
-      @drop="emit('drop', task)"
   >
     <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
       <input
