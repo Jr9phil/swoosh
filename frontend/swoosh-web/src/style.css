@@ -274,6 +274,9 @@
     li.task-item:last-child  { border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px); }
     li.task-item:only-child  { border-radius: calc(var(--radius-r) - 1px); }
 
+    /* ── Drag and drop ── */
+    .drag-ghost { opacity: 0.4; }
+
     /* ── Overdue / today dots on section labels ── */
     .overdue-dot {
         width: 7px; height: 7px; border-radius: 99px;
