@@ -145,6 +145,41 @@ export const useTasksStore = defineStore('tasks', {
             if (index !== -1) this.tasks[index].createdAt = newCreatedAt
         },
 
+        // Moves a task to a different priority group, calculating a new createdAt to preserve its
+        // visual position within the destination group.
+        // destGroupTasks is the destination array after VueDraggable inserted the task at newIndex.
+        async moveTaskToPriority(taskId: string, targetPriority: number, destGroupTasks: Task[], newIndex: number) {
+            const task = this.tasks.find(t => t.id === taskId)
+            if (!task) return
+
+            const above = newIndex > 0 ? destGroupTasks[newIndex - 1] : undefined
+            const below = newIndex < destGroupTasks.length - 1 ? destGroupTasks[newIndex + 1] : undefined
+
+            let newCreatedAt: string
+            if (above && below) {
+                const avg = (new Date(above.createdAt).getTime() + new Date(below.createdAt).getTime()) / 2
+                newCreatedAt = new Date(avg).toISOString()
+            } else if (above) {
+                // Bottom of dest list
+                newCreatedAt = new Date(new Date(above.createdAt).getTime() - 1).toISOString()
+            } else if (below) {
+                // Top of dest list
+                newCreatedAt = new Date(new Date(below.createdAt).getTime() + 1).toISOString()
+            } else {
+                // Only item in dest — keep current timestamp
+                newCreatedAt = task.createdAt
+            }
+
+            const updated = { ...task, priority: targetPriority, createdAt: newCreatedAt }
+            await api.put(`/tasks/${task.id}`, updated)
+
+            const index = this.tasks.findIndex(t => t.id === taskId)
+            if (index !== -1) {
+                this.tasks[index].priority = targetPriority
+                this.tasks[index].createdAt = newCreatedAt
+            }
+        },
+
         // Edits multiple task fields at once (title, notes, pinned, deadline, priority, rating, icon)
         async editTask(
             taskId: string,

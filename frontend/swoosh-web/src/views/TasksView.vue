@@ -225,11 +225,28 @@ watch(tasksByPriority, (groups) => {
   draggableGroups.value = next
 }, { immediate: true })
 
-function onGroupDragEnd(evt: any, priorityValue: number) {
+function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
   const { oldIndex, newIndex } = evt
+
+  // Cross-group drag: task moved into a different priority section
+  if (evt.from !== evt.to) {
+    const destPriority = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
+    if (isNaN(destPriority)) return
+
+    // By the time @end fires, @update:model-value has already run on both source
+    // and destination lists, so destItems includes the moved task at newIndex.
+    const taskId = (evt.item as HTMLElement).id.replace('task-', '')
+    const destItems = draggableGroups.value[destPriority]
+    if (!destItems) return
+
+    tasksStore.moveTaskToPriority(taskId, destPriority, destItems, newIndex ?? 0)
+    return
+  }
+
+  // Same-group reorder
   if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
 
-  const items = draggableGroups.value[priorityValue]
+  const items = draggableGroups.value[sourcePriorityValue]
   if (!items) return
   const source = items[newIndex]
   if (!source) return
@@ -388,6 +405,8 @@ const skeletonSections = [
             :model-value="draggableGroups[group.priority.value] ?? []"
             @update:model-value="(val: Task[]) => { draggableGroups[group.priority.value] = val }"
             class="task-group mt-8"
+            :group="{ name: 'tasks' }"
+            :data-priority="group.priority.value"
             :animation="150"
             ghost-class="drag-ghost"
             @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
@@ -423,6 +442,8 @@ const skeletonSections = [
                 @update:model-value="(val: Task[]) => { draggableGroups[group.priority.value] = val }"
                 class="task-group"
                 :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }"
+                :group="{ name: 'tasks' }"
+                :data-priority="group.priority.value"
                 :animation="150"
                 ghost-class="drag-ghost"
                 @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
