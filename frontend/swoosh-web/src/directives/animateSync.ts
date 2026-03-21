@@ -75,3 +75,32 @@ export const animateSync = {
         applyAnimation(el, binding)
     }
 }
+
+// Finds all v-animate-sync elements within a container and re-syncs their
+// animations with a freshly calculated phase. Call this after any operation
+// that detaches and re-inserts elements (e.g. drag-and-drop), because the
+// browser restarts CSS animations on re-insertion using the stale delay.
+export function resyncAnimatedChildren(container: HTMLElement) {
+    container.querySelectorAll<HTMLElement>('[data-sync-type]').forEach(el => {
+        const type = el.getAttribute('data-sync-type')
+        const groupName = el.getAttribute('data-sync-group')
+        if (!type || !groupName) return
+
+        const group = SYNC_GROUPS[groupName as keyof typeof SYNC_GROUPS]
+        if (!group) return
+
+        const animationTemplate = group.animations[type as keyof typeof group.animations]
+        if (!animationTemplate) return
+
+        const [name, duration, ...timing] = animationTemplate.split(' ')
+        const phase = -Math.floor(performance.now() % group.duration)
+
+        // Stop the animation, force a reflow, then restart with the correct phase.
+        el.style.animationName = 'none'
+        void el.offsetWidth
+        el.style.animationName = name ?? ''
+        el.style.animationDuration = duration ?? ''
+        el.style.animationTimingFunction = timing.join(' ')
+        el.style.animationDelay = `${phase}ms`
+    })
+}
