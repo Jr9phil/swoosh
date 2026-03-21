@@ -1,7 +1,7 @@
-<!-- 
+<!--
   TaskItem.vue
   Represents a single task in the list.
-  Handles inline editing, completion toggling, pinning, priority management, and drag-and-drop.
+  Handles inline editing, completion toggling, pinning, and priority management.
 -->
 <script setup lang="ts">
 import type { Task } from '../types/task'
@@ -62,11 +62,6 @@ const isDueToday = computed(() => {
 })
 
 const tasksStore = useTasksStore()
-
-const emit = defineEmits<{
-  (e: 'drag-start', task: Task): void
-  (e: 'drop', task: Task): void
-}>()
 
 // Formats the deadline into a human-readable relative string
 function formattedDeadline() {
@@ -140,6 +135,42 @@ function startEditing() {
   editing.value = true
 }
 
+// ── Mobile double-tap to edit ────────────────────────────────────────────────
+// On touch devices, a single tap should not open the editor (it would conflict
+// with the long-press-to-drag gesture). Double-tap opens it instead.
+let touchStartX = 0
+let touchStartY = 0
+let lastTapTime = 0
+
+function handleContentClick(e: MouseEvent) {
+  // Touch devices fire a synthetic click after touchend — ignore it here and
+  // let the touchend handler decide (double-tap detection).
+  if (navigator.maxTouchPoints > 0) return
+  startEditing()
+}
+
+function handleContentTouchStart(e: TouchEvent) {
+  const t = e.touches[0]
+  if (t) { touchStartX = t.clientX; touchStartY = t.clientY }
+}
+
+function handleContentTouchEnd(e: TouchEvent) {
+  const t = e.changedTouches[0]
+  if (!t) return
+
+  // Ignore if the finger moved significantly (scroll, not a tap)
+  if (Math.abs(t.clientX - touchStartX) > 10 || Math.abs(t.clientY - touchStartY) > 10) return
+
+  const now = Date.now()
+  const gap = now - lastTapTime
+  lastTapTime = now
+
+  if (gap < 300 && gap > 0) {
+    e.preventDefault() // suppress the subsequent synthetic click
+    startEditing()
+  }
+}
+
 const completing = ref(false)
 
 // Initiates the task completion animation and updates the store
@@ -203,11 +234,7 @@ async function remove() {
   <li v-else
       :id="'task-' + task.id"
       class="task-item"
-      :class="{ 'title-only': !task.completed && !task.notes && !task.deadline }"
-      :draggable="!task.completed"
-      @dragstart="emit('drag-start', task)"
-      @dragover.prevent
-      @drop="emit('drop', task)"
+      :class="{ 'title-only': !task.completed && !task.notes && !task.deadline, 'cursor-grab': !task.completed }"
   >
     <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
       <input
@@ -221,7 +248,13 @@ async function remove() {
     </div>
 
     <!-- Task content: title, notes, deadline badge -->
-    <div @click="startEditing" class="flex-1 min-w-0 cursor-text" :class="{ 'opacity-40' : task.completed }">
+    <div
+      @click="handleContentClick"
+      @touchstart.passive="handleContentTouchStart"
+      @touchend="handleContentTouchEnd"
+      class="flex-1 min-w-0 cursor-text"
+      :class="{ 'opacity-40' : task.completed }"
+    >
       <div class="flex items-center justify-between gap-3">
         <span class="flex items-center gap-1.5 min-w-0">
           <span

@@ -8,11 +8,13 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { PRIORITIES } from '../types/priority'
+import type { Task } from '../types/task'
 import { useRouter } from 'vue-router'
 import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
+import { VueDraggable } from 'vue-draggable-plus'
 import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
@@ -211,6 +213,52 @@ function handleCreateTaskForDate(date: string) {
   nextTick(() => { createTaskEdit.value?.setDate(date) })
 }
 
+// ── Drag and drop ────────────────────────────────────────────────────────────
+// Local mutable copies of each priority group's tasks, kept in sync with the
+// store. VueDraggable mutates these on drag; the @end handler persists the new
+// order to the backend via moveTaskRelative.
+const draggableGroups = ref<Record<number, Task[]>>({})
+
+watch(tasksByPriority, (groups) => {
+  const next: Record<number, Task[]> = {}
+  groups.forEach(g => { next[g.priority.value] = [...g.tasks] })
+  draggableGroups.value = next
+}, { immediate: true })
+
+function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
+  const { oldIndex, newIndex } = evt
+
+  // Cross-group drag: task moved into a different priority section
+  if (evt.from !== evt.to) {
+    const destPriority = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
+    if (isNaN(destPriority)) return
+
+    // By the time @end fires, @update:model-value has already run on both source
+    // and destination lists, so destItems includes the moved task at newIndex.
+    const taskId = (evt.item as HTMLElement).id.replace('task-', '')
+    const destItems = draggableGroups.value[destPriority]
+    if (!destItems) return
+
+    tasksStore.moveTaskToPriority(taskId, destPriority, destItems, newIndex ?? 0)
+    return
+  }
+
+  // Same-group reorder
+  if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+
+  const items = draggableGroups.value[sourcePriorityValue]
+  if (!items) return
+  const source = items[newIndex]
+  if (!source) return
+
+  // Determine the anchor task and whether source goes before or after it
+  const target = newIndex < items.length - 1 ? items[newIndex + 1] : items[newIndex - 1]
+  if (!target) return
+  const before = newIndex < items.length - 1
+
+  tasksStore.moveTaskRelative(source, target, before)
+}
+
 // ── Skeleton data — realistic mix of variants and widths ──────────────────────
 const skeletonSections = [
   {
@@ -353,9 +401,20 @@ const skeletonSections = [
       <template v-for="group in tasksByPriority" :key="group.priority.value">
         <!-- When the only group is no-priority, render tasks directly without a header -->
         <template v-if="onlyNoPriority">
-          <div class="task-group mt-8">
-            <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
-          </div>
+          <VueDraggable
+            :model-value="draggableGroups[group.priority.value] ?? []"
+            @update:model-value="(val: Task[]) => { draggableGroups[group.priority.value] = val }"
+            class="task-group mt-8"
+            :group="{ name: 'tasks' }"
+            :data-priority="group.priority.value"
+            :animation="150"
+            :delay="500"
+            :delay-on-touch-only="true"
+            ghost-class="drag-ghost"
+            @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
+          >
+            <TaskItem v-for="task in draggableGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
+          </VueDraggable>
         </template>
         <template v-else>
           <div
@@ -380,9 +439,21 @@ const skeletonSections = [
           <div class="section-body" :class="{ collapsed: !priorityExpanded[group.priority.value], 'is-animating': animatingSections.has(group.priority.value.toString()) }">
             <div>
               <!-- pinned/high/med/low get a coloured left accent — none does not -->
-              <div class="task-group" :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }">
-                <TaskItem v-for="task in group.tasks" :key="task.id" :task="task" />
-              </div>
+              <VueDraggable
+                :model-value="draggableGroups[group.priority.value] ?? []"
+                @update:model-value="(val: Task[]) => { draggableGroups[group.priority.value] = val }"
+                class="task-group"
+                :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }"
+                :group="{ name: 'tasks' }"
+                :data-priority="group.priority.value"
+                :animation="150"
+                :delay="500"
+                :delay-on-touch-only="true"
+                ghost-class="drag-ghost"
+                @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
+              >
+                <TaskItem v-for="task in draggableGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
+              </VueDraggable>
             </div>
           </div>
         </template>
