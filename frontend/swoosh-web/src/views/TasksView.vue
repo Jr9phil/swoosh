@@ -15,6 +15,7 @@ import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
 import { VueDraggable } from 'vue-draggable-plus'
+import { resyncAnimatedChildren } from '../directives/animateSync'
 import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
@@ -215,15 +216,48 @@ function handleCreateTaskForDate(date: string) {
 
 // ── Drag and drop ────────────────────────────────────────────────────────────
 // Local mutable copies of each priority group's tasks, kept in sync with the
-// store. VueDraggable mutates these on drag; the @end handler persists the new
-// order to the backend via moveTaskRelative.
+// store. VueDraggable mutates these on drag; the @end handler persists the
+// new order to the backend.
 const draggableGroups = ref<Record<number, Task[]>>({})
+
+// Groups the user has manually reordered this session. The watch preserves
+// their local order instead of re-applying the computed sort (which would
+// snap overdue tasks back to the top immediately after a drag).
+const frozenGroups = new Set<number>()
 
 watch(tasksByPriority, (groups) => {
   const next: Record<number, Task[]> = {}
-  groups.forEach(g => { next[g.priority.value] = [...g.tasks] })
+  groups.forEach(g => {
+    const p = g.priority.value
+    if (frozenGroups.has(p)) {
+      // Preserve the user's order: keep existing sequence, use fresh task
+      // objects from the store, drop tasks that no longer exist, prepend any
+      // newly added tasks.
+      const storeMap = new Map(g.tasks.map(t => [t.id, t]))
+      const preserved = (draggableGroups.value[p] ?? [])
+        .filter(t => storeMap.has(t.id))
+        .map(t => storeMap.get(t.id)!)
+      const preservedIds = new Set(preserved.map(t => t.id))
+      const added = g.tasks.filter(t => !preservedIds.has(t.id))
+      next[p] = [...added, ...preserved]
+    } else {
+      next[p] = [...g.tasks]
+    }
+  })
   draggableGroups.value = next
 }, { immediate: true })
+
+// On drag start, clear the v-animate-sync guard attributes on any animated
+// badges inside the dragged element. This ensures the directive's next
+// `updated` call (triggered by TaskItem's 1-second clock) will recalculate
+// the phase rather than being blocked by the equality guard.
+function handleDragChoose(evt: any) {
+  const el = evt.item as HTMLElement
+  el.querySelectorAll<HTMLElement>('[data-sync-type]').forEach(badge => {
+    badge.removeAttribute('data-sync-type')
+    badge.removeAttribute('data-sync-group')
+  })
+}
 
 function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
   const { oldIndex, newIndex } = evt
@@ -233,30 +267,36 @@ function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
     const destPriority = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
     if (isNaN(destPriority)) return
 
-    // By the time @end fires, @update:model-value has already run on both source
-    // and destination lists, so destItems includes the moved task at newIndex.
+    frozenGroups.add(sourcePriorityValue)
+    frozenGroups.add(destPriority)
+
+    // By the time @end fires, @update:model-value has already run on both
+    // source and destination lists, so destItems includes the moved task.
     const taskId = (evt.item as HTMLElement).id.replace('task-', '')
     const destItems = draggableGroups.value[destPriority]
     if (!destItems) return
 
     tasksStore.moveTaskToPriority(taskId, destPriority, destItems, newIndex ?? 0)
+    resyncAnimatedChildren(evt.item as HTMLElement)
     return
   }
 
   // Same-group reorder
   if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
 
+  frozenGroups.add(sourcePriorityValue)
+
   const items = draggableGroups.value[sourcePriorityValue]
   if (!items) return
   const source = items[newIndex]
   if (!source) return
 
-  // Determine the anchor task and whether source goes before or after it
   const target = newIndex < items.length - 1 ? items[newIndex + 1] : items[newIndex - 1]
   if (!target) return
   const before = newIndex < items.length - 1
 
   tasksStore.moveTaskRelative(source, target, before)
+  resyncAnimatedChildren(evt.item as HTMLElement)
 }
 
 // ── Skeleton data — realistic mix of variants and widths ──────────────────────
@@ -411,6 +451,7 @@ const skeletonSections = [
             :delay="500"
             :delay-on-touch-only="true"
             ghost-class="drag-ghost"
+            @choose="handleDragChoose"
             @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
           >
             <TaskItem v-for="task in draggableGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
@@ -450,6 +491,7 @@ const skeletonSections = [
                 :delay="500"
                 :delay-on-touch-only="true"
                 ghost-class="drag-ghost"
+                @choose="handleDragChoose"
                 @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
               >
                 <TaskItem v-for="task in draggableGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
