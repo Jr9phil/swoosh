@@ -408,6 +408,8 @@ const skeletonSections = [
             :group="{ name: 'tasks' }"
             :data-priority="group.priority.value"
             :animation="150"
+            :delay="500"
+            :delay-on-touch-only="true"
             ghost-class="drag-ghost"
             @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
           >
@@ -445,6 +447,8 @@ const skeletonSections = [
                 :group="{ name: 'tasks' }"
                 :data-priority="group.priority.value"
                 :animation="150"
+                :delay="500"
+                :delay-on-touch-only="true"
                 ghost-class="drag-ghost"
                 @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
               >
