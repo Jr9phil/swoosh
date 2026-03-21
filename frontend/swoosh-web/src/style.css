@@ -276,6 +276,7 @@
 
     /* ── Drag and drop ── */
     .drag-ghost { opacity: 0.4; }
+    .sortable-chosen { cursor: grabbing !important; }
 
     /* ── Overdue / today dots on section labels ── */
     .overdue-dot {
