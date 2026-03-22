@@ -263,6 +263,19 @@ function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
 
     tasksStore.moveTaskToPriority(taskId, destPriority, destItems, newIndex ?? 0)
     resyncAnimatedChildren(evt.item as HTMLElement)
+
+    // VueDraggable's onRemove re-inserts the dragged element into the source
+    // container (via Tt) so Vue can cleanly remove it during reconciliation.
+    // In some cases Vue's patch leaves the element as an orphan in source;
+    // this nextTick pass removes any such orphan after the render settles.
+    const srcContainer = evt.from as HTMLElement
+    const destContainer = evt.to as HTMLElement
+    nextTick(() => {
+      const taskElId = 'task-' + taskId
+      ;(srcContainer.querySelector('#' + taskElId) as HTMLElement | null)?.remove()
+      const dupes = Array.from(destContainer.querySelectorAll('#' + taskElId))
+      dupes.slice(1).forEach(el => el.remove())
+    })
     return
   }
 
