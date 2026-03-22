@@ -1,9 +1,5 @@
 <svg width="100%" viewBox="0 0 680 690" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="84%" cy="38%" r="76%">
-      <stop offset="0%" stop-color="#0c0a1c"/>
-      <stop offset="100%" stop-color="#02010a"/>
-    </radialGradient>
     <radialGradient id="sceneGlow" cx="50%" cy="50%" r="48%">
       <stop offset="0%" stop-color="#180c38" stop-opacity="0.36"/>
       <stop offset="58%" stop-color="#0c0820" stop-opacity="0.16"/>
@@ -87,9 +83,6 @@
     <clipPath id="mcD"><circle cx="182" cy="510" r="12"/></clipPath>
     <clipPath id="mcE"><circle cx="452" cy="530" r="8"/></clipPath>
   </defs>
-
-  <!-- Background -->
-  <rect width="680" height="680" fill="url(#bg)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
 
   <!-- Nebula wisps -->
   <ellipse cx="520" cy="98" rx="230" ry="50" fill="#180c38" opacity="0.28" transform="rotate(12,520,98)" style="fill:rgb(24, 12, 56);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.28;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
