@@ -9,6 +9,7 @@ import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import TaskTimeline from '../components/TaskTimeline.vue'
+import ImgHeader from '../components/ImgHeader.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { useTaskDrag } from '../composables/useTaskDrag'
 import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
@@ -88,12 +89,6 @@ function isOverdue(deadline?: string | null) {
 function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed && isOverdue(t.deadline)) }
 function hasTodayInGroup(tasks: any[])   { return tasks.some(t => !t.completed && isDueToday(t.deadline)) }
 
-const formattedToday = computed(() => {
-  const d = new Date()
-  const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`.toUpperCase()
-})
 
 const taskTimeline = ref<InstanceType<typeof TaskTimeline> | null>(null)
 const completedExpanded = ref(false)
@@ -228,23 +223,8 @@ const skeletonSections = [
   <main class="flex-1 flex justify-center pt-6 px-5 pb-[60px] xl:pt-8 xl:px-10 xl:pb-[70px]">
     <div class="w-full max-w-[540px] xl:max-w-[700px] 2xl:max-w-[840px]">
 
-      <!-- ── Header ── -->
-      <header class="page-header flex items-center gap-3.5 mb-8 pb-[22px] border-b border-swoosh">
-        <button
-            class="icon-btn"
-            @click="openModal"
-        >
-          <Plus :size="18" stroke-width="2.5" />
-        </button>
-        <span class="text-[18px] xl:text-[20px] font-bold tracking-[0.18em] uppercase text-base-content flex-1">My Tasks</span>
-        <!-- Clicking the date label resets the timeline to the current week -->
-        <div
-            class="font-mono text-[11px] font-bold text-swoosh-text-muted tracking-[0.10em] uppercase whitespace-nowrap cursor-pointer select-none transition-colors hover:text-swoosh-text"
-            @click="() => taskTimeline?.resetTimeline()"
-        >
-          {{ formattedToday }}
-        </div>
-      </header>
+      <!-- ── Image Header ── -->
+      <ImgHeader @open-modal="openModal" @reset-timeline="taskTimeline?.resetTimeline()" />
 
       <!-- ── Overdue banner ── -->
       <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">

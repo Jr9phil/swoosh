@@ -1,0 +1,133 @@
+<svg width="100%" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sceneGlow" cx="50%" cy="48%" r="42%">
+      <stop offset="0%"   stop-color="#081838" stop-opacity="0.42"/>
+      <stop offset="55%"  stop-color="#030a18" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#000"    stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Planet: much brighter — vivid blue across most of the disk -->
+    <radialGradient id="pDay" cx="71%" cy="23%" r="70%">
+      <stop offset="0%"   stop-color="#e8f4ff"/>
+      <stop offset="10%"  stop-color="#80b8ff"/>
+      <stop offset="26%"  stop-color="#3870e0"/>
+      <stop offset="48%"  stop-color="#1848b8"/>
+      <stop offset="72%"  stop-color="#0c2878"/>
+      <stop offset="100%" stop-color="#060f3a"/>
+    </radialGradient>
+
+    <!-- Night shadow — pulled back so it covers less of the disk -->
+    <linearGradient id="nightShadow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#000408" stop-opacity="0.96"/>
+      <stop offset="12%"  stop-color="#000510" stop-opacity="0.88"/>
+      <stop offset="28%"  stop-color="#000818" stop-opacity="0.68"/>
+      <stop offset="44%"  stop-color="#000c20" stop-opacity="0.35"/>
+      <stop offset="58%"  stop-color="#000"    stop-opacity="0.10"/>
+      <stop offset="68%"  stop-color="#000"    stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000"    stop-opacity="0"/>
+    </linearGradient>
+
+    <radialGradient id="shine" cx="72%" cy="22%" r="40%">
+      <stop offset="0%"   stop-color="#f8fdff" stop-opacity="0.80"/>
+      <stop offset="28%"  stop-color="#80b8ff" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#000"    stop-opacity="0"/>
+    </radialGradient>
+
+    <clipPath id="pClip">
+      <circle cx="340" cy="320" r="110"/>
+    </clipPath>
+  </defs>
+
+  <!-- Nebula wisps -->
+  <ellipse cx="510" cy="125" rx="235" ry="55" fill="#020820" opacity="0.35" transform="rotate(13,510,125)"/>
+  <ellipse cx="165" cy="555" rx="195" ry="46" fill="#010618" opacity="0.28" transform="rotate(-11,165,555)"/>
+  <ellipse cx="580" cy="490" rx="155" ry="36" fill="#020a1e" opacity="0.22" transform="rotate(5,580,490)"/>
+
+  <!-- Stars -->
+  <circle cx="20"  cy="42"  r="1.2" fill="#cce0ff" opacity="0.88"/>
+  <circle cx="68"  cy="14"  r="0.9" fill="#eef4ff" opacity="0.70"/>
+  <circle cx="118" cy="62"  r="1.4" fill="#fff"    opacity="0.92"/>
+  <circle cx="42"  cy="128" r="0.7" fill="#fff"    opacity="0.58"/>
+  <circle cx="16"  cy="250" r="1.0" fill="#cce0ff" opacity="0.65"/>
+  <circle cx="8"   cy="382" r="1.2" fill="#eef4ff" opacity="0.75"/>
+  <circle cx="22"  cy="470" r="0.7" fill="#fff"    opacity="0.58"/>
+  <circle cx="12"  cy="578" r="1.3" fill="#fff"    opacity="0.85"/>
+  <circle cx="48"  cy="648" r="0.8" fill="#cce0ff" opacity="0.65"/>
+  <circle cx="155" cy="32"  r="1.0" fill="#fff"    opacity="0.75"/>
+  <circle cx="84"  cy="620" r="1.1" fill="#fff"    opacity="0.78"/>
+  <circle cx="622" cy="24"  r="1.1" fill="#fff"    opacity="0.72"/>
+  <circle cx="660" cy="82"  r="0.8" fill="#eef4ff" opacity="0.58"/>
+  <circle cx="670" cy="172" r="0.9" fill="#fff"    opacity="0.62"/>
+  <circle cx="668" cy="394" r="1.0" fill="#eef4ff" opacity="0.68"/>
+  <circle cx="642" cy="566" r="1.2" fill="#fff"    opacity="0.78"/>
+  <circle cx="608" cy="640" r="0.9" fill="#cce0ff" opacity="0.65"/>
+  <circle cx="344" cy="12"  r="1.0" fill="#fff"    opacity="0.75"/>
+  <circle cx="480" cy="22"  r="1.2" fill="#fff"    opacity="0.68"/>
+  <circle cx="226" cy="20"  r="0.9" fill="#fff"    opacity="0.62"/>
+  <circle cx="38"  cy="320" r="0.8" fill="#cce0ff" opacity="0.55"/>
+  <circle cx="658" cy="290" r="0.8" fill="#fff"    opacity="0.58"/>
+
+  <!-- Scene glow -->
+  <circle cx="340" cy="320" r="340" fill="url(#sceneGlow)"/>
+
+  <g transform="rotate(-22, 340, 320)">
+
+    <!-- ── RINGS BACK HALF ── -->
+    <path d="M 18 320 A 322 72 0 0 1 662 320" fill="none" stroke="#6090d8" stroke-width="0.8" opacity="0.13"/>
+    <path d="M 44 320 A 296 66 0 0 1 636 320" fill="none" stroke="#80aae8" stroke-width="1.5" opacity="0.19"/>
+    <path d="M 72 320 A 268 60 0 0 1 608 320" fill="none" stroke="#c0d8ff" stroke-width="2.8" opacity="0.27"/>
+    <path d="M 75 320 A 265 59 0 0 1 605 320" fill="none" stroke="#e8f2ff" stroke-width="0.8" opacity="0.20"/>
+    <path d="M 96 320 A 244 55 0 0 1 584 320" fill="none" stroke="#010408" stroke-width="4"   opacity="0.75"/>
+    <path d="M 112 320 A 228 51 0 0 1 568 320" fill="none" stroke="#a8c8ff" stroke-width="2.2" opacity="0.25"/>
+    <path d="M 115 320 A 225 50 0 0 1 565 320" fill="none" stroke="#d8eaff" stroke-width="0.7" opacity="0.17"/>
+    <path d="M 132 320 A 208 47 0 0 1 548 320" fill="none" stroke="#5878c0" stroke-width="1.2" opacity="0.15"/>
+    <path d="M 82 320 A 258 58 0 0 1 598 320"  fill="none" stroke="#d0e4ff" stroke-width="0.6" opacity="0.11"/>
+    <path d="M 120 320 A 220 49 0 0 1 560 320" fill="none" stroke="#b0ccff" stroke-width="0.6" opacity="0.10"/>
+
+    <!-- ── PLANET ── -->
+    <circle cx="340" cy="320" r="136" fill="none" stroke="#1030b0" stroke-width="20" opacity="0.11"/>
+    <circle cx="340" cy="320" r="123" fill="none" stroke="#3060e0" stroke-width="7"  opacity="0.14"/>
+
+    <circle cx="340" cy="320" r="110" fill="url(#pDay)"/>
+
+    <g clip-path="url(#pClip)">
+      <g transform="rotate(14, 340, 320)">
+        <!-- Subtle bands — kept light -->
+        <rect x="230" y="208" width="220" height="11" fill="#0c2268" opacity="0.38"/>
+        <rect x="230" y="228" width="220" height="16" fill="#2050c8" opacity="0.14"/>
+        <rect x="230" y="252" width="220" height="9"  fill="#0a1c58" opacity="0.36"/>
+        <rect x="230" y="272" width="220" height="20" fill="#1848c0" opacity="0.13"/>
+        <rect x="230" y="302" width="220" height="11" fill="#0c2068" opacity="0.34"/>
+        <rect x="230" y="324" width="220" height="18" fill="#1038a8" opacity="0.14"/>
+        <rect x="230" y="354" width="220" height="9"  fill="#0a1c58" opacity="0.35"/>
+        <rect x="230" y="374" width="220" height="16" fill="#1830a0" opacity="0.13"/>
+        <rect x="230" y="402" width="220" height="11" fill="#0c2268" opacity="0.35"/>
+
+        <!-- Very faint turbulence -->
+        <path d="M230 278 Q268 272 306 280 Q342 287 378 273 Q410 261 450 276 L450 284 Q408 276 370 289 Q334 299 298 285 Q260 271 230 283Z" fill="#3060d0" opacity="0.07"/>
+        <path d="M230 330 Q268 323 308 332 Q344 342 380 325 Q412 310 450 328 L450 338 Q410 333 372 347 Q336 358 300 341 Q262 325 230 340Z" fill="#2050c0" opacity="0.07"/>
+
+        <!-- Polar darkening — lighter than before -->
+        <ellipse cx="340" cy="210" rx="110" ry="28" fill="#000820" opacity="0.38"/>
+        <ellipse cx="340" cy="430" rx="110" ry="28" fill="#000820" opacity="0.44"/>
+      </g>
+
+      <circle cx="340" cy="320" r="110" fill="url(#shine)"/>
+      <rect x="230" y="210" width="220" height="220" fill="url(#nightShadow)"/>
+    </g>
+
+    <!-- ── RINGS FRONT HALF ── -->
+    <path d="M 132 320 A 208 47 0 0 0 548 320" fill="none" stroke="#5878c0" stroke-width="1.2" opacity="0.18"/>
+    <path d="M 115 320 A 225 50 0 0 0 565 320" fill="none" stroke="#d8eaff" stroke-width="0.7" opacity="0.20"/>
+    <path d="M 112 320 A 228 51 0 0 0 568 320" fill="none" stroke="#a8c8ff" stroke-width="2.2" opacity="0.32"/>
+    <path d="M 96 320 A 244 55 0 0 0 584 320"  fill="none" stroke="#010408" stroke-width="4"   opacity="0.85"/>
+    <path d="M 75 320 A 265 59 0 0 0 605 320"  fill="none" stroke="#e8f2ff" stroke-width="0.8" opacity="0.25"/>
+    <path d="M 72 320 A 268 60 0 0 0 608 320"  fill="none" stroke="#c0d8ff" stroke-width="2.8" opacity="0.36"/>
+    <path d="M 44 320 A 296 66 0 0 0 636 320"  fill="none" stroke="#80aae8" stroke-width="1.5" opacity="0.24"/>
+    <path d="M 18 320 A 322 72 0 0 0 662 320"  fill="none" stroke="#6090d8" stroke-width="0.8" opacity="0.16"/>
+    <path d="M 82 320 A 258 58 0 0 0 598 320"  fill="none" stroke="#d0e4ff" stroke-width="0.6" opacity="0.14"/>
+    <path d="M 120 320 A 220 49 0 0 0 560 320" fill="none" stroke="#b0ccff" stroke-width="0.6" opacity="0.13"/>
+
+  </g>
+
+</svg>

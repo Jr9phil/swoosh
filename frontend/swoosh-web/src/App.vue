@@ -74,11 +74,7 @@ async function exportCsv() {
 
 <template>
   <div id="app" class="min-h-screen flex flex-col">
-    <header class="flex flex-container p-3 border-b border-swoosh">
-      <a href="https://github.com/Jr9phil/swoosh" target="_blank">
-        <Github class="logo" />
-      </a>
-    </header>
+
     <router-view />
 
     <!-- Application footer, visible only when the user is authenticated -->
