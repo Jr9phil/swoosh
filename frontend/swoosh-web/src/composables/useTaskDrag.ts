@@ -43,7 +43,7 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
             }
         })
         draggableGroups.value = next
-    }, { immediate: true })
+    }, { immediate: true, flush: 'sync' })
 
     function handleDragChoose(evt: any) {
         dragActive = true
@@ -54,6 +54,10 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
             badge.removeAttribute('data-sync-type')
             badge.removeAttribute('data-sync-group')
         })
+    }
+
+    function handleModelUpdate(priority: number, val: Task[]) {
+        draggableGroups.value[priority] = val
     }
 
     function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
@@ -111,5 +115,5 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
         resyncAnimatedChildren(evt.item as HTMLElement)
     }
 
-    return { draggableGroups, handleDragChoose, onGroupDragEnd }
+    return { draggableGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd }
 }
