@@ -171,12 +171,25 @@ export const useTasksStore = defineStore('tasks', {
             }
 
             const updated = { ...task, priority: targetPriority, createdAt: newCreatedAt }
-            await api.put(`/tasks/${task.id}`, updated)
 
+            // Optimistically update before the API call so the tasksByPriority
+            // watch sees the new state immediately and doesn't snap the task back.
             const index = this.tasks.findIndex(t => t.id === taskId)
+            const oldPriority = task.priority
+            const oldCreatedAt = task.createdAt
             if (index !== -1) {
                 this.tasks[index].priority = targetPriority
                 this.tasks[index].createdAt = newCreatedAt
+            }
+
+            try {
+                await api.put(`/tasks/${task.id}`, updated)
+            } catch (e) {
+                if (index !== -1) {
+                    this.tasks[index].priority = oldPriority
+                    this.tasks[index].createdAt = oldCreatedAt
+                }
+                throw e
             }
         },
 
