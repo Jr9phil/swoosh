@@ -170,15 +170,10 @@ export const useTasksStore = defineStore('tasks', {
                 newCreatedAt = task.createdAt
             }
 
-            // Snapshot the payload before mutating the store, so the API receives
-            // the correct values regardless of reactive aliasing.
             const updated = { ...task, priority: targetPriority, createdAt: newCreatedAt }
 
-            // Optimistically update the store NOW, before the API call.
-            // This keeps the store in sync with what VueDraggable has already done
-            // to the UI, so clock-driven tasksByPriority recomputes (which fire the
-            // watch every second) see the task at its new priority and leave
-            // draggableGroups undisturbed instead of snapping the task back.
+            // Optimistically update before the API call so the tasksByPriority
+            // watch sees the new state immediately and doesn't snap the task back.
             const index = this.tasks.findIndex(t => t.id === taskId)
             const oldPriority = task.priority
             const oldCreatedAt = task.createdAt
@@ -190,7 +185,6 @@ export const useTasksStore = defineStore('tasks', {
             try {
                 await api.put(`/tasks/${task.id}`, updated)
             } catch (e) {
-                // Roll back optimistic update on failure
                 if (index !== -1) {
                     this.tasks[index].priority = oldPriority
                     this.tasks[index].createdAt = oldCreatedAt

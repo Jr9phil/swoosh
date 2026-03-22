@@ -1,8 +1,3 @@
-<!-- 
-  TasksView.vue
-  Main view for displaying and managing tasks.
-  Includes sections for pinned, incomplete, and completed tasks.
--->
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useTasksStore } from '../stores/tasks'
@@ -22,11 +17,9 @@ const tasksStore = useTasksStore()
 const auth = useAuthStore()
 const router = useRouter()
 
-// Reactive current time — updated every second for live deadline/overdue updates
 const now = ref(Date.now())
 let clockInterval: ReturnType<typeof setInterval>
 
-// ── Computed task groups ────────────────────────────────────────────────────
 const incompleteTasks = computed(() =>
     tasksStore.tasks
         .filter(t => !t.completed && !t.pinned)
@@ -76,7 +69,6 @@ const overdueCount = computed(() =>
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
 const isEverythingCompleted = computed(() => tasksStore.tasks.length > 0 && incompleteTasks.value.length === 0 && pinnedTasks.value.length === 0)
 
-// ── Date helpers ────────────────────────────────────────────────────────────
 function isSameDay(d1: Date, d2: Date) {
   return d1.getFullYear() === d2.getFullYear() &&
       d1.getMonth()    === d2.getMonth()    &&
@@ -96,7 +88,6 @@ function isOverdue(deadline?: string | null) {
 function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed && isOverdue(t.deadline)) }
 function hasTodayInGroup(tasks: any[])   { return tasks.some(t => !t.completed && isDueToday(t.deadline)) }
 
-// ── Header date ─────────────────────────────────────────────────────────────
 const formattedToday = computed(() => {
   const d = new Date()
   const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
@@ -104,21 +95,19 @@ const formattedToday = computed(() => {
   return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`.toUpperCase()
 })
 
-// ── Section collapse ─────────────────────────────────────────────────────────
 const taskTimeline = ref<InstanceType<typeof TaskTimeline> | null>(null)
 const completedExpanded = ref(false)
 const priorityExpanded = ref<Record<string, boolean>>({
   '0': true, '1': true, '2': true, '3': true, 'pinned': true
 })
-// Tracks which sections are mid-animation so overflow:hidden can be applied
-// only during the transition, preventing permanent clipping of dropdown menus.
+// Tracks sections mid-animation so overflow:hidden is applied only during the
+// transition, preventing it from permanently clipping dropdown menus.
 const animatingSections = ref<Set<string>>(new Set())
 
 function togglePriority(val: number | string) {
   const key = val.toString()
   priorityExpanded.value[key] = !priorityExpanded.value[key]
 
-  // Add overflow clip for the transition duration, then remove it
   animatingSections.value = new Set([...animatingSections.value, key])
   setTimeout(() => {
     animatingSections.value.delete(key)
@@ -126,7 +115,6 @@ function togglePriority(val: number | string) {
   }, 240) // slightly longer than the 220ms grid transition
 }
 
-// ── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
   try {
@@ -141,7 +129,6 @@ onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
 })
 
-// ── Jump to overdue ──────────────────────────────────────────────────────────
 function jumpToOverdue() {
   Object.keys(priorityExpanded.value).forEach(key => {
     const tasks = key === 'pinned'
@@ -156,7 +143,6 @@ function jumpToOverdue() {
 
   const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline))
   if (firstOverdue) {
-    // 1. Focus the timeline on this task's day
     const d = new Date(firstOverdue.deadline!)
     const today = new Date()
     today.setHours(0,0,0,0)
@@ -164,7 +150,6 @@ function jumpToOverdue() {
     const offset = Math.round((d.getTime() - today.getTime()) / 86400000)
     taskTimeline.value?.focusOffset(offset)
 
-    // 2. Jump to the task in the list
     nextTick(() => {
       const el = document.getElementById('task-' + firstOverdue.id)
       if (el) {
@@ -176,11 +161,9 @@ function jumpToOverdue() {
   }
 }
 
-// ── Jump to a specific task from the timeline panel ─────────────────────────
-// TaskTimeline emits this when a task is clicked. We must expand the task's
-// section first (it may be collapsed), wait for Vue to render, then scroll.
+// Expand the task's section if collapsed, then scroll to it.
+// Called when a task is clicked in the timeline panel.
 function handleJumpToTask(task: any) {
-  // Determine which section key this task lives in
   const key = task.pinned &&
   !isOverdue(task.deadline) &&
   !isDueToday(task.deadline)
@@ -190,8 +173,7 @@ function handleJumpToTask(task: any) {
   const wasCollapsed = !priorityExpanded.value[key]
   priorityExpanded.value[key] = true
 
-  // If the section was collapsed we need to wait for the expand animation
-  // to finish before scrollIntoView will find a visible element
+  // Wait for the expand animation before scrollIntoView
   const delay = wasCollapsed ? 250 : 0
   setTimeout(() => {
     nextTick(() => {
@@ -215,24 +197,25 @@ function handleCreateTaskForDate(date: string) {
 }
 
 // ── Drag and drop ────────────────────────────────────────────────────────────
-// Local mutable copies of each priority group's tasks, kept in sync with the
-// store. VueDraggable mutates these on drag; the @end handler persists the
-// new order to the backend.
+
+// Per-priority mutable task arrays bound to VueDraggable. Kept in sync with
+// the store via the watch below; user-drag order is preserved via frozenGroups.
 const draggableGroups = ref<Record<number, Task[]>>({})
 
-// Groups the user has manually reordered this session. The watch preserves
-// their local order instead of re-applying the computed sort (which would
-// snap overdue tasks back to the top immediately after a drag).
+// Priorities the user has reordered this session. The watch uses the existing
+// draggableGroups order for these instead of re-applying the computed sort.
 const frozenGroups = new Set<number>()
 
+// Blocked while a drag is in progress so clock-driven tasksByPriority
+// recomputes don't overwrite draggableGroups mid-gesture.
+let dragActive = false
+
 watch(tasksByPriority, (groups) => {
+  if (dragActive) return
   const next: Record<number, Task[]> = {}
   groups.forEach(g => {
     const p = g.priority.value
     if (frozenGroups.has(p)) {
-      // Preserve the user's order: keep existing sequence, use fresh task
-      // objects from the store, drop tasks that no longer exist, prepend any
-      // newly added tasks.
       const storeMap = new Map(g.tasks.map(t => [t.id, t]))
       const preserved = (draggableGroups.value[p] ?? [])
         .filter(t => storeMap.has(t.id))
@@ -247,11 +230,10 @@ watch(tasksByPriority, (groups) => {
   draggableGroups.value = next
 }, { immediate: true })
 
-// On drag start, clear the v-animate-sync guard attributes on any animated
-// badges inside the dragged element. This ensures the directive's next
-// `updated` call (triggered by TaskItem's 1-second clock) will recalculate
-// the phase rather than being blocked by the equality guard.
 function handleDragChoose(evt: any) {
+  dragActive = true
+  // Clear v-animate-sync guard attrs so the directive recalculates animation
+  // phase on the next clock tick rather than being blocked by the equality check.
   const el = evt.item as HTMLElement
   el.querySelectorAll<HTMLElement>('[data-sync-type]').forEach(badge => {
     badge.removeAttribute('data-sync-type')
@@ -260,9 +242,14 @@ function handleDragChoose(evt: any) {
 }
 
 function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
+  // Unblock the watch now — @update:model-value has already fired on both
+  // lists, so draggableGroups reflects the drag result. The store action
+  // below updates the store optimistically, so the watch will see a
+  // consistent state on its next fire.
+  dragActive = false
+
   const { oldIndex, newIndex } = evt
 
-  // Cross-group drag: task moved into a different priority section
   if (evt.from !== evt.to) {
     const destPriority = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
     if (isNaN(destPriority)) return
@@ -270,8 +257,6 @@ function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
     frozenGroups.add(sourcePriorityValue)
     frozenGroups.add(destPriority)
 
-    // By the time @end fires, @update:model-value has already run on both
-    // source and destination lists, so destItems includes the moved task.
     const taskId = (evt.item as HTMLElement).id.replace('task-', '')
     const destItems = draggableGroups.value[destPriority]
     if (!destItems) return
@@ -281,7 +266,6 @@ function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
     return
   }
 
-  // Same-group reorder
   if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
 
   frozenGroups.add(sourcePriorityValue)
