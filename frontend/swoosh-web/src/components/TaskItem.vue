@@ -234,7 +234,7 @@ async function remove() {
   <li v-else
       :id="'task-' + task.id"
       class="task-item"
-      :class="{ 'title-only': !task.completed && !task.notes && !task.deadline, 'cursor-grab': !task.completed }"
+      :class="{ 'title-only': !task.completed && !task.notes && !task.deadline, 'cursor-grab': !task.completed && !task.pinned }"
   >
     <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
       <input
