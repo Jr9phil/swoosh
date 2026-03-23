@@ -171,6 +171,19 @@ onUnmounted(() => {
   transition: background 0.6s ease;
 }
 
+@media (max-width: 640px) {
+  .img-header {
+    /* px-5 = 20px, pt-6 = 24px — bleed out of TasksView's container padding */
+    margin-left: -20px;
+    margin-right: -20px;
+    margin-top: -24px;
+    width: calc(100% + 40px);
+    height: 220px;
+    border-radius: 0;
+    margin-bottom: 16px;
+  }
+}
+
 .img-header::after {
   content: '';
   position: absolute; left: 0; right: 0; bottom: 0;

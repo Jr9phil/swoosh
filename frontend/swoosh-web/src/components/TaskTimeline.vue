@@ -259,9 +259,8 @@ onUnmounted(() => {
   <div class="timeline-wrapper mb-8">
     <div class="timeline-clip">
       <div
-          v-if="!loading"
           class="grid grid-cols-7 gap-1 timeline-container transition-all duration-150"
-          :class="{ 
+          :class="{
           'opacity-0': slideState === 'sliding-out' || slideState === 'hidden',
           'translate-x-[-60px]': slideState === 'sliding-out' && slideDir > 0,
           'translate-x-[60px]': slideState === 'sliding-out' && slideDir < 0,
@@ -287,26 +286,22 @@ onUnmounted(() => {
           <span class="font-mono text-[10px] xl:text-[11px] tracking-[0.10em] uppercase" :class="day.isToday ? 'text-swoosh-text-muted' : 'text-swoosh-text-faint'">{{ day.name }}</span>
           <span class="text-[24px] xl:text-[28px] 2xl:text-[32px] font-bold leading-none font-mono" :class="day.isToday ? 'text-base-content' : 'text-swoosh-text-faint'">{{ day.num }}</span>
 
-          <div v-if="day.taskCount > 0"
-               class="day-count min-w-[22px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1.5 border border-swoosh-border-hover bg-base-300"
-               :class="{ 
-               'overdue-timeline-count': day.hasOverdue,
-               'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
-               'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
-               'text-warning border-warning/30 bg-warning/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
-             }"
-               v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
-          >
-            {{ day.taskCount }}
-          </div>
-          <div v-else class="text-swoosh-text-faint text-[10px] h-[18px] flex items-center justify-center">·</div>
-        </div>
-      </div>
-      <div v-else class="grid grid-cols-7 gap-1">
-        <div v-for="i in 7" :key="i" class="day-cell-skeleton bg-white/5 animate-pulse">
-          <div class="h-2 w-8 bg-white/10 rounded mb-1"></div>
-          <div class="h-6 w-6 bg-white/10 rounded"></div>
-          <div class="h-3 w-3 bg-white/10 rounded mt-1"></div>
+          <div v-if="loading" class="min-w-[22px] h-[18px] rounded-full bg-white/10 animate-pulse"></div>
+          <template v-else>
+            <div v-if="day.taskCount > 0"
+                 class="day-count min-w-[22px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold font-mono px-1.5 border border-swoosh-border-hover bg-base-300"
+                 :class="{
+                 'overdue-timeline-count': day.hasOverdue,
+                 'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
+                 'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
+                 'text-warning border-warning/30 bg-warning/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
+               }"
+                 v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
+            >
+              {{ day.taskCount }}
+            </div>
+            <div v-else class="text-swoosh-text-faint text-[10px] h-[18px] flex items-center justify-center">·</div>
+          </template>
         </div>
       </div>
     </div>
@@ -350,8 +345,7 @@ onUnmounted(() => {
   user-select: none;
 }
 
-.day-cell,
-.day-cell-skeleton {
+.day-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -362,14 +356,14 @@ onUnmounted(() => {
 }
 
 @media (min-width: 1280px) {
-  .day-cell, .day-cell-skeleton {
+  .day-cell {
     padding: 12px 6px;
     gap: 6px;
   }
 }
 
 @media (min-width: 1920px) {
-  .day-cell, .day-cell-skeleton {
+  .day-cell {
     padding: 16px 8px;
     gap: 8px;
   }
