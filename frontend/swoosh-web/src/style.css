@@ -265,7 +265,7 @@
     .task-skeleton:last-child { border-bottom: none; }
 
     /* ── Task item hover background ── */
-    li.task-item { transition: background-color 150ms; }
+    li.task-item { position: relative; transition: background-color 150ms; }
     /* Center checkbox with title when there is no sub-content below the title */
     li.task-item.title-only { align-items: center; }
     li.task-item:hover { background: var(--color-base-300); }
@@ -273,6 +273,32 @@
     li.task-item:first-child { border-radius: calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px) 0 0; }
     li.task-item:last-child  { border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px); }
     li.task-item:only-child  { border-radius: calc(var(--radius-r) - 1px); }
+
+    /* ── Task completion progress bar ── */
+    .task-complete-bar {
+      position: absolute;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--color-base-content);
+      opacity: 0.55;
+      border-radius: 0 1px 1px 0;
+      pointer-events: none;
+      animation: task-complete-progress 2.5s linear forwards;
+    }
+    @keyframes task-complete-progress {
+      from { width: 0%; }
+      to   { width: 100%; opacity: 0.75; }
+    }
+
+    /* ── Task completion done flash ── */
+    li.task-item.completing-done {
+      animation: task-complete-done 0.7s ease-out forwards;
+    }
+    @keyframes task-complete-done {
+      0%   { background-color: color-mix(in srgb, var(--color-success) 18%, transparent); }
+      100% { background-color: transparent; }
+    }
 
     /* ── Drag and drop ── */
     .drag-ghost { opacity: 0.4; }
