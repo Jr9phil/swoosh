@@ -1,4 +1,4 @@
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import type { ComputedRef } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import type { Task } from '../types/task'
@@ -115,5 +115,31 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
         resyncAnimatedChildren(evt.item as HTMLElement)
     }
 
-    return { draggableGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd }
+    // Reactive display lists: merges draggableGroups order with the canonical
+    // tasksByPriority membership. This ensures tasks added or moved via
+    // createTask/editTask always appear even if the draggableGroups watch hasn't
+    // synced yet — new tasks fall back to group.tasks and are prepended.
+    const displayGroups = computed<Record<number, Task[]>>(() => {
+        const result: Record<number, Task[]> = {}
+        tasksByPriority.value.forEach(g => {
+            const p = g.priority.value
+            const draggable = draggableGroups.value[p] ?? []
+            const storeMap = new Map(g.tasks.map(t => [t.id, t]))
+
+            // Tasks in drag order that still belong here, using latest store data
+            const inOrder = draggable
+                .filter(t => storeMap.has(t.id))
+                .map(t => storeMap.get(t.id)!)
+
+            const inOrderSet = new Set(inOrder.map(t => t.id))
+
+            // Tasks newly added to this group not yet reflected in draggableGroups
+            const newTasks = g.tasks.filter(t => !inOrderSet.has(t.id))
+
+            result[p] = [...newTasks, ...inOrder]
+        })
+        return result
+    })
+
+    return { draggableGroups, displayGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd }
 }

@@ -191,7 +191,7 @@ function handleCreateTaskForDate(date: string) {
   nextTick(() => { createTaskEdit.value?.setDate(date) })
 }
 
-const { draggableGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd } = useTaskDrag(tasksByPriority)
+const { draggableGroups, displayGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd } = useTaskDrag(tasksByPriority)
 
 // ── Skeleton data — realistic mix of variants and widths ──────────────────────
 const skeletonSections = [
@@ -321,7 +321,7 @@ const skeletonSections = [
         <!-- When the only group is no-priority, render tasks directly without a header -->
         <template v-if="onlyNoPriority">
           <VueDraggable
-            :model-value="draggableGroups[group.priority.value] ?? []"
+            :model-value="displayGroups[group.priority.value] ?? []"
             @update:model-value="(val: Task[]) => handleModelUpdate(group.priority.value, val)"
             class="task-group mt-8"
             :group="{ name: 'tasks' }"
@@ -333,7 +333,7 @@ const skeletonSections = [
             @choose="handleDragChoose"
             @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
           >
-            <TaskItem v-for="task in (draggableGroups[group.priority.value] ?? []).filter(t => group.tasks.some(gt => gt.id === t.id))" :key="task.id" :task="task" />
+            <TaskItem v-for="task in displayGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
           </VueDraggable>
         </template>
         <template v-else>
@@ -360,7 +360,7 @@ const skeletonSections = [
             <div>
               <!-- pinned/high/med/low get a coloured left accent — none does not -->
               <VueDraggable
-                :model-value="draggableGroups[group.priority.value] ?? []"
+                :model-value="displayGroups[group.priority.value] ?? []"
                 @update:model-value="(val: Task[]) => handleModelUpdate(group.priority.value, val)"
                 class="task-group"
                 :class="{ high: group.priority.value === 3, med: group.priority.value === 2, low: group.priority.value === 1 }"
@@ -373,7 +373,7 @@ const skeletonSections = [
                 @choose="handleDragChoose"
                 @end="(evt: any) => onGroupDragEnd(evt, group.priority.value)"
               >
-                <TaskItem v-for="task in (draggableGroups[group.priority.value] ?? []).filter(t => group.tasks.some(gt => gt.id === t.id))" :key="task.id" :task="task" />
+                <TaskItem v-for="task in displayGroups[group.priority.value] ?? []" :key="task.id" :task="task" />
               </VueDraggable>
             </div>
           </div>
