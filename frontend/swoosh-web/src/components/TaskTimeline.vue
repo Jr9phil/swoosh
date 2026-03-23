@@ -293,8 +293,7 @@ onUnmounted(() => {
                  :class="{
                  'overdue-timeline-count': day.hasOverdue,
                  'text-swoosh-today border-swoosh-today/35 bg-swoosh-today/10 today-border-pulse': day.isToday && !day.hasOverdue,
-                 'text-swoosh-text-muted': !day.isToday && !day.hasOverdue && day.taskCount < 4,
-                 'text-warning border-warning/30 bg-warning/10': !day.isToday && !day.hasOverdue && day.taskCount >= 4
+                 'text-swoosh-text-muted': !day.isToday && !day.hasOverdue
                }"
                  v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
             >
