@@ -35,6 +35,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   clearInterval(clockInterval)
+  if (completingTimeout) clearTimeout(completingTimeout)
 })
 
 const priorityIndex = computed(() =>
@@ -172,17 +173,32 @@ function handleContentTouchEnd(e: TouchEvent) {
 }
 
 const completing = ref(false)
+const completingDone = ref(false)
+let completingTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Initiates the task completion animation and updates the store
 async function onCompleteClick() {
-  if (props.task.completed || completing.value) return
+  if (props.task.completed || completingDone.value) return
+
+  if (completing.value) {
+    // Second click cancels the in-progress completion
+    completing.value = false
+    if (completingTimeout) { clearTimeout(completingTimeout); completingTimeout = null }
+    return
+  }
 
   completing.value = true
 
-  setTimeout(async () => {
-    await tasksStore.toggleComplete(props.task)
-    completing.value = false
-  }, 500)
+  await new Promise<void>(resolve => { completingTimeout = setTimeout(resolve, 2500) })
+  completingTimeout = null
+
+  if (!completing.value) return // was cancelled
+
+  completing.value = false
+  completingDone.value = true
+  setTimeout(() => { completingDone.value = false }, 700)
+
+  await tasksStore.toggleComplete(props.task)
 }
 
 // Toggles completion status for already-completed tasks (with confirmation)
@@ -234,8 +250,13 @@ async function remove() {
   <li v-else
       :id="'task-' + task.id"
       class="task-item"
-      :class="{ 'title-only': !task.completed && !task.notes && !task.deadline, 'cursor-grab': !task.completed && !task.pinned }"
+      :class="{
+        'title-only': !task.completed && !task.notes && !task.deadline,
+        'cursor-grab': !task.completed && !task.pinned,
+        'completing-done': completingDone
+      }"
   >
+    <div v-if="completing" class="task-complete-bar"></div>
     <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
       <input
           type="checkbox"
