@@ -8,7 +8,6 @@ import { useRouter } from 'vue-router'
 import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
-import TaskTimeline from '../components/TaskTimeline.vue'
 import ImgHeader from '../components/ImgHeader.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { useTaskDrag } from '../composables/useTaskDrag'
@@ -90,7 +89,7 @@ function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed &
 function hasTodayInGroup(tasks: any[])   { return tasks.some(t => !t.completed && isDueToday(t.deadline)) }
 
 
-const taskTimeline = ref<InstanceType<typeof TaskTimeline> | null>(null)
+const imgHeader = ref<InstanceType<typeof ImgHeader> | null>(null)
 const completedExpanded = ref(false)
 const priorityExpanded = ref<Record<string, boolean>>({
   '0': true, '1': true, '2': true, '3': true, 'pinned': true
@@ -143,7 +142,7 @@ function jumpToOverdue() {
     today.setHours(0,0,0,0)
     d.setHours(0,0,0,0)
     const offset = Math.round((d.getTime() - today.getTime()) / 86400000)
-    taskTimeline.value?.focusOffset(offset)
+    imgHeader.value?.focusOffset(offset)
 
     nextTick(() => {
       const el = document.getElementById('task-' + firstOverdue.id)
@@ -223,8 +222,8 @@ const skeletonSections = [
   <main class="flex-1 flex justify-center pt-6 px-5 pb-[60px] xl:pt-8 xl:px-10 xl:pb-[70px]">
     <div class="w-full max-w-[540px] xl:max-w-[700px] 2xl:max-w-[840px]">
 
-      <!-- ── Image Header ── -->
-      <ImgHeader @open-modal="openModal" @reset-timeline="taskTimeline?.resetTimeline()" />
+      <!-- ── Image Header + Timeline ── -->
+      <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="openModal" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
 
       <!-- ── Overdue banner ── -->
       <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">
@@ -235,9 +234,6 @@ const skeletonSections = [
           <ChevronRight :size="12"/>
         </button>
       </div>
-
-      <!-- ── Timeline ── -->
-      <TaskTimeline ref="taskTimeline" :loading="tasksStore.loading" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
 
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">
