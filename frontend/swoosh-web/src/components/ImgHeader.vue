@@ -632,14 +632,12 @@ defineExpose({ resetTimeline, focusOffset })
   position: absolute; top: 14px; left: 16px; z-index: 3;
   width: 34px; height: 34px;
   border-radius: 999px;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.40);
+  background: rgba(0,0,0,0.60);
+  color: rgba(255,255,255,0.85);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: border-color .15s, background .15s, color .15s, transform .1s, opacity .2s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 .header-add-btn:hover {
   border-color: var(--header-accent, rgba(255,255,255,0.45));
