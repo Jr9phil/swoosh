@@ -301,6 +301,7 @@ function getDotClass(task: Task) {
   if (task.pinned) return 'pinned'
   if (task.priority === 3) return 'high'
   if (task.priority === 2) return 'med'
+  if (task.priority === 1) return 'low'
   return ''
 }
 
@@ -899,6 +900,7 @@ defineExpose({ resetTimeline, focusOffset })
 }
 .day-panel-dot.high   { background: var(--color-warning); }
 .day-panel-dot.med    { background: var(--color-info); }
+.day-panel-dot.low    { background: var(--color-success); }
 .day-panel-dot.pinned { background: var(--color-secondary); }
 
 .day-panel-check {
