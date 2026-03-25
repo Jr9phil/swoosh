@@ -570,7 +570,7 @@ defineExpose({ resetTimeline, focusOffset })
 <style scoped>
 /* ── Outer wrapper ── */
 .header-section {
-  margin-bottom: 32px;
+  margin-bottom: 0;
 }
 
 /* ── Image header ── */
@@ -844,11 +844,13 @@ defineExpose({ resetTimeline, focusOffset })
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
+  margin-bottom: -8px;
 }
 .day-panel-wrap.open {
   grid-template-rows: 1fr;
   opacity: 1;
   pointer-events: all;
+  margin-bottom: 0;
 }
 
 .day-panel {
