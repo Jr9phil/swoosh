@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useTasksStore } from '../stores/tasks'
+import type { Task } from '../types/task'
+import { X } from 'lucide-vue-next'
 import sundaySvg    from '../assets/sunday.svg'
 import mondaySvg    from '../assets/monday.svg'
 import tuesdaySvg   from '../assets/tuesday.svg'
@@ -19,16 +22,19 @@ const PLANET_POS = [
   { left: '-110px', top: '-145px', width: '510px', height: '510px' },
 ]
 
-const emit = defineEmits<{
-  'open-modal': []
-  'reset-timeline': []
+const props = defineProps<{
+  loading?: boolean
 }>()
 
-const activeDow = ref(0)
-const hdDay     = ref('')
-const hdWeekday = ref('')
-const hdMonth   = ref('')
-const canvasEl  = ref<HTMLCanvasElement | null>(null)
+const emit = defineEmits<{
+  'open-modal': []
+  'jump-to-task': [task: Task]
+  'create-task-for-date': [date: string]
+}>()
+
+const tasksStore = useTasksStore()
+
+// ── Header / planet state ─────────────────────────────────────────────────
 
 interface DayConfig {
   name: string; prefix: string; bg: string
@@ -48,14 +54,24 @@ const DAY_CONFIG: DayConfig[] = [
   { name: 'Saturday',  prefix: 'sa', bg: '#02010a', star: {rB:200,rF:35, gB:185,gF:30,bB:248,bF:7},  planet: {px:145,py:95, r:82}, moons: [[346,119,16]], btn: 'rgba(160,120,255,0.45)', btnText: 'rgba(200,170,255,0.9)', weekday: 'rgba(180,150,255,0.52)', sep: 'rgba(160,130,240,0.22)' },
 ]
 
-const planetSrc   = computed(() => PLANET_SRCS[activeDow.value])
-const planetStyle = computed(() => PLANET_POS[activeDow.value])
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+
+const activeDow  = ref(0)
+const hdDay      = ref('')
+const hdWeekday  = ref('')
+const hdMonth    = ref('')
+const isHeaderToday  = ref(true)
+const canvasEl   = ref<HTMLCanvasElement | null>(null)
+const imgHeaderEl  = ref<HTMLElement | null>(null)
+const dayPanelEl   = ref<HTMLElement | null>(null)
+
 
 let starCfg: DayConfig | null = null
 let rafId: number | null = null
 let removeResizeListener: (() => void) | null = null
+let todayDow = 0
 
-function applyDay(dow: number) {
+function applyDay(dow: number, dayOffset: number = 0) {
   const cfg = DAY_CONFIG[dow]!
   const s = document.documentElement.style
   s.setProperty('--header-bg',          cfg.bg)
@@ -65,7 +81,11 @@ function applyDay(dow: number) {
   s.setProperty('--header-sep',         cfg.sep)
   activeDow.value = dow
   starCfg = cfg
+
+  isHeaderToday.value  = dayOffset === 0
+
   const d = new Date()
+  d.setDate(d.getDate() + dayOffset)
   hdDay.value     = String(d.getDate()).padStart(2, '0')
   hdWeekday.value = cfg.name.toUpperCase()
   hdMonth.value   = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
@@ -123,75 +143,475 @@ function initCanvas() {
   draw()
 }
 
+// ── Timeline state ────────────────────────────────────────────────────────
+
+const weekOffset = ref(0)
+const selectedDayOffset = ref<number | null>(null)
+const now = ref(new Date())
+let clockInterval: any
+
+const slideState = ref<'idle' | 'sliding-out' | 'sliding-in' | 'hidden'>('idle')
+const slideDir = ref(0)
+const displayOffset = ref(0)
+
+function isSameDay(d1: Date, d2: Date) {
+  return d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+}
+
+function isTaskOverdue(task: Task) {
+  if (!task.deadline || task.completed) return false
+  return now.value.getTime() >= new Date(task.deadline).getTime()
+}
+
+function isPastDay(d: Date) {
+  const today = new Date(now.value)
+  today.setHours(0, 0, 0, 0)
+  const dayStart = new Date(d)
+  dayStart.setHours(0, 0, 0, 0)
+  return dayStart < today
+}
+
+const weekDays = computed(() => {
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    const dayOffset = displayOffset.value * 7 + i
+    const d = new Date(now.value)
+    d.setDate(now.value.getDate() + dayOffset)
+
+    const isToday = isSameDay(d, now.value)
+    const isPast = isPastDay(d)
+    const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+    const completedTasks = isPast
+      ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
+      : []
+    const tasksForDay = [...incompleteTasks, ...completedTasks]
+    const count = tasksForDay.length
+    const hasOverdue = incompleteTasks.some(t => isTaskOverdue(t))
+
+    days.push({
+      date: d,
+      name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()],
+      num: d.getDate(),
+      isToday,
+      taskCount: count,
+      hasOverdue,
+      dayOffset,
+      tasks: tasksForDay
+    })
+  }
+  return days
+})
+
+const selectedDay = computed(() => {
+  if (selectedDayOffset.value === null) return null
+  const d = new Date(now.value)
+  d.setDate(now.value.getDate() + selectedDayOffset.value)
+
+  const isToday = isSameDay(d, now.value)
+  const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]
+  const monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
+  const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
+
+  const isPast = isPastDay(d)
+  const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+  const completedTasks = isPast
+    ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
+    : []
+
+  const sortByDeadline = (a: Task, b: Task) => {
+    const timeA = a.deadline ? new Date(a.deadline).getTime() : 0
+    const timeB = b.deadline ? new Date(b.deadline).getTime() : 0
+    if (timeA !== timeB) return timeA - timeB
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+    if (b.priority !== a.priority) return b.priority - a.priority
+    return b.rating - a.rating
+  }
+
+  const tasks = [
+    ...incompleteTasks.sort(sortByDeadline),
+    ...completedTasks.sort((a, b) => new Date(a.completed!).getTime() - new Date(b.completed!).getTime())
+  ]
+
+  return { label, tasks }
+})
+
+const frozenSelectedDay = ref<{ label: string; tasks: Task[] } | null>(null)
+watch(selectedDay, (val) => {
+  if (val !== null) frozenSelectedDay.value = val
+})
+
+// When a day is selected/deselected, update header art
+watch(selectedDayOffset, (val) => {
+  if (val === null) {
+    applyDay(todayDow, 0)
+  } else {
+    const d = new Date()
+    d.setDate(d.getDate() + val)
+    applyDay(d.getDay(), val)
+  }
+})
+
+// Relative day badge label
+// Progressive desaturation: each week back reduces saturation and brightness.
+// Future days get a fixed mild desaturation.
+const planetFilter = computed(() => {
+  const offset = selectedDayOffset.value
+  if (offset === null || offset === 0) return ''
+  if (offset > 0) return 'saturate(0.70) brightness(0.96)'
+  const weeksBack = Math.ceil(Math.abs(offset) / 7)
+  const sat    = Math.max(0.05, 0.85 - weeksBack * 0.20)
+  const bright = Math.max(0.72, 0.96 - weeksBack * 0.06)
+  return `saturate(${sat.toFixed(2)}) brightness(${bright.toFixed(2)})`
+})
+
+const dayBadgeText = computed(() => {
+  const offset = selectedDayOffset.value
+  if (offset === null || offset === 0) return ''
+  const d = new Date()
+  d.setDate(d.getDate() + offset)
+  const dow = d.getDay()
+  if (offset === 1)  return 'Tomorrow'
+  if (offset === -1) return 'Yesterday'
+  if (offset >= 2  && offset <= 6)  return 'This ' + WEEKDAYS[dow]
+  if (offset >= -7 && offset <= -2) return 'Last ' + WEEKDAYS[dow]
+  if (offset >= 7  && offset <= 13) return 'Next Week'
+  return offset > 0 ? `+${offset} days` : `${-offset} days ago`
+})
+
+function toggleDay(offset: number) {
+  if (selectedDayOffset.value === offset) {
+    selectedDayOffset.value = null
+  } else {
+    selectedDayOffset.value = offset
+  }
+}
+
+function closeDayPanel() {
+  selectedDayOffset.value = null
+}
+
+function formatTime(deadline: string | null | undefined) {
+  if (!deadline) return ''
+  return new Date(deadline).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
+function getDotClass(task: Task) {
+  if (task.pinned) return 'pinned'
+  if (task.priority === 3) return 'high'
+  if (task.priority === 2) return 'med'
+  return ''
+}
+
+function jumpToTask(task: Task) {
+  emit('jump-to-task', task)
+}
+
+function handleDayDblClick(day: { date: Date; dayOffset: number }) {
+  if (isPastDay(day.date)) return
+  const yyyy = day.date.getFullYear()
+  const mm = String(day.date.getMonth() + 1).padStart(2, '0')
+  const dd = String(day.date.getDate()).padStart(2, '0')
+  emit('create-task-for-date', `${yyyy}-${mm}-${dd}`)
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+
+let wheelCooldown = false
+async function handleWheel(e: WheelEvent) {
+  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+    if (wheelCooldown || slideState.value !== 'idle') return
+    const dir = e.deltaY > 0 ? 1 : -1
+    await changeWeek(dir)
+    wheelCooldown = true
+    setTimeout(() => wheelCooldown = false, 350)
+  }
+}
+
+let touchStartX: number | null = null
+function handleTouchStart(e: TouchEvent) {
+  touchStartX = e.touches[0].clientX
+}
+
+async function handleTouchEnd(e: TouchEvent) {
+  if (touchStartX === null || slideState.value !== 'idle') return
+  const dx = e.changedTouches[0].clientX - touchStartX
+  touchStartX = null
+  if (Math.abs(dx) < 40) return
+  const dir = dx < 0 ? 1 : -1
+  await changeWeek(dir)
+}
+
+async function animateToOffset(next: number, dir: number) {
+  slideDir.value = dir
+  slideState.value = 'sliding-out'
+  closeDayPanel()
+
+  await new Promise(r => setTimeout(r, 160))
+
+  weekOffset.value = next
+  displayOffset.value = next
+  slideState.value = 'hidden'
+
+  await new Promise(r => setTimeout(r, 10))
+
+  slideState.value = 'sliding-in'
+
+  await new Promise(r => setTimeout(r, 180))
+  slideState.value = 'idle'
+}
+
+async function changeWeek(dir: number) {
+  const next = weekOffset.value + dir
+  if (next < -4 || next > 4) return
+  await animateToOffset(next, dir)
+}
+
+async function resetTimeline() {
+  if (weekOffset.value === 0) {
+    closeDayPanel()
+    return
+  }
+  const dir = weekOffset.value > 0 ? -1 : 1
+  await animateToOffset(0, dir)
+}
+
+async function focusOffset(offset: number) {
+  const targetWeek = Math.floor(offset / 7)
+  const boundedWeek = Math.max(-4, Math.min(4, targetWeek))
+
+  if (boundedWeek !== weekOffset.value) {
+    const dir = boundedWeek > weekOffset.value ? 1 : -1
+    await animateToOffset(boundedWeek, dir)
+  }
+  selectedDayOffset.value = offset
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    closeDayPanel()
+    return
+  }
+  if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+    e.preventDefault()
+    resetTimeline()
+  }
+}
+
+function handleDocClick(e: MouseEvent) {
+  const target = e.target as Node
+  if (
+    !imgHeaderEl.value?.contains(target) &&
+    !dayPanelEl.value?.contains(target)
+  ) {
+    closeDayPanel()
+  }
+}
+
 onMounted(() => {
-  applyDay(new Date().getDay())
+  todayDow = new Date().getDay()
+  applyDay(todayDow, 0)
   initCanvas()
+  window.addEventListener('keydown', handleKeyDown)
+  document.addEventListener('mousedown', handleDocClick)
+  clockInterval = setInterval(() => { now.value = new Date() }, 10000)
 })
 
 onUnmounted(() => {
   if (rafId !== null) cancelAnimationFrame(rafId)
   removeResizeListener?.()
+  window.removeEventListener('keydown', handleKeyDown)
+  document.removeEventListener('mousedown', handleDocClick)
+  if (clockInterval) clearInterval(clockInterval)
 })
+
+defineExpose({ resetTimeline, focusOffset })
 </script>
 
 <template>
-  <div class="img-header">
-    <canvas ref="canvasEl" class="star-canvas"></canvas>
+  <div class="header-section">
+    <!-- ── Image header ── -->
+    <div
+      ref="imgHeaderEl"
+      class="img-header"
+    >
+      <canvas ref="canvasEl" class="star-canvas" :style="{ filter: planetFilter, transition: 'filter 0.4s ease' }"></canvas>
+      <img
+        v-for="(src, i) in PLANET_SRCS"
+        :key="i"
+        v-show="i === activeDow"
+        :src="src"
+        :style="{ ...PLANET_POS[i], filter: planetFilter, transition: 'filter 0.4s ease' }"
+        class="header-planet"
+        alt=""
+      />
 
-    <img :src="planetSrc" :style="planetStyle" class="header-planet" alt="" />
+      <!-- Add button (top-left, hidden when day badge is visible) -->
+      <button
+        class="header-add-btn"
+        :class="{ 'btn-hidden': dayBadgeText }"
+        @click="emit('open-modal')"
+        aria-label="New task"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
 
-    <!-- Add button -->
-    <button class="header-add-btn" @click="emit('open-modal')" aria-label="New task">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-    </button>
+      <!-- Relative day badge (top-left, shown when non-today day is selected) -->
+      <div class="header-day-badge" :class="{ visible: dayBadgeText }">{{ dayBadgeText }}</div>
 
-    <!-- Date display -->
-    <div class="header-date" @click="emit('reset-timeline')">
-      <span class="header-date-day">{{ hdDay }}</span>
-      <span class="header-date-sep"></span>
-      <div class="header-date-stack">
-        <span class="header-date-weekday">{{ hdWeekday }}</span>
-        <span class="header-date-month">{{ hdMonth }}</span>
+      <!-- Date display (top-right, shows selected day or today) -->
+      <div class="header-date" :class="{ 'is-today': isHeaderToday }" @click="resetTimeline">
+        <span class="header-date-day">{{ hdDay }}</span>
+        <span class="header-date-sep"></span>
+        <div class="header-date-stack">
+          <span class="header-date-weekday">{{ hdWeekday }}</span>
+          <span class="header-date-month">{{ hdMonth }}</span>
+        </div>
+      </div>
+
+      <!-- Timeline strip (inside header, at bottom) -->
+      <div class="header-timeline-strip">
+        <!-- Return-to-today arrow -->
+        <button
+          v-if="weekOffset !== 0"
+          class="timeline-return-arrow"
+          :class="weekOffset < 0 ? 'right' : 'left'"
+          @click.stop="resetTimeline"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline v-if="weekOffset < 0" points="9 18 15 12 9 6"/>
+            <polyline v-else points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+
+        <div
+          class="timeline-grid"
+          :class="{
+            'slide-out-left':  slideState === 'sliding-out' && slideDir > 0,
+            'slide-out-right': slideState === 'sliding-out' && slideDir < 0,
+            'slide-hidden-right': slideState === 'hidden' && slideDir > 0,
+            'slide-hidden-left':  slideState === 'hidden' && slideDir < 0,
+            'slide-in': slideState === 'sliding-in',
+          }"
+          @wheel.prevent="handleWheel"
+          @touchstart="handleTouchStart"
+          @touchend="handleTouchEnd"
+        >
+          <div
+            v-for="day in weekDays"
+            :key="day.date.getTime()"
+            class="day-cell"
+            :class="{
+              today:    day.isToday,
+              past:     !day.isToday && isPastDay(day.date),
+              future:   !day.isToday && !isPastDay(day.date),
+              selected: selectedDayOffset === day.dayOffset,
+            }"
+            @click="toggleDay(day.dayOffset)"
+            @dblclick.stop="handleDayDblClick(day)"
+          >
+            <span class="day-name">{{ day.name }}</span>
+            <span class="day-num">{{ day.num }}</span>
+
+            <div v-if="loading" class="day-count-skeleton"></div>
+            <template v-else>
+              <div
+                v-if="day.taskCount > 0"
+                class="day-count has-tasks"
+                :class="{
+                  'overdue-count':  day.hasOverdue,
+                  'today-count':    day.isToday && !day.hasOverdue,
+                }"
+                v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
+              >{{ day.taskCount }}</div>
+              <span v-else class="day-count no-tasks">·</span>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Day panel (outside the header) ── -->
+    <div ref="dayPanelEl" class="day-panel-wrap" :class="{ open: selectedDayOffset !== null }">
+      <div class="day-panel">
+        <div class="day-panel-header">
+          <span class="day-panel-title">{{ frozenSelectedDay?.label }}</span>
+          <button class="day-panel-close" @click="closeDayPanel">
+            <X :size="11" stroke-width="2.5" />
+          </button>
+        </div>
+        <div class="day-panel-tasks">
+          <template v-if="frozenSelectedDay?.tasks.length">
+            <div
+              v-for="task in frozenSelectedDay.tasks"
+              :key="task.id"
+              class="day-panel-task linkable"
+              :class="{ done: task.completed }"
+              @click="jumpToTask(task)"
+            >
+              <svg v-if="task.completed" class="day-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <div v-else class="day-panel-dot" :class="getDotClass(task)"></div>
+              <span class="day-panel-name">{{ task.title }}</span>
+              <span class="day-panel-time">{{ task.completed ? formatTime(task.completed) : formatTime(task.deadline) }}</span>
+            </div>
+          </template>
+          <div v-else class="day-panel-empty">No tasks due this day</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* ── Outer wrapper ── */
+.header-section {
+  margin-bottom: 0;
+}
+
+/* ── Image header ── */
 .img-header {
   position: relative;
   width: 100%;
   height: 200px;
   overflow: hidden;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 6px;
   background: var(--header-bg, #010408);
   transition: background 0.6s ease;
 }
 
 @media (max-width: 640px) {
   .img-header {
-    /* px-5 = 20px, pt-6 = 24px — bleed out of TasksView's container padding */
     margin-left: -20px;
     margin-right: -20px;
     margin-top: -24px;
     width: calc(100% + 40px);
     height: 220px;
     border-radius: 0;
-    margin-bottom: 16px;
+    margin-bottom: 6px;
   }
 }
 
+/* Deeper vignette to accommodate timeline strip */
 .img-header::after {
   content: '';
   position: absolute; left: 0; right: 0; bottom: 0;
-  height: 50%;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.75));
+  height: 70%;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0,0,0,0.35) 40%,
+    rgba(0,0,0,0.82) 72%,
+    rgba(0,0,0,0.92) 100%
+  );
   pointer-events: none;
   z-index: 1;
 }
+
 
 .star-canvas {
   position: absolute;
@@ -207,62 +627,17 @@ onUnmounted(() => {
   overflow: visible;
 }
 
-
-.header-date {
-  position: absolute; bottom: 16px; right: 20px; z-index: 3;
-  display: flex; align-items: flex-end; gap: 10px;
-  cursor: pointer; user-select: none;
-  transition: opacity .15s;
-}
-.header-date:hover { opacity: 0.8; }
-
-.header-date-day {
-  font-family: var(--font-mono);
-  font-size: 48px; font-weight: 700;
-  letter-spacing: -0.02em;
-  color: rgba(255,255,255,0.45);
-  line-height: 0.9;
-}
-
-.header-date-sep {
-  width: 1px; height: 30px; flex-shrink: 0; margin-bottom: 4px;
-  background: var(--header-sep, rgba(255,255,255,0.18));
-  transition: background 0.6s ease;
-}
-
-.header-date-stack {
-  display: flex; flex-direction: column;
-  align-items: flex-start; justify-content: flex-end;
-  gap: 3px; padding-bottom: 3px;
-}
-
-.header-date-weekday {
-  font-family: var(--font-mono);
-  font-size: 9.5px; font-weight: 700;
-  letter-spacing: 0.20em; text-transform: uppercase;
-  color: var(--header-weekday, rgba(255,255,255,0.4));
-  transition: color 0.6s ease;
-}
-
-.header-date-month {
-  font-family: var(--font-mono);
-  font-size: 8.5px; font-weight: 700;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: rgba(255,255,255,0.22);
-}
-
+/* ── Add button (top-left) ── */
 .header-add-btn {
-  position: absolute; bottom: 16px; left: 18px; z-index: 3;
-  width: 40px; height: 40px;
+  position: absolute; top: 14px; left: 16px; z-index: 3;
+  width: 34px; height: 34px;
   border-radius: 999px;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.40);
+  background: rgba(0,0,0,0.60);
+  color: rgba(255,255,255,0.85);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: border-color .15s, background .15s, color .15s, transform .1s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  transition: border-color .15s, background .15s, color .15s, transform .1s, opacity .2s;
 }
 .header-add-btn:hover {
   border-color: var(--header-accent, rgba(255,255,255,0.45));
@@ -271,5 +646,298 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 .header-add-btn:active { transform: translateY(1px); }
-.header-add-btn svg { width: 18px; height: 18px; stroke-width: 2px; }
+.header-add-btn svg { width: 16px; height: 16px; stroke-width: 2px; }
+.header-add-btn.btn-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Relative day badge (top-left) ── */
+.header-day-badge {
+  position: absolute; top: 14px; left: 16px; z-index: 3;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  padding: 4px 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.header-day-badge.visible { opacity: 1; }
+
+/* ── Date display (top-right) ── */
+.header-date {
+  position: absolute; top: 14px; right: 16px; z-index: 3;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; user-select: none;
+  transition: opacity .15s;
+}
+.header-date:hover { opacity: 0.7; }
+
+.header-date-day {
+  font-family: var(--font-mono);
+  font-size: 36px; font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.40);
+  line-height: 1;
+  transition: color .3s ease;
+}
+.header-date.is-today .header-date-day { color: rgba(255,255,255,0.72); }
+
+.header-date-sep {
+  width: 1px; height: 26px; flex-shrink: 0;
+  background: var(--header-sep, rgba(255,255,255,0.18));
+  transition: background 0.6s ease;
+}
+.header-date.is-today .header-date-sep { background: var(--header-sep, rgba(255,255,255,0.38)); }
+
+.header-date-stack {
+  display: flex; flex-direction: column;
+  gap: 3px;
+}
+.header-date-weekday {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--header-weekday, rgba(255,255,255,0.38));
+  transition: color 0.6s ease;
+}
+.header-date-month {
+  font-family: var(--font-mono);
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.18);
+}
+
+/* ── Timeline strip (inside header, at bottom) ── */
+.header-timeline-strip {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  z-index: 2; padding: 8px 8px 10px;
+  transition: background .2s ease;
+  isolation: isolate;
+}
+.header-timeline-strip:hover {
+  background: rgba(0,0,0,0.16);
+}
+
+/* Return-to-today arrow */
+.timeline-return-arrow {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.10em;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: color .15s;
+  user-select: none;
+  background: none; border: none; padding: 4px;
+  z-index: 3;
+}
+.timeline-return-arrow:hover { color: rgba(255,255,255,0.65); }
+.timeline-return-arrow svg { width: 12px; height: 12px; }
+.timeline-return-arrow.right { right: 10px; }
+.timeline-return-arrow.left  { left: 10px; }
+
+/* ── Timeline 7-day grid ── */
+.timeline-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  user-select: none;
+  transition: opacity .15s ease, transform .15s ease;
+}
+.timeline-grid.slide-out-left  { opacity: 0; transform: translateX(-60px); }
+.timeline-grid.slide-out-right { opacity: 0; transform: translateX(60px); }
+.timeline-grid.slide-hidden-right { opacity: 0; transform: translateX(60px);  transition: none; }
+.timeline-grid.slide-hidden-left  { opacity: 0; transform: translateX(-60px); transition: none; }
+.timeline-grid.slide-in { opacity: 1; transform: translateX(0); transition: opacity .18s ease, transform .18s ease; }
+
+/* ── Day cells ── */
+.day-cell {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 7px 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 120ms;
+}
+.day-cell:hover { background: rgba(255,255,255,0.06); }
+
+.day-name {
+  font-family: var(--font-mono); font-size: 8.5px;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+}
+.day-num {
+  font-size: 18px; font-weight: 700;
+  color: rgba(255,255,255,0.30); line-height: 1;
+  font-family: var(--font-mono);
+}
+
+/* Past zone */
+.day-cell.past .day-name  { color: rgba(255,255,255,0.22); }
+.day-cell.past .day-num   { color: rgba(255,255,255,0.25); font-weight: 400; }
+
+/* Today zone */
+.day-cell.today { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+.day-cell.today .day-name { color: rgba(255,255,255,0.55); }
+.day-cell.today .day-num  { color: rgba(255,255,255,0.90); font-weight: 700; }
+
+/* Future zone */
+.day-cell.future .day-num { color: rgba(255,255,255,0.32); }
+
+/* Selected */
+.day-cell.selected {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.20) !important;
+}
+.day-cell.today.selected { border-color: rgba(100,140,255,0.65) !important; }
+
+/* Count pills */
+.day-count {
+  min-width: 18px; height: 15px;
+  border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700;
+  font-family: var(--font-mono); padding: 0 5px;
+}
+.day-count.has-tasks {
+  color: rgba(255,255,255,0.38);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.05);
+}
+.day-count.today-count {
+  color: var(--color-swoosh-today);
+  border-color: color-mix(in srgb, var(--color-swoosh-today) 35%, transparent);
+  background: color-mix(in srgb, var(--color-swoosh-today) 10%, transparent);
+}
+.day-count.overdue-count {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 38%, transparent);
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+}
+.day-count.no-tasks { color: rgba(255,255,255,0.18); font-size: 8px; }
+.day-cell.past .day-count.has-tasks {
+  background: rgba(255,255,255,0.12);
+  border-color: transparent;
+  color: rgba(255,255,255,0.30);
+}
+
+.day-count-skeleton {
+  min-width: 18px; height: 15px; border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+/* ── Day panel ── */
+.day-panel-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .22s ease, opacity .18s ease;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  margin-bottom: -8px;
+}
+.day-panel-wrap.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  pointer-events: all;
+  margin-bottom: 0;
+}
+
+.day-panel {
+  min-height: 0;
+  border: 1px solid var(--color-swoosh-border-hover);
+  border-radius: 10px;
+  background: var(--color-base-200);
+  overflow: hidden;
+  margin: 10px 0 0;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.day-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 9px;
+  border-bottom: 1px solid var(--color-swoosh-border);
+  background: var(--color-base-300);
+}
+.day-panel-title {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--color-swoosh-text-muted);
+}
+.day-panel-close {
+  width: 22px; height: 22px; border-radius: 999px; border: none;
+  background: transparent; color: var(--color-swoosh-text-faint);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: color .1s, background .1s;
+}
+.day-panel-close:hover { color: var(--color-swoosh-text-muted); background: var(--color-base-200); }
+
+.day-panel-task {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-swoosh-border);
+  animation: fadeUp .15s ease both;
+}
+.day-panel-task:last-child { border-bottom: none; }
+.day-panel-task.linkable { cursor: pointer; }
+.day-panel-task.linkable:hover { background: var(--color-base-300); }
+.day-panel-task.linkable:hover .day-panel-name { color: var(--color-base-content); }
+
+.day-panel-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0;
+  background: var(--color-swoosh-text-faint);
+}
+.day-panel-dot.high   { background: var(--color-warning); }
+.day-panel-dot.med    { background: var(--color-info); }
+.day-panel-dot.pinned { background: var(--color-secondary); }
+
+.day-panel-check {
+  width: 13px; height: 13px; flex-shrink: 0;
+  color: var(--color-success); opacity: 0.7;
+}
+
+.day-panel-task.done .day-panel-name {
+  color: var(--color-swoosh-text-faint);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,255,255,0.18);
+}
+.day-panel-task.done .day-panel-time { opacity: 0.45; }
+
+.day-panel-name {
+  flex: 1; font-size: 13px; font-weight: 500;
+  color: var(--color-base-content);
+}
+.day-panel-time {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--color-swoosh-text-faint); flex-shrink: 0; letter-spacing: 0.06em;
+}
+.day-panel-empty {
+  padding: 16px;
+  font-size: 12px; color: var(--color-swoosh-text-faint);
+  font-family: var(--font-mono); letter-spacing: 0.08em;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+:global(.highlight-pulse) {
+  animation: highlightPulse 2s ease-out;
+}
+@keyframes highlightPulse {
+  0% { background-color: transparent; }
+  10% { background-color: rgba(232, 232, 234, 0.1); }
+  100% { background-color: transparent; }
+}
 </style>
