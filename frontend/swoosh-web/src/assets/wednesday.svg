@@ -152,10 +152,6 @@
       <rect x="230" y="210" width="220" height="220" fill="url(#nightShadow)"/>
     </g>
 
-    <!-- Lit limb arc -->
-    <path d="M 424 230 A 110 110 0 0 1 452 320 A 110 110 0 0 1 424 410" fill="none" stroke="#44dada" stroke-width="4"   opacity="0.26"/>
-    <path d="M 412 212 A 110 110 0 0 1 452 320 A 110 110 0 0 1 412 428" fill="none" stroke="#90f2ee" stroke-width="2"   opacity="0.16"/>
-
     <!-- ── RINGS FRONT HALF ── -->
     <path d="M 204 320 A 136 35 0 0 0 476 320" fill="none" stroke="#40b0b8" stroke-width="3"   opacity="0.22"/>
     <path d="M 188 320 A 152 40 0 0 0 492 320" fill="none" stroke="#60c8cc" stroke-width="5"   opacity="0.27"/>
