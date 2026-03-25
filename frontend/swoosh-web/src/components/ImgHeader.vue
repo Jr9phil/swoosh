@@ -851,7 +851,7 @@ defineExpose({ resetTimeline, focusOffset })
   grid-template-rows: 1fr;
   opacity: 1;
   pointer-events: all;
-  margin-bottom: 0;
+  margin-bottom: 14px;
 }
 
 .day-panel {
