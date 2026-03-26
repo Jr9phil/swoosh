@@ -763,7 +763,7 @@ defineExpose({ resetTimeline, focusOffset })
   color: rgba(255,255,255,0.85);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: border-color .15s, background .15s, color .15s, transform .1s, opacity .2s;
+  transition: border-color .15s, background .15s, color .15s, transform .1s;
 }
 .header-add-btn:hover {
   border-color: var(--header-accent, rgba(255,255,255,0.45));
@@ -790,7 +790,6 @@ defineExpose({ resetTimeline, focusOffset })
   padding: 4px 10px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .2s ease;
 }
 .header-day-badge.visible { opacity: 1; }
 
