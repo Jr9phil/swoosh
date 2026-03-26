@@ -675,7 +675,7 @@ defineExpose({ resetTimeline, focusOffset })
               v-for="task in frozenSelectedDay.tasks"
               :key="task.id"
               class="day-panel-task linkable"
-              :class="{ done: task.completed }"
+              :class="{ done: task.completed, overdue: !task.completed && isTaskOverdue(task) }"
               @click="jumpToTask(task)"
             >
               <svg v-if="task.completed" class="day-panel-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1027,6 +1027,9 @@ defineExpose({ resetTimeline, focusOffset })
 .day-panel-dot.med    { background: var(--color-info); }
 .day-panel-dot.low    { background: var(--color-success); }
 .day-panel-dot.pinned { background: var(--color-secondary); }
+
+.day-panel-task.overdue .day-panel-name { color: var(--color-error); }
+.day-panel-task.overdue .day-panel-time { color: var(--color-error); opacity: 0.7; }
 
 .day-panel-check {
   width: 13px; height: 13px; flex-shrink: 0;
