@@ -278,7 +278,8 @@ const planetFilter = computed(() => {
 
 const dayBadgeText = computed(() => {
   const offset = selectedDayOffset.value
-  if (offset === null || offset === 0) return ''
+  if (offset === null) return ''
+  if (offset === 0) return 'Today'
   const d = new Date()
   d.setDate(d.getDate() + offset)
   const dow = d.getDay()
@@ -323,7 +324,21 @@ function jumpToTask(task: Task) {
   emit('jump-to-task', task)
 }
 
+let clickTimer: ReturnType<typeof setTimeout> | null = null
+
+function handleDayClick(dayOffset: number) {
+  if (clickTimer) clearTimeout(clickTimer)
+  clickTimer = setTimeout(() => {
+    clickTimer = null
+    toggleDay(dayOffset)
+  }, 220)
+}
+
 function handleDayDblClick(day: { date: Date; dayOffset: number }) {
+  if (clickTimer) {
+    clearTimeout(clickTimer)
+    clickTimer = null
+  }
   if (isPastDay(day.date)) return
   const yyyy = day.date.getFullYear()
   const mm = String(day.date.getMonth() + 1).padStart(2, '0')
@@ -499,6 +514,7 @@ async function focusOffset(offset: number) {
 
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
+    if (document.querySelector('dialog[open]')) return
     closeDayPanel()
     return
   }
@@ -510,6 +526,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 function handleDocClick(e: MouseEvent) {
   const target = e.target as Node
+  if (document.querySelector('dialog[open]')?.contains(target)) return
   if (
     !imgHeaderEl.value?.contains(target) &&
     !dayPanelEl.value?.contains(target)
@@ -619,7 +636,7 @@ defineExpose({ resetTimeline, focusOffset })
               future:   !day.isToday && !isPastDay(day.date),
               selected: selectedDayOffset === day.dayOffset,
             }"
-            @click="toggleDay(day.dayOffset)"
+            @click="handleDayClick(day.dayOffset)"
             @dblclick.stop="handleDayDblClick(day)"
           >
             <span class="day-name">{{ day.name }}</span>
