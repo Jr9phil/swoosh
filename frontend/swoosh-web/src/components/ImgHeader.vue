@@ -224,7 +224,7 @@ const selectedDay = computed(() => {
 
   const isPast = isPastDay(d)
   const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
-  const completedTasks = isPast
+  const completedTasks = (isPast || isToday)
     ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
     : []
 
