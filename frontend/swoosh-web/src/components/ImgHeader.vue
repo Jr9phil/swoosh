@@ -9,6 +9,7 @@ import tuesdaySvg   from '../assets/tuesday.svg'
 import wednesdaySvg from '../assets/wednesday.svg'
 import thursdaySvg  from '../assets/thursday.svg'
 import fridaySvg    from '../assets/friday.svg'
+import cometSvg     from '../assets/comet.svg'
 import saturdaySvg  from '../assets/saturday.svg'
 
 const PLANET_SRCS = [sundaySvg, mondaySvg, tuesdaySvg, wednesdaySvg, thursdaySvg, fridaySvg, saturdaySvg]
@@ -56,11 +57,16 @@ const DAY_CONFIG: DayConfig[] = [
 
 const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 
-const activeDow  = ref(0)
-const hdDay      = ref('')
-const hdWeekday  = ref('')
-const hdMonth    = ref('')
+const activeDow      = ref(0)
+const hdDay          = ref('')
+const hdWeekday      = ref('')
+const hdMonth        = ref('')
+const hdMonthIndex   = ref(0)
 const isHeaderToday  = ref(true)
+const isYearBoundary = computed(() =>
+  (hdMonthIndex.value === 0  && hdDay.value === '01') ||
+  (hdMonthIndex.value === 11 && hdDay.value === '31')
+)
 const canvasEl   = ref<HTMLCanvasElement | null>(null)
 const imgHeaderEl  = ref<HTMLElement | null>(null)
 const dayPanelEl   = ref<HTMLElement | null>(null)
@@ -94,9 +100,10 @@ function applyDay(dow: number, dayOffset: number = 0) {
 
   const d = new Date()
   d.setDate(d.getDate() + dayOffset)
-  hdDay.value     = String(d.getDate()).padStart(2, '0')
-  hdWeekday.value = cfg.name.toUpperCase()
-  hdMonth.value   = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
+  hdDay.value        = String(d.getDate()).padStart(2, '0')
+  hdWeekday.value    = cfg.name.toUpperCase()
+  hdMonth.value      = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()
+  hdMonthIndex.value = d.getMonth()
 }
 
 function initCanvas() {
@@ -573,6 +580,15 @@ defineExpose({ resetTimeline, focusOffset })
         alt=""
       />
 
+      <!-- Comet overlay (first of the month) -->
+      <img
+        v-if="isYearBoundary"
+        :src="cometSvg"
+        class="header-comet"
+        :style="{ filter: planetFilter, transition: 'filter 0.4s ease' }"
+        alt=""
+      />
+
       <!-- Add button (top-left, hidden when day badge is visible) -->
       <button
         class="header-add-btn"
@@ -751,6 +767,16 @@ defineExpose({ resetTimeline, focusOffset })
   pointer-events: none;
   position: absolute;
   overflow: visible;
+}
+
+.header-comet {
+  pointer-events: none;
+  position: absolute;
+  right: 170px;
+  top: 14px;
+  width: 69px;
+  height: 35px;
+  opacity: 0.7;
 }
 
 /* ── Add button (top-left) ── */
