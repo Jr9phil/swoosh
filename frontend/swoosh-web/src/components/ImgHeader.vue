@@ -116,13 +116,13 @@ function initCanvas() {
 
   let t = 0
   function draw() {
-    ctx.clearRect(0, 0, (canvas as HTMLCanvasElement).width, (canvas as HTMLCanvasElement).height)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     t += 0.007
     if (!starCfg) { rafId = requestAnimationFrame(draw); return }
     const { rB, rF, gB, gF, bB, bF } = starCfg.star
     const { px: cpx, py: cpy, r: cr } = starCfg.planet
-    const w = (canvas as HTMLCanvasElement).width
-    const h = (canvas as HTMLCanvasElement).height
+    const w = canvas.width
+    const h = canvas.height
     for (const s of STARS) {
       const px = s.x * w, py = s.y * h
       if ((px - cpx) ** 2 + (py - cpy) ** 2 < cr * cr) continue
@@ -148,7 +148,7 @@ function initCanvas() {
 const weekOffset = ref(0)
 const selectedDayOffset = ref<number | null>(null)
 const now = ref(new Date())
-let clockInterval: any
+let clockInterval: ReturnType<typeof setInterval>
 
 const slideState = ref<'idle' | 'sliding-out' | 'sliding-in' | 'hidden'>('idle')
 const slideDir = ref(0)
@@ -927,11 +927,6 @@ defineExpose({ resetTimeline, focusOffset })
   padding: 16px;
   font-size: 12px; color: var(--color-swoosh-text-faint);
   font-family: var(--font-mono); letter-spacing: 0.08em;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 :global(.highlight-pulse) {
