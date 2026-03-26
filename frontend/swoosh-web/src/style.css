@@ -169,6 +169,7 @@
     .section-label:not(.open)::after { flex: 1; width: auto; opacity: 0.25; overflow: visible; }
     .section-label:hover { opacity: 1; }
     .section-label svg   { width: 11px; height: 11px; flex-shrink: 0; }
+    .section-label svg.section-toggle { width: 16px; height: 16px; }
 
     .section-label.pinned { color: var(--color-secondary); opacity: 0.8; }
     .section-label.high   { color: var(--color-warning);   opacity: 0.8; }
@@ -199,17 +200,14 @@
     .section-label.low    .section-count { background: var(--color-success); }
     .section-label.none   .section-count { background: var(--color-swoosh-text-muted); }
 
-    /* ── Section toggle +/− character ── */
+    /* ── Section toggle chevron ── */
     .section-toggle {
-        font-family: var(--font-mono);
-        font-size: 14px; font-weight: 400;
         opacity: 0.45; flex-shrink: 0;
-        line-height: 1; width: 18px; text-align: center;
-        transition: opacity .15s;
+        display: flex; align-items: center; justify-content: center;
+        transition: opacity .15s, transform .2s;
     }
     .section-label:hover .section-toggle { opacity: 0.7; }
-    .section-label:not(.open) .section-toggle::before { content: '+'; }
-    .section-label.open       .section-toggle::before { content: '−'; }
+    .section-label.open  .section-toggle { transform: rotate(90deg); }
 
     .section-divider {
         height: 1px; background: var(--color-swoosh-border); margin: 28px 0 0;
