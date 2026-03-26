@@ -299,7 +299,7 @@ const skeletonSections = [
             <span v-if="hasOverdueInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
             <span v-else-if="hasTodayInGroup(pinnedTasks) && !priorityExpanded.pinned" v-animate-sync:today="'dot'" class="today-dot"></span>
             <span class="section-count">{{ pinnedTasks.length }}</span>
-            <span class="section-toggle"></span>
+            <ChevronRight :size="14" stroke-width="2.5" class="section-toggle" />
           </div>
         </div>
         <div class="section-body" :class="{ collapsed: !priorityExpanded.pinned, 'is-animating': animatingSections.has('pinned') }">
@@ -349,7 +349,7 @@ const skeletonSections = [
               <span v-if="hasOverdueInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:overdue="'dot'" class="overdue-dot right"></span>
               <span v-else-if="hasTodayInGroup(group.tasks) && !priorityExpanded[group.priority.value]" v-animate-sync:today="'dot'" class="today-dot"></span>
               <span class="section-count">{{ group.tasks.length }}</span>
-              <span class="section-toggle"></span>
+              <ChevronRight :size="14" stroke-width="2.5" class="section-toggle" />
             </div>
           </div>
           <div class="section-body" :class="{ collapsed: !priorityExpanded[group.priority.value], 'is-animating': animatingSections.has(group.priority.value.toString()) }">
