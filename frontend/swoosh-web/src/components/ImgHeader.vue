@@ -70,6 +70,10 @@ let starCfg: DayConfig | null = null
 let rafId: number | null = null
 let removeResizeListener: (() => void) | null = null
 let todayDow = 0
+let artLocked = false
+// Set when the user arrives at yesterday via the today→scroll-back special case.
+// Enables two follow-on behaviours: forward→today, backward→-7 (same week, no slide).
+let yesterdayFromToday = false
 
 function applyDay(dow: number, dayOffset: number = 0) {
   const cfg = DAY_CONFIG[dow]!
@@ -242,8 +246,10 @@ watch(selectedDay, (val) => {
   if (val !== null) frozenSelectedDay.value = val
 })
 
-// When a day is selected/deselected, update header art
+// When a day is selected/deselected, update header art.
+// artLocked suppresses this during week transitions (art is applied directly instead).
 watch(selectedDayOffset, (val) => {
+  if (artLocked) return
   if (val === null) {
     applyDay(todayDow, 0)
   } else {
@@ -281,6 +287,7 @@ const dayBadgeText = computed(() => {
 })
 
 function toggleDay(offset: number) {
+  yesterdayFromToday = false
   if (selectedDayOffset.value === offset) {
     selectedDayOffset.value = null
   } else {
@@ -289,6 +296,7 @@ function toggleDay(offset: number) {
 }
 
 function closeDayPanel() {
+  yesterdayFromToday = false
   selectedDayOffset.value = null
 }
 
@@ -324,9 +332,54 @@ async function handleWheel(e: WheelEvent) {
   if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
     if (wheelCooldown || slideState.value !== 'idle') return
     const dir = e.deltaY > 0 ? 1 : -1
-    await changeWeek(dir)
+    if (e.shiftKey && selectedDayOffset.value !== null) {
+      await stepDay(dir)
+    } else {
+      await changeWeek(dir)
+    }
     wheelCooldown = true
     setTimeout(() => wheelCooldown = false, 350)
+  }
+}
+
+async function stepDay(dir: number) {
+  if (selectedDayOffset.value === null) return
+  const newOffset = selectedDayOffset.value + dir
+  yesterdayFromToday = false
+
+  const weekStart = weekOffset.value * 7
+  const weekEnd   = weekOffset.value * 7 + 6
+
+  if (newOffset >= weekStart && newOffset <= weekEnd) {
+    // Within the same visible week — instant selection change
+    selectedDayOffset.value = newOffset
+  } else {
+    // Crosses into an adjacent week — animate, landing on the specific day
+    const newWeek = weekOffset.value + dir
+    if (newWeek < -4 || newWeek > 4) return
+
+    const d = new Date()
+    d.setDate(d.getDate() + newOffset)
+    applyDay(d.getDay(), newOffset)
+    artLocked = true
+
+    slideDir.value = dir
+    slideState.value = 'sliding-out'
+
+    await new Promise(r => setTimeout(r, 160))
+
+    weekOffset.value = newWeek
+    displayOffset.value = newWeek
+    slideState.value = 'hidden'
+    selectedDayOffset.value = newOffset
+
+    await new Promise(r => setTimeout(r, 10))
+
+    artLocked = false
+    slideState.value = 'sliding-in'
+
+    await new Promise(r => setTimeout(r, 180))
+    slideState.value = 'idle'
   }
 }
 
@@ -345,18 +398,51 @@ async function handleTouchEnd(e: TouchEvent) {
 }
 
 async function animateToOffset(next: number, dir: number) {
+  // Carry the selection to the same day-of-week in the new week, with two special cases:
+  //   today → scroll back          → yesterday (-1),     set yesterdayFromToday flag
+  //   yesterday (from today) → fwd → today (0),          clear flag
+  //   all other cases              → same DOW, clear flag
+  const sel = selectedDayOffset.value
+  let targetOffset: number | null
+  if (sel === null) {
+    targetOffset = null
+  } else if (sel === 0 && dir < 0) {
+    targetOffset = -1
+    yesterdayFromToday = true
+  } else if (yesterdayFromToday && sel === -1 && dir > 0) {
+    targetOffset = 0
+    yesterdayFromToday = false
+  } else {
+    yesterdayFromToday = false
+    targetOffset = next * 7 + ((sel % 7) + 7) % 7
+  }
+
+  // Pre-apply the destination art so it never flickers through today's art.
+  // Lock the watch so it doesn't override while selectedDayOffset transiently becomes null.
+  if (targetOffset !== null) {
+    const d = new Date()
+    d.setDate(d.getDate() + targetOffset)
+    applyDay(d.getDay(), targetOffset)
+  } else {
+    applyDay(todayDow, 0)
+  }
+  artLocked = true
+
   slideDir.value = dir
   slideState.value = 'sliding-out'
-  closeDayPanel()
+  if (targetOffset === null) closeDayPanel()
 
   await new Promise(r => setTimeout(r, 160))
 
   weekOffset.value = next
   displayOffset.value = next
   slideState.value = 'hidden'
+  // Swap the selected day while the grid is invisible — panel stays open, no flicker
+  if (targetOffset !== null) selectedDayOffset.value = targetOffset
 
   await new Promise(r => setTimeout(r, 10))
 
+  artLocked = false
   slideState.value = 'sliding-in'
 
   await new Promise(r => setTimeout(r, 180))
@@ -364,6 +450,13 @@ async function animateToOffset(next: number, dir: number) {
 }
 
 async function changeWeek(dir: number) {
+  // Special case: if yesterday was reached from today, scrolling back moves to the
+  // start of this week (-7) rather than sliding to the previous week.
+  if (yesterdayFromToday && selectedDayOffset.value === -1 && dir < 0) {
+    yesterdayFromToday = false
+    selectedDayOffset.value = -7
+    return
+  }
   const next = weekOffset.value + dir
   if (next < -4 || next > 4) return
   await animateToOffset(next, dir)
@@ -379,6 +472,7 @@ async function resetTimeline() {
 }
 
 async function focusOffset(offset: number) {
+  yesterdayFromToday = false
   const targetWeek = Math.floor(offset / 7)
   const boundedWeek = Math.max(-4, Math.min(4, targetWeek))
 
