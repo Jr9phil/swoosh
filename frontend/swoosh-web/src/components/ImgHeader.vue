@@ -74,6 +74,10 @@ let artLocked = false
 // Set when the user arrives at yesterday via the today→scroll-back special case.
 // Enables two follow-on behaviours: forward→today, backward→-7 (same week, no slide).
 let yesterdayFromToday = false
+// Set when offset 0 (today) was reached by scrolling rather than by a manual click or
+// initial load. When true, the today→yesterday special case is suppressed so that
+// scrolling back continues with the normal same-DOW rule instead.
+let arrivedAtTodayByScroll = false
 
 function applyDay(dow: number, dayOffset: number = 0) {
   const cfg = DAY_CONFIG[dow]!
@@ -288,6 +292,7 @@ const dayBadgeText = computed(() => {
 
 function toggleDay(offset: number) {
   yesterdayFromToday = false
+  arrivedAtTodayByScroll = false
   if (selectedDayOffset.value === offset) {
     selectedDayOffset.value = null
   } else {
@@ -297,6 +302,7 @@ function toggleDay(offset: number) {
 
 function closeDayPanel() {
   yesterdayFromToday = false
+  arrivedAtTodayByScroll = false
   selectedDayOffset.value = null
 }
 
@@ -346,6 +352,7 @@ async function stepDay(dir: number) {
   if (selectedDayOffset.value === null) return
   const newOffset = selectedDayOffset.value + dir
   yesterdayFromToday = false
+  arrivedAtTodayByScroll = (newOffset === 0)
 
   const weekStart = weekOffset.value * 7
   const weekEnd   = weekOffset.value * 7 + 6
@@ -406,15 +413,21 @@ async function animateToOffset(next: number, dir: number) {
   let targetOffset: number | null
   if (sel === null) {
     targetOffset = null
-  } else if (sel === 0 && dir < 0) {
+    arrivedAtTodayByScroll = false
+  } else if (sel === 0 && dir < 0 && !arrivedAtTodayByScroll) {
+    // today → scroll back → yesterday (only when today wasn't reached by scrolling)
     targetOffset = -1
     yesterdayFromToday = true
+    arrivedAtTodayByScroll = false
   } else if (yesterdayFromToday && sel === -1 && dir > 0) {
+    // yesterday (from today) → scroll forward → today
     targetOffset = 0
     yesterdayFromToday = false
+    arrivedAtTodayByScroll = true
   } else {
     yesterdayFromToday = false
     targetOffset = next * 7 + ((sel % 7) + 7) % 7
+    arrivedAtTodayByScroll = (targetOffset === 0)
   }
 
   // Pre-apply the destination art so it never flickers through today's art.
@@ -473,6 +486,7 @@ async function resetTimeline() {
 
 async function focusOffset(offset: number) {
   yesterdayFromToday = false
+  arrivedAtTodayByScroll = false
   const targetWeek = Math.floor(offset / 7)
   const boundedWeek = Math.max(-4, Math.min(4, targetWeek))
 
