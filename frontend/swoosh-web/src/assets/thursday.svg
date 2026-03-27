@@ -59,6 +59,8 @@
   <!-- Nebula wisps -->
   <ellipse cx="160" cy="560" rx="200" ry="46" fill="#180800" opacity="0.25" transform="rotate(-11,160,560)" style="fill:rgb(24, 8, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.25;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   
+  <circle cx="340" cy="330" r="340" fill="url(#sceneGlow)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
   <!-- ── PLANET ── -->
   <g transform="rotate(-22, 340, 330)" style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">
     <circle cx="340" cy="330" r="162" fill="none" stroke="#c08000" stroke-width="22" opacity="0.09" style="fill:none;stroke:rgb(192, 128, 0);color:rgb(255, 255, 255);stroke-width:22px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.09;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
