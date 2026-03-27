@@ -198,10 +198,24 @@ const weekDays = computed(() => {
     const isToday = isSameDay(d, now.value)
     const isPast = isPastDay(d)
     const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
-    const completedTasks = isPast
+    const completedTasks = (isPast || isToday)
       ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
       : []
-    const tasksForDay = [...incompleteTasks, ...completedTasks]
+
+    let tasksForDay = []
+    let allCompleted = false
+
+    if (isToday) {
+      if (incompleteTasks.length === 0 && completedTasks.length > 0) {
+        tasksForDay = completedTasks
+        allCompleted = true
+      } else {
+        tasksForDay = incompleteTasks
+      }
+    } else {
+      tasksForDay = [...incompleteTasks, ...completedTasks]
+    }
+
     const count = tasksForDay.length
     const hasOverdue = incompleteTasks.some(t => isTaskOverdue(t))
 
@@ -210,6 +224,7 @@ const weekDays = computed(() => {
       name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()],
       num: d.getDate(),
       isToday,
+      allCompleted,
       taskCount: count,
       hasOverdue,
       dayOffset,
@@ -665,9 +680,10 @@ defineExpose({ resetTimeline, focusOffset })
                 class="day-count has-tasks"
                 :class="{
                   'overdue-count':  day.hasOverdue,
-                  'today-count':    day.isToday && !day.hasOverdue,
+                  'today-count':    day.isToday && !day.hasOverdue && !day.allCompleted,
+                  'completed':      day.allCompleted
                 }"
-                v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday ? { group: 'today', type: 'border' } : null)"
+                v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday && !day.allCompleted ? { group: 'today', type: 'border' } : null)"
               >{{ day.taskCount }}</div>
               <span v-else class="day-count no-tasks">·</span>
             </template>
@@ -971,7 +987,8 @@ defineExpose({ resetTimeline, focusOffset })
   background: color-mix(in srgb, var(--color-error) 12%, transparent);
 }
 .day-count.no-tasks { color: rgba(255,255,255,0.18); font-size: 8px; }
-.day-cell.past .day-count.has-tasks {
+.day-cell.past .day-count.has-tasks,
+.day-count.completed {
   background: rgba(255,255,255,0.12);
   border-color: transparent;
   color: rgba(255,255,255,0.30);
