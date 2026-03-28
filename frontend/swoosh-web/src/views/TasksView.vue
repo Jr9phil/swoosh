@@ -132,6 +132,49 @@ function toggleCompleted(_?: MouseEvent) {
   completedExpanded.value = !completedExpanded.value
 }
 
+const isLongPressActive = ref(false)
+let longPressTimer: ReturnType<typeof setTimeout> | null = null
+
+function startLongPress(val: number | string, isCompleted = false) {
+  isLongPressActive.value = false
+  if (longPressTimer) clearTimeout(longPressTimer)
+  longPressTimer = setTimeout(() => {
+    isLongPressActive.value = true
+    if (isCompleted) {
+      toggleCompleted({ shiftKey: true } as MouseEvent)
+    } else {
+      togglePriority(val, { shiftKey: true } as MouseEvent)
+    }
+    if (window.navigator.vibrate) window.navigator.vibrate(50)
+  }, 1500)
+}
+
+function cancelLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+function handleTouchEnd() {
+  cancelLongPress()
+  if (isLongPressActive.value) {
+    setTimeout(() => { isLongPressActive.value = false }, 500)
+  }
+}
+
+function handleHeaderClick(val: number | string, event: MouseEvent, isCompleted = false) {
+  if (isLongPressActive.value) {
+    isLongPressActive.value = false
+    return
+  }
+  if (isCompleted) {
+    toggleCompleted(event)
+  } else {
+    togglePriority(val, event)
+  }
+}
+
 onMounted(async () => {
   clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
   try {
@@ -313,7 +356,11 @@ const skeletonSections = [
         <div
             class="section-label pinned"
             :class="{ open: priorityExpanded.pinned }"
-            @click="togglePriority('pinned', $event)"
+            @click="handleHeaderClick('pinned', $event)"
+            @touchstart="startLongPress('pinned')"
+            @touchend="handleTouchEnd"
+            @touchmove="cancelLongPress"
+            @contextmenu.prevent
         >
           <div class="section-label-left">
             <Pin :size="14" fill="currentColor"/>
@@ -362,7 +409,11 @@ const skeletonSections = [
           <div
               class="section-label"
               :class="[group.priority.class, { open: priorityExpanded[group.priority.value] }]"
-              @click="togglePriority(group.priority.value, $event)"
+              @click="handleHeaderClick(group.priority.value, $event)"
+              @touchstart="startLongPress(group.priority.value)"
+              @touchend="handleTouchEnd"
+              @touchmove="cancelLongPress"
+              @contextmenu.prevent
           >
             <div class="section-label-left">
               <component :is="group.priority.icon" :size="14" fill="currentColor" />
@@ -408,7 +459,11 @@ const skeletonSections = [
         <div
             class="collapse-header"
             :class="{ open: completedExpanded }"
-            @click="toggleCompleted($event)"
+            @click="handleHeaderClick('', $event, true)"
+            @touchstart="startLongPress('', true)"
+            @touchend="handleTouchEnd"
+            @touchmove="cancelLongPress"
+            @contextmenu.prevent
         >
           <ChevronRight :size="13" stroke-width="2.5" />
           Completed ({{ completedTasks.length }})
