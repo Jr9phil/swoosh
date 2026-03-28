@@ -3,7 +3,7 @@ import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin, X, Check, Ban } from 'lucide-vue-next'
+import { Pin, X, Check, Ban, Calendar, Clock } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -55,6 +55,19 @@ const editedPriority = computed(() =>
 )
 
 const editContainer = ref<HTMLElement | null>(null)
+const hiddenDateInput = ref<HTMLInputElement | null>(null)
+const hiddenTimeInput = ref<HTMLInputElement | null>(null)
+
+const formattedDate = computed(() => {
+  if (!editedDate.value) return ''
+  const [year, month, day] = editedDate.value.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+  const isCurrentYear = year === new Date().getFullYear()
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    ...(isCurrentYear ? {} : { year: 'numeric' })
+  })
+})
 
 // Combines date and time inputs into a single deadline string
 const combinedDeadline = computed(() => {
@@ -71,6 +84,33 @@ const combinedDeadline = computed(() => {
 
   return `${date}T${time}:00`
 })
+
+function setToday() {
+  editedDate.value = new Date().toISOString().split('T')[0]
+}
+
+function setTomorrow() {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  editedDate.value = d.toISOString().split('T')[0]
+}
+
+function openDatePicker() {
+  const input = hiddenDateInput.value
+  if (!input) return
+  try { input.showPicker() } catch { input.click() }
+}
+
+function openTimePicker() {
+  const input = hiddenTimeInput.value
+  if (!input) return
+  try { input.showPicker() } catch { input.click() }
+}
+
+function clearDate() {
+  editedDate.value = ''
+  editedTime.value = ''
+}
 
 // Cycles through available priority levels
 function cyclePriority() {
@@ -332,21 +372,95 @@ async function moveToTop() {
       <!-- Deadline Section -->
       <div>
         <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[11px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Deadline</div>
-        <div class="flex gap-2">
-          <input
-              type="date"
-              class="task-edit-input rounded-sm flex-1 text-base-content font-mono"
-              :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
-              v-model="editedDate"
+
+        <!-- No date selected: quick-pick row -->
+        <div v-if="!editedDate" class="flex gap-1.5 items-center py-[3px]">
+          <button
+              type="button"
+              @click="setToday"
               :disabled="task?.completed"
-          />
-          <input
-              type="time"
-              class="task-edit-input rounded-sm flex-1 text-base-content font-mono"
-              :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
-              v-model="editedTime"
+              class="deadline-shortcut rounded-full font-mono disabled:opacity-40"
+              :class="isEdit ? 'py-[5px] px-3.5 text-[13px]' : 'py-[7px] px-3.5 text-[14px]'"
+          >Today</button>
+          <button
+              type="button"
+              @click="setTomorrow"
               :disabled="task?.completed"
-          />
+              class="deadline-shortcut rounded-full font-mono disabled:opacity-40"
+              :class="isEdit ? 'py-[5px] px-3.5 text-[13px]' : 'py-[7px] px-3.5 text-[14px]'"
+          >Tomorrow</button>
+          <button
+              type="button"
+              @click="openDatePicker"
+              :disabled="task?.completed"
+              title="Pick a custom date"
+              class="deadline-shortcut rounded-full flex items-center justify-center disabled:opacity-40"
+              :class="isEdit ? 'py-2 px-2.5' : 'py-[10px] px-2.5'"
+          >
+            <Calendar :size="isEdit ? 14 : 15" />
+          </button>
+          <input type="date" ref="hiddenDateInput" v-model="editedDate" class="sr-only" tabindex="-1" />
+        </div>
+
+        <!-- Date selected -->
+        <div v-else class="flex gap-2 items-center">
+          <!-- Date input + conjoined X (always flex-1) -->
+          <div class="flex flex-1 rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200">
+            <input
+                type="date"
+                class="flex-1 bg-transparent text-base-content font-mono outline-none disabled:opacity-40"
+                :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
+                v-model="editedDate"
+                :disabled="task?.completed"
+            />
+            <button
+                type="button"
+                @click="clearDate"
+                :disabled="task?.completed"
+                title="Remove deadline"
+                class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors disabled:opacity-40 flex items-center"
+            >
+              <X :size="11" />
+            </button>
+          </div>
+
+          <!-- Right half: always flex-1, contains pill or time input -->
+          <div class="flex flex-1 items-center">
+            <!-- Add Time pill (no time set) -->
+            <template v-if="!editedTime || editedTime === '23:59'">
+              <button
+                  type="button"
+                  @click="openTimePicker"
+                  :disabled="task?.completed"
+                  class="deadline-shortcut rounded-full font-mono flex items-center gap-1.5 disabled:opacity-40"
+                  :class="isEdit ? 'py-[5px] px-3.5 text-[13px]' : 'py-[7px] px-3.5 text-[14px]'"
+              >
+                <Clock :size="isEdit ? 14 : 15" />
+                Add time
+              </button>
+              <input type="time" ref="hiddenTimeInput" v-model="editedTime" class="sr-only" tabindex="-1" />
+            </template>
+
+            <!-- Time input + conjoined X (time set) -->
+            <div v-else class="flex flex-1 rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200">
+              <input
+                  type="time"
+                  class="flex-1 bg-transparent text-base-content font-mono outline-none disabled:opacity-40"
+                  :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
+                  v-model="editedTime"
+                  :disabled="task?.completed"
+              />
+              <button
+                  type="button"
+                  @click="editedTime = ''"
+                  :disabled="task?.completed"
+                  title="Remove time"
+                  class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors disabled:opacity-40 flex items-center"
+              >
+                <X :size="11" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -500,13 +614,11 @@ async function moveToTop() {
 </template>
 
 <style scoped>
-/* Ensure date/time input icons (calendar/clock) adapt to dark theme */
 input[type="date"],
 input[type="time"] {
   color-scheme: dark;
 }
 
-/* Fallback/Enhancement for WebKit browsers to ensure icons are visible */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
