@@ -98,15 +98,38 @@ const priorityExpanded = ref<Record<string, boolean>>({
 // transition, preventing it from permanently clipping dropdown menus.
 const animatingSections = ref<Set<string>>(new Set())
 
-function togglePriority(val: number | string) {
+function togglePriority(val: number | string, event?: MouseEvent) {
   const key = val.toString()
-  priorityExpanded.value[key] = !priorityExpanded.value[key]
+  completedExpanded.value = false
 
-  animatingSections.value = new Set([...animatingSections.value, key])
-  setTimeout(() => {
-    animatingSections.value.delete(key)
-    animatingSections.value = new Set(animatingSections.value) // trigger reactivity
-  }, 240) // slightly longer than the 220ms grid transition
+  if (event?.shiftKey) {
+    const isOnlyOneOpen = priorityExpanded.value[key] &&
+      Object.keys(priorityExpanded.value).every(k => k === key || !priorityExpanded.value[k])
+
+    Object.keys(priorityExpanded.value).forEach(k => {
+      const nextState = isOnlyOneOpen ? true : k === key
+      if (priorityExpanded.value[k] !== nextState) {
+        priorityExpanded.value[k] = nextState
+        animatingSections.value = new Set([...animatingSections.value, k])
+        setTimeout(() => {
+          animatingSections.value.delete(k)
+          animatingSections.value = new Set(animatingSections.value)
+        }, 240)
+      }
+    })
+  } else {
+    priorityExpanded.value[key] = !priorityExpanded.value[key]
+
+    animatingSections.value = new Set([...animatingSections.value, key])
+    setTimeout(() => {
+      animatingSections.value.delete(key)
+      animatingSections.value = new Set(animatingSections.value) // trigger reactivity
+    }, 240) // slightly longer than the 220ms grid transition
+  }
+}
+
+function toggleCompleted(_?: MouseEvent) {
+  completedExpanded.value = !completedExpanded.value
 }
 
 onMounted(async () => {
@@ -124,6 +147,7 @@ onUnmounted(() => {
 })
 
 function jumpToOverdue() {
+  completedExpanded.value = false
   Object.keys(priorityExpanded.value).forEach(key => {
     const tasks = key === 'pinned'
         ? pinnedTasks.value
@@ -158,6 +182,8 @@ function jumpToOverdue() {
 // Expand the task's section if collapsed, then scroll to it.
 // Called when a task is clicked in the timeline panel.
 function handleJumpToTask(task: any) {
+  if (!task.completed) completedExpanded.value = false
+
   const key = task.pinned &&
   !isOverdue(task.deadline) &&
   !isDueToday(task.deadline)
@@ -287,7 +313,7 @@ const skeletonSections = [
         <div
             class="section-label pinned"
             :class="{ open: priorityExpanded.pinned }"
-            @click="togglePriority('pinned')"
+            @click="togglePriority('pinned', $event)"
         >
           <div class="section-label-left">
             <Pin :size="14" fill="currentColor"/>
@@ -336,7 +362,7 @@ const skeletonSections = [
           <div
               class="section-label"
               :class="[group.priority.class, { open: priorityExpanded[group.priority.value] }]"
-              @click="togglePriority(group.priority.value)"
+              @click="togglePriority(group.priority.value, $event)"
           >
             <div class="section-label-left">
               <component :is="group.priority.icon" :size="14" fill="currentColor" />
@@ -382,7 +408,7 @@ const skeletonSections = [
         <div
             class="collapse-header"
             :class="{ open: completedExpanded }"
-            @click="completedExpanded = !completedExpanded"
+            @click="toggleCompleted($event)"
         >
           <ChevronRight :size="13" stroke-width="2.5" />
           Completed ({{ completedTasks.length }})
