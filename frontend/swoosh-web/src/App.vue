@@ -3,10 +3,30 @@ import { useAuthStore } from './stores/auth'
 import { useTasksStore } from './stores/tasks'
 import { useRouter } from 'vue-router'
 import { Github, User, LogOut, KeyRound, Download } from 'lucide-vue-next'
+import { onMounted, onUnmounted } from 'vue'
 
 const auth = useAuthStore()
 const tasksStore = useTasksStore()
 const router = useRouter()
+
+let scrollTimer: number | null = null
+
+// Shows scrollbars when scrolling starts and hides them after 1 second of inactivity
+function handleScroll() {
+  document.documentElement.classList.add('is-scrolling')
+  if (scrollTimer) clearTimeout(scrollTimer)
+  scrollTimer = window.setTimeout(() => {
+    document.documentElement.classList.remove('is-scrolling')
+  }, 1000)
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true, capture: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll, { capture: true })
+})
 
 // Logs the user out after confirmation and redirects to the login page
 function logout() {
