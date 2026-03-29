@@ -224,7 +224,15 @@ function setDate(dateStr: string) {
   editedDate.value = dateStr
 }
 
-defineExpose({ resetForm, isFormBlank, setDate })
+function prefill(title: string, notesVal: string | null, deadline: string | null) {
+  editedTitle.value = title
+  editedNotes.value = notesVal ?? ''
+  const { date, time } = splitDeadline(deadline)
+  editedDate.value = date
+  editedTime.value = time
+}
+
+defineExpose({ resetForm, isFormBlank, setDate, prefill })
 
 // Saves changes to the store
 async function finishEditing() {

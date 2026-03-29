@@ -7,7 +7,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import TaskEdit from './TaskEdit.vue'
 import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
@@ -21,6 +21,7 @@ const props = defineProps<{
 
 const editing = ref(false)
 const creatingSubtask = ref(false)
+const openSeparateTask = inject<(task: Task) => void>('openSeparateTask')
 
 const subtasks = computed(() => {
   if (props.isSubtask) return []
@@ -319,6 +320,7 @@ async function remove() {
             @reset-rating="resetRating"
             @reset-priority="resetPriority"
             @add-subtask="creatingSubtask = true"
+            @separate-task="openSeparateTask?.(task)"
         />
       </div>
     </div>

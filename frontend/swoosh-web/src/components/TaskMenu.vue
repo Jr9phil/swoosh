@@ -4,7 +4,7 @@
   Provides options like moving to top, resetting deadline, toggling completion, and deleting.
 -->
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, Pin, CalendarOff, CalendarPlus, Undo2, Diamond, ListPlus } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, Pin, CalendarOff, CalendarPlus, Undo2, Diamond, ListPlus, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { PRIORITIES } from '../types/priority'
 
@@ -26,6 +26,7 @@ const emit = defineEmits<{
   (e: 'resetRating'): void
   (e: 'resetPriority'): void
   (e: 'addSubtask'): void
+  (e: 'separateTask'): void
 }>()
 
 const priorityIcon = computed(() => PRIORITIES.find(p => p.value === props.priority)?.icon ?? PRIORITIES[0].icon)
@@ -79,6 +80,12 @@ const menuItems = computed<MenuItem[]>(() => [
     icon: ListPlus,
     action: () => emit('addSubtask'),
     show: !props.isCompleted && !props.isSubtask
+  },
+  {
+    label: 'Separate task',
+    icon: ArrowUpRight,
+    action: () => emit('separateTask'),
+    show: !props.isCompleted && !!props.isSubtask
   }
 ])
 
