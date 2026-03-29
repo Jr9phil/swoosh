@@ -659,7 +659,7 @@ defineExpose({ resetTimeline, focusOffset })
         >
           <div
             v-for="day in weekDays"
-            :key="day.date.getTime()"
+            :key="day.dayOffset"
             class="day-cell"
             :class="{
               today:    day.isToday,
