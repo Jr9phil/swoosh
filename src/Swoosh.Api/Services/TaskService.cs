@@ -102,6 +102,26 @@ public class TaskService : ITaskService
             })
             .FirstOrDefaultAsync();
     }
+    
+    //Get a subtask by ID
+    public async Task<SubtaskDto?> GetByIdAsync(Guid userId, Guid taskId, Guid? parentId)
+    {
+        if (parentId == null) return null;
+        
+        var salt = await GetUserSalt(userId);
+        return await _db.Tasks
+            .Where(t => t.Id == taskId && t.UserId == userId && t.ParentId == parentId)
+            .Select(t => new SubtaskDto
+            {
+                Id = t.Id,
+                ParentId = t.ParentId,
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
+            })
+            .FirstOrDefaultAsync();
+    }
 
     /// Creates a new task, encrypting all sensitive fields before saving to the database.
     public async Task<TaskDto> CreateAsync(Guid userId, CreateTaskDto dto)
@@ -145,6 +165,53 @@ public class TaskService : ITaskService
             Priority = dto.Priority,
             Rating = dto.Rating,
             Icon = dto.Icon,
+            CreatedAt = task.CreatedAt
+        };
+    }
+    
+    // Creates a new subtask
+    public async Task<SubtaskDto> CreateAsync(Guid userId, Guid parentTaskID, CreateSubtaskDto dto)
+    {
+        var salt = await GetUserSalt(userId);
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
+        var encryptedPriority = _crypto.EncryptInt(
+            0,
+            userId,
+            salt
+        );
+
+        
+        var task = new TaskItem
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ParentId = parentTaskID,
+            EncryptedTitle = encryptedTitle,
+            EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
+            EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext,
+            EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
+            
+            //Set to blank values since subtasks will never use these
+            EncryptedPinned = _crypto.EncryptBool(false, userId, salt).Ciphertext,
+            EncryptedPriority = encryptedPriority.Ciphertext,
+            EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext,
+            EncryptedIcon = null,
+            
+            KeyVersion = keyVersion,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Tasks.Add(task);
+        await _db.SaveChangesAsync();
+
+        return new SubtaskDto
+        {
+            Id = task.Id,
+            ParentId = parentTaskID,
+            Title = dto.Title,
+            Notes = dto.Notes,
+            Completed = dto.Completed,
+            Deadline = dto.Deadline,
             CreatedAt = task.CreatedAt
         };
     }

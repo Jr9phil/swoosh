@@ -57,3 +57,33 @@ public class UpdateTaskDto
 
     public int? Icon { get; set; } = null;
 }
+
+public class SubtaskDto
+{
+    public Guid Id { get; set; }
+    public Guid? ParentId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Notes { get; set; }
+    public DateTime? Deadline { get; set; }
+    public DateTime? Completed { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CreateSubtaskDto
+{
+    [Required]
+    [MaxLength(200)]
+    public string Title { get; set; } = string.Empty;
+    
+    [MaxLength(1000)]
+    public string? Notes { get; set; }
+    public DateTime? Deadline { get; set; } = null;
+    public DateTime? Completed { get; set; }
+}
+
+public class UpdateSubtaskDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Notes { get; set; }
+    public DateTime? Deadline { get; set; }
+}

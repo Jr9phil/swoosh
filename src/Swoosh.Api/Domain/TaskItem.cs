@@ -4,6 +4,7 @@ public class TaskItem
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? ParentId { get; set; }
 
     public string EncryptedTitle { get; set; } = null!;
     public string EncryptedNotes { get; set; } = null!;
