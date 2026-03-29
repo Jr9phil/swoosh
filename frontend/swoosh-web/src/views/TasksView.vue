@@ -22,7 +22,7 @@ let clockInterval: ReturnType<typeof setInterval>
 
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && !t.pinned)
+        .filter(t => !t.completed && !t.pinned && !t.parentId)
         .slice()
         .sort((a, b) => {
           const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
@@ -47,7 +47,7 @@ const onlyNoPriority = computed(() =>
 
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned)
+        .filter(t => !t.completed && t.pinned && !t.parentId)
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
@@ -57,13 +57,13 @@ const pinnedTasks = computed(() =>
 
 const completedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => t.completed)
+        .filter(t => t.completed && !t.parentId)
         .slice()
         .sort((a, b) => new Date(b.completed!).getTime() - new Date(a.completed!).getTime())
 )
 
 const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
+    tasksStore.tasks.filter(t => !t.completed && !t.parentId && isOverdue(t.deadline)).length
 )
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)

@@ -31,6 +31,25 @@ export const useTasksStore = defineStore('tasks', {
             const res = await api.post('/tasks', payload)
             this.tasks.unshift(res.data)
         },
+
+        // Creates a new subtask under the given parent task
+        async createSubtask(parentTaskId: string, payload: { title: string, notes?: string | null, deadline?: string | null }) {
+            const res = await api.post(`/tasks/${parentTaskId}/subtasks`, payload)
+            const subtask: Task = {
+                id: res.data.id,
+                parentId: parentTaskId,
+                title: res.data.title,
+                notes: res.data.notes ?? null,
+                deadline: res.data.deadline ?? null,
+                completed: res.data.completed ?? null,
+                createdAt: res.data.createdAt,
+                pinned: false,
+                priority: 0,
+                rating: 0,
+                icon: null
+            }
+            this.tasks.push(subtask)
+        },
         
         // Toggles the completion status of a task and updates the backend
         async toggleComplete(task: Task) {
@@ -222,10 +241,10 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
-        // Removes a task from the backend and local store
+        // Removes a task and its subtasks from the backend and local store
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)
-            this.tasks = this.tasks.filter(t => t.id !== taskId)
+            this.tasks = this.tasks.filter(t => t.id !== taskId && t.parentId !== taskId)
         },
 
         // Resets a task's rating to 0

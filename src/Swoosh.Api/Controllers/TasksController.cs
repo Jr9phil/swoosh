@@ -73,6 +73,28 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
+    // POST: api/tasks/{parentId}/subtasks
+    [HttpPost("{parentId:guid}/subtasks")]
+    public async Task<IActionResult> CreateSubtask(Guid parentId, [FromBody] CreateSubtaskDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = UserContext.GetUserId(User);
+
+        var parent = await _tasks.GetByIdAsync(userId, parentId);
+        if (parent == null)
+            return NotFound();
+
+        var subtask = await _tasks.CreateSubtaskAsync(userId, parentId, dto);
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = subtask.Id },
+            subtask
+        );
+    }
+
     // DELETE: api/tasks/{id}
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)

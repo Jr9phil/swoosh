@@ -59,6 +59,7 @@ public class TaskService : ITaskService
                 var dto = new TaskDto
                 {
                     Id = t.Id,
+                    ParentId = t.ParentId,
                     Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                     Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                     Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -90,6 +91,7 @@ public class TaskService : ITaskService
             .Select(t => new TaskDto
             {
                 Id = t.Id,
+                ParentId = t.ParentId,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                 Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -170,7 +172,7 @@ public class TaskService : ITaskService
     }
     
     // Creates a new subtask
-    public async Task<SubtaskDto> CreateAsync(Guid userId, Guid parentTaskID, CreateSubtaskDto dto)
+    public async Task<SubtaskDto> CreateSubtaskAsync(Guid userId, Guid parentTaskID, CreateSubtaskDto dto)
     {
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
@@ -247,7 +249,7 @@ public class TaskService : ITaskService
         return true;
     }
 
-    /// Deletes a task from the database.
+    /// Deletes a task and its subtasks from the database.
     public async Task<bool> DeleteAsync(Guid userId, Guid taskId)
     {
         var task = await _db.Tasks
@@ -256,6 +258,11 @@ public class TaskService : ITaskService
         if (task == null)
             return false;
 
+        var subtasks = await _db.Tasks
+            .Where(t => t.ParentId == taskId && t.UserId == userId)
+            .ToListAsync();
+
+        _db.Tasks.RemoveRange(subtasks);
         _db.Tasks.Remove(task);
         await _db.SaveChangesAsync();
         return true;

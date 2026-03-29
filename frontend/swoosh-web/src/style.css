@@ -278,36 +278,67 @@
 
     /* ── Task action menu — hidden until row hover ── */
     .task-actions { opacity: 0; transition: opacity .15s; }
-    li:hover .task-actions { opacity: 1; }
-    /* Keep visible while the dropdown is open (cursor may leave the li briefly) */
+    .task-main-row:hover .task-actions { opacity: 1; }
+    /* Keep visible while the dropdown is open (cursor may leave the row briefly) */
     .task-actions:focus-within { opacity: 1; }
     /* Elevate the row above siblings within the same group */
-    li:has(.task-actions:focus-within) { position: relative; z-index: 10; }
+    .task-main-row:has(.task-actions:focus-within) { position: relative; z-index: 10; }
     .task-group:has(.task-actions:focus-within) { position: relative; z-index: 50; }
     @media (max-width: 480px) { .task-actions { opacity: 1; } }
 
-    /* ── Task row layout (shared by TaskItem and TaskSkeleton) ── */
+    /* ── Task row layout ── */
+    .task-group { list-style: none; }
+
     .task-item,
     .task-skeleton {
-        display: flex;
-        align-items: flex-start;
-        gap: 13px;
-        padding-block: 16px;
-        padding-inline: 14px;
         border-bottom: 1px solid var(--color-swoosh-border);
     }
     .task-item:last-child,
     .task-skeleton:last-child { border-bottom: none; }
 
-    /* ── Task item hover background ── */
-    li.task-item { position: relative; transition: background-color 150ms; }
+    .task-skeleton {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        padding-inline: 14px;
+        padding-block: 16px;
+    }
+
+    /* ── Task main row (flex row inside task-item) ── */
+    .task-main-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        padding-inline: 14px;
+        padding-block: 16px;
+        border-radius: inherit;
+        transition: background-color 150ms;
+    }
     /* Center checkbox with title when there is no sub-content below the title */
-    li.task-item.title-only { align-items: center; }
-    li.task-item:hover { background: var(--color-base-300); }
+    .task-main-row.title-only { align-items: center; }
+    .task-main-row:hover { background: var(--color-base-300); }
+
+    /* ── Task item container ── */
+    .task-item { position: relative; }
     /* Round hover bg to match the card corners without needing overflow:hidden */
     li.task-item:first-child { border-radius: calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px) 0 0; }
     li.task-item:last-child  { border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px); }
     li.task-item:only-child  { border-radius: calc(var(--radius-r) - 1px); }
+
+    /* ── Subtasks container ── */
+    .subtasks-container {
+        border-top: 1px solid var(--color-swoosh-border);
+        padding-bottom: 8px;
+    }
+    .subtasks-container > .task-item {
+        border-bottom: 1px solid var(--color-swoosh-border);
+    }
+    .subtasks-container > .task-item:last-child { border-bottom: none; }
+    .subtasks-container > .task-item > .task-main-row {
+        padding-left: 28px;
+        padding-right: 14px;
+        padding-block: 12px;
+    }
 
     /* ── Task completion progress bar ── */
     .task-complete-bar {
@@ -327,7 +358,7 @@
     }
 
     /* ── Task completion done flash ── */
-    li.task-item.completing-done {
+    .task-item.completing-done > .task-main-row {
       animation: task-complete-done 0.7s ease-out forwards;
     }
     @keyframes task-complete-done {
@@ -665,10 +696,10 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
    Large screen scaling (1280px+)
 ───────────────────────────────────────────────────────── */
 @media (min-width: 1280px) {
-    .task-item,
+    .task-main-row,
     .task-skeleton {
-        padding-block: 18px;
         padding-inline: 18px;
+        padding-block: 18px;
         gap: 15px;
     }
     .section-label {
@@ -688,10 +719,10 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
     body {
         font-size: 18px;
     }
-    .task-item,
+    .task-main-row,
     .task-skeleton {
-        padding-block: 20px;
         padding-inline: 20px;
+        padding-block: 20px;
         gap: 16px;
     }
     .section-label {

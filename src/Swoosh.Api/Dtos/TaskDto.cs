@@ -6,10 +6,11 @@ public class TaskDto
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? ParentId { get; set; }
 
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }
-    
+
     public DateTime? Completed { get; set; }
     public DateTime? Deadline { get; set; }
     public bool Pinned { get; set; }

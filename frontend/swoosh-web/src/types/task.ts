@@ -1,5 +1,6 @@
 export interface Task {
     id: string
+    parentId?: string | null
     title: string
     notes?: string | null
     completed?: string | null
