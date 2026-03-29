@@ -39,12 +39,6 @@ interface MenuItem {
 
 const menuItems = computed<MenuItem[]>(() => [
   {
-    label: 'Add subtask',
-    icon: ListPlus,
-    action: () => emit('addSubtask'),
-    show: !props.isCompleted && !props.isSubtask
-  },
-  {
     label: props.pinned ? 'Unpin task' : 'Pin task',
     icon: Pin,
     action: () => emit('pin'),
@@ -79,6 +73,12 @@ const menuItems = computed<MenuItem[]>(() => [
     icon: priorityIcon.value,
     action: () => emit('resetPriority'),
     show: !props.isCompleted && props.priority > 0
+  },
+  {
+    label: 'Add subtask',
+    icon: ListPlus,
+    action: () => emit('addSubtask'),
+    show: !props.isCompleted && !props.isSubtask
   }
 ])
 

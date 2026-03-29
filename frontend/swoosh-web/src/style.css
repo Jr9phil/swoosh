@@ -327,17 +327,21 @@
 
     /* ── Subtasks container ── */
     .subtasks-container {
-        border-top: 1px solid var(--color-swoosh-border);
-        padding-bottom: 8px;
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px);
+        padding-bottom: 4px;
     }
-    .subtasks-container > .task-item {
-        border-bottom: 1px solid var(--color-swoosh-border);
-    }
-    .subtasks-container > .task-item:last-child { border-bottom: none; }
+    .subtasks-container > .task-item { border-bottom: none; }
     .subtasks-container > .task-item > .task-main-row {
-        padding-left: 28px;
+        padding-left: 44px;
         padding-right: 14px;
-        padding-block: 12px;
+        padding-block: 9px;
+    }
+
+    /* ── Subtask inline editor ── */
+    .subtask-edit {
+        padding: 10px 14px 10px 44px;
+        background: rgba(0, 0, 0, 0.15);
     }
 
     /* ── Task completion progress bar ── */

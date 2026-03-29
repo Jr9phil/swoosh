@@ -9,6 +9,7 @@ import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TaskEdit from './TaskEdit.vue'
+import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { Calendar, Clock } from 'lucide-vue-next'
@@ -242,7 +243,8 @@ async function remove() {
 <!-- Component Template: Renders either the task display or the inline editor -->
 <template>
   <!-- Inline Editor Mode -->
-  <TaskEdit v-if="editing" :task="task" :is-subtask="isSubtask" @close="editing = false" />
+  <SubtaskEdit v-if="editing && isSubtask" :task="task" @close="editing = false" />
+  <TaskEdit v-else-if="editing" :task="task" @close="editing = false" />
 
   <!-- Display Mode -->
   <component v-else
@@ -280,8 +282,8 @@ async function remove() {
         <div class="flex items-center justify-between gap-3">
           <span class="flex items-center gap-1.5 min-w-0">
             <span
-                class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words"
-                :class="{ 'line-through text-swoosh-text-muted' : task.completed }"
+                :class="[isSubtask ? 'text-[14px]' : 'text-[15.5px]', { 'line-through text-swoosh-text-muted': task.completed }]"
+                class="font-bold text-base-content leading-[1.45] break-words"
             >
               {{ task.title }}
             </span>
@@ -329,9 +331,8 @@ async function remove() {
           :task="sub"
           :is-subtask="true"
       />
-      <TaskEdit
+      <SubtaskEdit
           v-if="creatingSubtask"
-          :is-subtask="true"
           :parent-task-id="task.id"
           @close="creatingSubtask = false"
           @created="creatingSubtask = false"
