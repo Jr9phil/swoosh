@@ -40,6 +40,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(clockInterval)
   if (completingTimeout) clearTimeout(completingTimeout)
+  if (notesHoverTimer) clearTimeout(notesHoverTimer)
 })
 
 // True if the deadline has passed (and is not today)
@@ -172,6 +173,28 @@ function handleContentTouchEnd(e: TouchEvent) {
   }
 }
 
+// ── Notes expand on hover ────────────────────────────────────────────────────
+const notesEl = ref<HTMLElement | null>(null)
+const notesExpanded = ref(false)
+const notesFullHeight = ref(0)
+let notesHoverTimer: ReturnType<typeof setTimeout> | null = null
+
+function startNotesExpand() {
+  if (!notesEl.value) return
+  if (notesEl.value.scrollHeight <= notesEl.value.clientHeight + 2) return
+  notesHoverTimer = setTimeout(() => {
+    if (notesEl.value) {
+      notesFullHeight.value = notesEl.value.scrollHeight
+      notesExpanded.value = true
+    }
+  }, 1000)
+}
+
+function cancelNotesExpand() {
+  if (notesHoverTimer) { clearTimeout(notesHoverTimer); notesHoverTimer = null }
+  notesExpanded.value = false
+}
+
 const completing = ref(false)
 const completingDone = ref(false)
 let completingTimeout: ReturnType<typeof setTimeout> | null = null
@@ -292,7 +315,15 @@ async function remove() {
           </span>
           <TaskRating v-if="!task.completed && !isSubtask" :rating="task.rating" :priority="task.priority" :pinned="task.pinned" />
         </div>
-        <p v-if="!task.completed && task.notes" class="text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words line-clamp-2">{{ task.notes }}</p>
+        <p
+          v-if="!task.completed && task.notes"
+          ref="notesEl"
+          class="task-notes text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words"
+          :class="{ 'notes-expanded': notesExpanded }"
+          :style="notesExpanded ? { maxHeight: notesFullHeight + 'px' } : {}"
+          @mouseenter="startNotesExpand"
+          @mouseleave="cancelNotesExpand"
+        >{{ task.notes }}</p>
         <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
         <div v-if="!task.completed && task.deadline" class="badges">
           <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
@@ -342,3 +373,19 @@ async function remove() {
     </div>
   </component>
 </template>
+
+<style scoped>
+.task-notes {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-height: 3em; /* 2 lines × 1.5 line-height */
+  transition: max-height 0.3s ease;
+}
+
+.task-notes.notes-expanded {
+  -webkit-line-clamp: unset;
+  /* max-height driven by inline :style binding */
+}
+</style>
