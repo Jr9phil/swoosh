@@ -19,6 +19,7 @@ public class TaskDto
     public int? Icon { get; set; }
 
     public DateTime CreatedAt { get; set; }
+    public DateTime Modified { get; set; }
 }
 
 public class CreateTaskDto
@@ -68,6 +69,7 @@ public class SubtaskDto
     public DateTime? Deadline { get; set; }
     public DateTime? Completed { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime Modified { get; set; }
 }
 
 public class CreateSubtaskDto
@@ -80,11 +82,4 @@ public class CreateSubtaskDto
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; } = null;
     public DateTime? Completed { get; set; }
-}
-
-public class UpdateSubtaskDto
-{
-    public string Title { get; set; } = string.Empty;
-    public string? Notes { get; set; }
-    public DateTime? Deadline { get; set; }
 }

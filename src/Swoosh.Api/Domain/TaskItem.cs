@@ -17,4 +17,5 @@ public class TaskItem
     
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime Modified { get; set; } = DateTime.UtcNow;
 }
