@@ -269,6 +269,23 @@ async function finishEditing() {
         rating:   effectiveIsSubtask.value ? 0 : editedRating.value,
         icon:     effectiveIsSubtask.value ? null : selectedIcon.value
       })
+      // Auto-clear subtask deadlines that now exceed the updated parent deadline
+      if (currentDeadline && !effectiveIsSubtask.value) {
+        const subtasks = tasksStore.tasks.filter(t => t.parentId === props.task!.id && t.deadline)
+        for (const subtask of subtasks) {
+          if (subtask.deadline && new Date(subtask.deadline) > new Date(currentDeadline)) {
+            await tasksStore.editTask(subtask.id, {
+              title:    subtask.title,
+              notes:    subtask.notes,
+              pinned:   false,
+              deadline: null,
+              priority: 0,
+              rating:   0,
+              icon:     null,
+            })
+          }
+        }
+      }
     } else if (props.parentTaskId) {
       await tasksStore.createSubtask(props.parentTaskId, {
         title:    editedTitle.value.trim(),

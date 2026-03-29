@@ -24,6 +24,13 @@ const isEdit = computed(() => !!props.task)
 const tasksStore = useTasksStore()
 const loading = ref(false)
 const showValidation = ref(false)
+const deadlineError = ref(false)
+
+const parentTask = computed(() => {
+  const parentId = props.parentTaskId ?? props.task?.parentId
+  if (!parentId) return null
+  return tasksStore.tasks.find(t => t.id === parentId) ?? null
+})
 
 const originalTitle    = ref(props.task?.title    ?? '')
 const originalNotes    = ref(props.task?.notes    ?? '')
@@ -57,15 +64,18 @@ const combinedDeadline = computed(() => {
 
 function setToday() {
   editedDate.value = new Date().toISOString().split('T')[0]
+  deadlineError.value = false
 }
 function setTomorrow() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
   editedDate.value = d.toISOString().split('T')[0]
+  deadlineError.value = false
 }
 function clearDate() {
   editedDate.value = ''
   editedTime.value = ''
+  deadlineError.value = false
 }
 function openDatePicker() {
   const input = hiddenDateInput.value
@@ -145,6 +155,13 @@ async function finishEditing() {
     return
   }
 
+  if (currentDeadline && parentTask.value?.deadline) {
+    if (new Date(currentDeadline) > new Date(parentTask.value.deadline)) {
+      deadlineError.value = true
+      return
+    }
+  }
+
   loading.value = true
   try {
     if (isEdit.value && props.task) {
@@ -207,6 +224,11 @@ async function finishEditing() {
         :disabled="task?.completed"
     />
 
+    <!-- Deadline error -->
+    <div v-if="deadlineError" class="text-[10px] text-error font-bold uppercase px-0.5 mb-1">
+      Cannot be later than parent deadline
+    </div>
+
     <!-- Deadline + actions on one row -->
     <div class="flex items-center gap-1.5 flex-wrap">
 
@@ -235,6 +257,7 @@ async function finishEditing() {
               class="bg-transparent text-base-content font-mono outline-none py-[3px] px-2 text-[11.5px] disabled:opacity-40"
               v-model="editedDate"
               :disabled="task?.completed"
+              @change="deadlineError = false"
           />
           <button type="button" @click="clearDate" :disabled="task?.completed" title="Remove deadline"
                   class="border-l border-swoosh px-1.5 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors disabled:opacity-40 flex items-center">
