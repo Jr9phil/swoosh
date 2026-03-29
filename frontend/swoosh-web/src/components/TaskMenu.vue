@@ -73,7 +73,7 @@ const menuItems = computed<MenuItem[]>(() => [
     label: 'Reset priority',
     icon: priorityIcon.value,
     action: () => emit('resetPriority'),
-    show: !props.isCompleted && props.priority > 0
+    show: !props.isCompleted && props.priority > 0 && !props.isSubtask
   },
   {
     label: 'Add subtask',

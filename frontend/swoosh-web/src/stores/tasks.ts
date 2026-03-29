@@ -44,7 +44,7 @@ export const useTasksStore = defineStore('tasks', {
                 completed: res.data.completed ?? null,
                 createdAt: res.data.createdAt,
                 pinned: false,
-                priority: 0,
+                priority: this.tasks.find(t => t.id === parentTaskId)?.priority ?? 0,
                 rating: 0,
                 icon: null
             }

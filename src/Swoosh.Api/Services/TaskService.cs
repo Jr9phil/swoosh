@@ -51,12 +51,12 @@ public class TaskService : ITaskService
             .ToListAsync();
 
         var result = new List<TaskDto>();
-        
+
         foreach (var t in tasks)
         {
             try
             {
-                var dto = new TaskDto
+                result.Add(new TaskDto
                 {
                     Id = t.Id,
                     ParentId = t.ParentId,
@@ -69,14 +69,23 @@ public class TaskService : ITaskService
                     Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                     Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
                     CreatedAt = t.CreatedAt
-                };
-
-                result.Add(dto);
+                });
             }
             catch (CryptographicException ex)
             {
                 Console.WriteLine($"Failed to decrypt task {t.Id}: {ex.Message}");
             }
+        }
+
+        // Subtask priority is inferred from the parent at read time.
+        var parentPriorities = result
+            .Where(t => t.ParentId == null)
+            .ToDictionary(t => t.Id, t => t.Priority);
+
+        foreach (var dto in result.Where(t => t.ParentId != null))
+        {
+            if (parentPriorities.TryGetValue(dto.ParentId!.Value, out var parentPriority))
+                dto.Priority = parentPriority;
         }
 
         return result;
@@ -172,33 +181,24 @@ public class TaskService : ITaskService
     }
     
     // Creates a new subtask
-    public async Task<SubtaskDto> CreateSubtaskAsync(Guid userId, Guid parentTaskID, CreateSubtaskDto dto)
+    public async Task<SubtaskDto> CreateSubtaskAsync(Guid userId, Guid parentTaskId, CreateSubtaskDto dto)
     {
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
-        var encryptedPriority = _crypto.EncryptInt(
-            0,
-            userId,
-            salt
-        );
 
-        
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            ParentId = parentTaskID,
+            ParentId = parentTaskId,
             EncryptedTitle = encryptedTitle,
             EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
             EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext,
             EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
-            
-            //Set to blank values since subtasks will never use these
             EncryptedPinned = _crypto.EncryptBool(false, userId, salt).Ciphertext,
-            EncryptedPriority = encryptedPriority.Ciphertext,
+            EncryptedPriority = _crypto.EncryptInt(0, userId, salt).Ciphertext,
             EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext,
             EncryptedIcon = null,
-            
             KeyVersion = keyVersion,
             CreatedAt = DateTime.UtcNow
         };
@@ -209,7 +209,7 @@ public class TaskService : ITaskService
         return new SubtaskDto
         {
             Id = task.Id,
-            ParentId = parentTaskID,
+            ParentId = parentTaskId,
             Title = dto.Title,
             Notes = dto.Notes,
             Completed = dto.Completed,
@@ -226,21 +226,16 @@ public class TaskService : ITaskService
 
         if (task == null)
             return false;
-        
+
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
-        var encryptedPriority = _crypto.EncryptInt(
-            Math.Clamp(dto.Priority, 0, 3),
-            userId,
-            salt
-        );
 
         task.EncryptedTitle = encryptedTitle;
         task.EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext;
         task.EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext;
         task.EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext;
         task.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
-        task.EncryptedPriority = encryptedPriority.Ciphertext;
+        task.EncryptedPriority = _crypto.EncryptInt(Math.Clamp(dto.Priority, 0, 3), userId, salt).Ciphertext;
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
