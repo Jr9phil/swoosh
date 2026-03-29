@@ -68,7 +68,8 @@ public class TaskService : ITaskService
                     Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                     Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                     Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
-                    CreatedAt = t.CreatedAt
+                    CreatedAt = t.CreatedAt,
+                    Modified = t.Modified
                 });
             }
             catch (CryptographicException ex)
@@ -82,9 +83,9 @@ public class TaskService : ITaskService
             .Where(t => t.ParentId == null)
             .ToDictionary(t => t.Id, t => t.Priority);
 
-        foreach (var dto in result.Where(t => t.ParentId != null))
+        foreach (var dto in result)
         {
-            if (parentPriorities.TryGetValue(dto.ParentId!.Value, out var parentPriority))
+            if (dto.ParentId.HasValue && parentPriorities.TryGetValue(dto.ParentId.Value, out var parentPriority))
                 dto.Priority = parentPriority;
         }
 
@@ -109,7 +110,8 @@ public class TaskService : ITaskService
                 Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                 Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                 Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
-                CreatedAt = t.CreatedAt
+                CreatedAt = t.CreatedAt,
+                Modified = t.Modified
             })
             .FirstOrDefaultAsync();
     }
@@ -130,6 +132,8 @@ public class TaskService : ITaskService
                 Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
                 Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
+                CreatedAt = t.CreatedAt,
+                Modified = t.Modified
             })
             .FirstOrDefaultAsync();
     }
@@ -144,6 +148,7 @@ public class TaskService : ITaskService
             userId,
             salt
         );
+        var now = DateTime.UtcNow;
 
         
         var task = new TaskItem
@@ -159,7 +164,8 @@ public class TaskService : ITaskService
             EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext,
             EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null,
             KeyVersion = keyVersion,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            Modified = now
         };
 
         _db.Tasks.Add(task);
@@ -176,7 +182,8 @@ public class TaskService : ITaskService
             Priority = dto.Priority,
             Rating = dto.Rating,
             Icon = dto.Icon,
-            CreatedAt = task.CreatedAt
+            CreatedAt = task.CreatedAt,
+            Modified = task.Modified
         };
     }
     
@@ -185,6 +192,7 @@ public class TaskService : ITaskService
     {
         var salt = await GetUserSalt(userId);
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
+        var now = DateTime.UtcNow;
 
         var task = new TaskItem
         {
@@ -200,7 +208,8 @@ public class TaskService : ITaskService
             EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext,
             EncryptedIcon = null,
             KeyVersion = keyVersion,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            Modified = now
         };
 
         _db.Tasks.Add(task);
@@ -214,7 +223,8 @@ public class TaskService : ITaskService
             Notes = dto.Notes,
             Completed = dto.Completed,
             Deadline = dto.Deadline,
-            CreatedAt = task.CreatedAt
+            CreatedAt = task.CreatedAt,
+            Modified = task.Modified
         };
     }
 
@@ -239,6 +249,7 @@ public class TaskService : ITaskService
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
+        task.Modified = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
         return true;
