@@ -4,7 +4,7 @@
   Provides options like moving to top, resetting deadline, toggling completion, and deleting.
 -->
 <script setup lang="ts">
-import { Trash2, EllipsisVertical, Pin, CalendarOff, CalendarPlus, Undo2, Diamond } from 'lucide-vue-next'
+import { Trash2, EllipsisVertical, Pin, CalendarOff, CalendarPlus, Undo2, Diamond, ListPlus, ArrowUpRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { PRIORITIES } from '../types/priority'
 
@@ -14,6 +14,7 @@ const props = defineProps<{
   hasRating: boolean
   pinned: boolean
   priority: number
+  isSubtask?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +25,8 @@ const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'resetRating'): void
   (e: 'resetPriority'): void
+  (e: 'addSubtask'): void
+  (e: 'separateTask'): void
 }>()
 
 const priorityIcon = computed(() => PRIORITIES.find(p => p.value === props.priority)?.icon ?? PRIORITIES[0].icon)
@@ -40,7 +43,7 @@ const menuItems = computed<MenuItem[]>(() => [
     label: props.pinned ? 'Unpin task' : 'Pin task',
     icon: Pin,
     action: () => emit('pin'),
-    show: !props.isCompleted
+    show: !props.isCompleted && !props.isSubtask
   },
   {
     label: 'Mark incomplete',
@@ -71,6 +74,18 @@ const menuItems = computed<MenuItem[]>(() => [
     icon: priorityIcon.value,
     action: () => emit('resetPriority'),
     show: !props.isCompleted && props.priority > 0
+  },
+  {
+    label: 'Add subtask',
+    icon: ListPlus,
+    action: () => emit('addSubtask'),
+    show: !props.isCompleted && !props.isSubtask
+  },
+  {
+    label: 'Separate task',
+    icon: ArrowUpRight,
+    action: () => emit('separateTask'),
+    show: !props.isCompleted && !!props.isSubtask
   }
 ])
 

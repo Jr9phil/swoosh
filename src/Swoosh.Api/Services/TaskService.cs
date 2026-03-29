@@ -59,6 +59,7 @@ public class TaskService : ITaskService
                 var dto = new TaskDto
                 {
                     Id = t.Id,
+                    ParentId = t.ParentId,
                     Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                     Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                     Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -90,6 +91,7 @@ public class TaskService : ITaskService
             .Select(t => new TaskDto
             {
                 Id = t.Id,
+                ParentId = t.ParentId,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                 Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -99,6 +101,26 @@ public class TaskService : ITaskService
                 Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                 Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
                 CreatedAt = t.CreatedAt
+            })
+            .FirstOrDefaultAsync();
+    }
+    
+    //Get a subtask by ID
+    public async Task<SubtaskDto?> GetByIdAsync(Guid userId, Guid taskId, Guid? parentId)
+    {
+        if (parentId == null) return null;
+        
+        var salt = await GetUserSalt(userId);
+        return await _db.Tasks
+            .Where(t => t.Id == taskId && t.UserId == userId && t.ParentId == parentId)
+            .Select(t => new SubtaskDto
+            {
+                Id = t.Id,
+                ParentId = t.ParentId,
+                Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                Completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt),
             })
             .FirstOrDefaultAsync();
     }
@@ -148,6 +170,53 @@ public class TaskService : ITaskService
             CreatedAt = task.CreatedAt
         };
     }
+    
+    // Creates a new subtask
+    public async Task<SubtaskDto> CreateSubtaskAsync(Guid userId, Guid parentTaskID, CreateSubtaskDto dto)
+    {
+        var salt = await GetUserSalt(userId);
+        var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
+        var encryptedPriority = _crypto.EncryptInt(
+            0,
+            userId,
+            salt
+        );
+
+        
+        var task = new TaskItem
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ParentId = parentTaskID,
+            EncryptedTitle = encryptedTitle,
+            EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
+            EncryptedCompletedAt = _crypto.EncryptNullableDateTime(dto.Completed, userId, salt).Ciphertext,
+            EncryptedDeadline = _crypto.EncryptNullableDateTime(dto.Deadline, userId, salt).Ciphertext,
+            
+            //Set to blank values since subtasks will never use these
+            EncryptedPinned = _crypto.EncryptBool(false, userId, salt).Ciphertext,
+            EncryptedPriority = encryptedPriority.Ciphertext,
+            EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext,
+            EncryptedIcon = null,
+            
+            KeyVersion = keyVersion,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Tasks.Add(task);
+        await _db.SaveChangesAsync();
+
+        return new SubtaskDto
+        {
+            Id = task.Id,
+            ParentId = parentTaskID,
+            Title = dto.Title,
+            Notes = dto.Notes,
+            Completed = dto.Completed,
+            Deadline = dto.Deadline,
+            CreatedAt = task.CreatedAt
+        };
+    }
 
     /// Updates an existing task, re-encrypting updated fields.
     public async Task<bool> UpdateAsync(Guid userId, Guid taskId, UpdateTaskDto dto)
@@ -180,7 +249,7 @@ public class TaskService : ITaskService
         return true;
     }
 
-    /// Deletes a task from the database.
+    /// Deletes a task and its subtasks from the database.
     public async Task<bool> DeleteAsync(Guid userId, Guid taskId)
     {
         var task = await _db.Tasks
@@ -189,6 +258,11 @@ public class TaskService : ITaskService
         if (task == null)
             return false;
 
+        var subtasks = await _db.Tasks
+            .Where(t => t.ParentId == taskId && t.UserId == userId)
+            .ToListAsync();
+
+        _db.Tasks.RemoveRange(subtasks);
         _db.Tasks.Remove(task);
         await _db.SaveChangesAsync();
         return true;

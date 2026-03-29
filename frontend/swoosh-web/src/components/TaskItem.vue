@@ -5,26 +5,30 @@
 -->
 <script setup lang="ts">
 import type { Task } from '../types/task'
-import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import TaskEdit from './TaskEdit.vue'
+import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
-import {
-  Trash2,
-  EllipsisVertical,
-  Pin,
-  Calendar,
-  Clock
-} from 'lucide-vue-next'
+import { Calendar, Clock } from 'lucide-vue-next'
 
 const props = defineProps<{
   task: Task
+  isSubtask?: boolean
 }>()
 
 const editing = ref(false)
+const creatingSubtask = ref(false)
+const openSeparateTask = inject<(task: Task) => void>('openSeparateTask')
+
+const subtasks = computed(() => {
+  if (props.isSubtask) return []
+  return tasksStore.tasks
+    .filter(t => t.parentId === props.task.id)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+})
 
 // Reactive current time — updated every second for live deadline display
 const now = ref(Date.now())
@@ -37,10 +41,6 @@ onUnmounted(() => {
   clearInterval(clockInterval)
   if (completingTimeout) clearTimeout(completingTimeout)
 })
-
-const priorityIndex = computed(() =>
-    PRIORITIES.findIndex(p => p.value === props.task.priority)
-)
 
 // True if the deadline has passed (and is not today)
 const deadlineExpired = computed(() => {
@@ -143,7 +143,7 @@ let touchStartX = 0
 let touchStartY = 0
 let lastTapTime = 0
 
-function handleContentClick(e: MouseEvent) {
+function handleContentClick() {
   // Touch devices fire a synthetic click after touchend — ignore it here and
   // let the touchend handler decide (double-tap detection).
   if (navigator.maxTouchPoints > 0) return
@@ -244,77 +244,101 @@ async function remove() {
 <!-- Component Template: Renders either the task display or the inline editor -->
 <template>
   <!-- Inline Editor Mode -->
-  <TaskEdit v-if="editing" :task="task" @close="editing = false" />
+  <SubtaskEdit v-if="editing && isSubtask" :task="task" @close="editing = false" />
+  <TaskEdit v-else-if="editing" :task="task" @close="editing = false" />
 
   <!-- Display Mode -->
-  <li v-else
+  <component v-else
+      :is="isSubtask ? 'div' : 'li'"
       :id="'task-' + task.id"
       class="task-item"
-      :class="{
-        'title-only': !task.completed && !task.notes && !task.deadline,
-        'cursor-grab': !task.completed && !task.pinned,
-        'completing-done': completingDone
-      }"
+      :class="{ 'completing-done': completingDone }"
   >
     <div v-if="completing" class="task-complete-bar"></div>
-    <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
-      <input
-          type="checkbox"
-          :checked="!!task.completed"
-          :disabled="task.completed"
-          @change="onCompleteClick"
-          class="swoosh-check"
-          :class="{ 'opacity-100' : task.completed || completing }"
-      />
-    </div>
 
-    <!-- Task content: title, notes, deadline badge -->
-    <div
-      @click="handleContentClick"
-      @touchstart.passive="handleContentTouchStart"
-      @touchend="handleContentTouchEnd"
-      class="flex-1 min-w-0 cursor-text"
-      :class="{ 'opacity-40' : task.completed }"
-    >
-      <div class="flex items-center justify-between gap-3">
-        <span class="flex items-center gap-1.5 min-w-0">
-          <span
-              class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words"
-              :class="{ 'line-through text-swoosh-text-muted' : task.completed }"
-          >
-            {{ task.title }}
+    <!-- Main row: checkbox + content + menu -->
+    <div class="task-main-row" :class="{
+      'title-only': !task.completed && !task.notes && !task.deadline && subtasks.length === 0 && !creatingSubtask,
+      'cursor-grab': !task.completed && !task.pinned && !isSubtask,
+    }">
+      <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
+        <input
+            type="checkbox"
+            :checked="!!task.completed"
+            :disabled="!!task.completed"
+            @change="onCompleteClick"
+            class="swoosh-check"
+            :class="{ 'opacity-100' : task.completed || completing }"
+        />
+      </div>
+
+      <!-- Task content: title, notes, deadline badge -->
+      <div
+        @click="handleContentClick"
+        @touchstart.passive="handleContentTouchStart"
+        @touchend="handleContentTouchEnd"
+        class="flex-1 min-w-0 cursor-text"
+        :class="{ 'opacity-40' : task.completed }"
+      >
+        <div class="flex items-center justify-between gap-3">
+          <span class="flex items-center gap-1.5 min-w-0">
+            <span
+                :class="[isSubtask ? 'text-[14px]' : 'text-[15.5px]', { 'line-through text-swoosh-text-muted': task.completed }]"
+                class="font-bold text-base-content leading-[1.45] break-words"
+            >
+              {{ task.title }}
+            </span>
+            <TaskIcon v-if="task.icon != null" :value="task.icon" />
           </span>
-          <TaskIcon v-if="task.icon != null" :value="task.icon" />
-        </span>
-        <TaskRating v-if="!task.completed" :rating="task.rating" :priority="task.priority" :pinned="task.pinned" />
+          <TaskRating v-if="!task.completed && !isSubtask" :rating="task.rating" :priority="task.priority" :pinned="task.pinned" />
+        </div>
+        <p v-if="!task.completed && task.notes" class="text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words line-clamp-2">{{ task.notes }}</p>
+        <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
+        <div v-if="!task.completed && task.deadline" class="badges">
+          <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
+            <Calendar v-if="!deadlineExpired" :size="11" />
+            <Clock v-else :size="11" />
+            {{ formattedDeadline() }}
+          </span>
+        </div>
       </div>
-      <p v-if="!task.completed && task.notes" class="text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words line-clamp-2">{{ task.notes }}</p>
-      <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
-      <div v-if="!task.completed && task.deadline" class="badges">
-        <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
-          <Calendar v-if="!deadlineExpired" :size="11" />
-          <Clock v-else :size="11" />
-          {{ formattedDeadline() }}
-        </span>
+
+      <!-- Task overflow menu — hidden until row hover via .task-actions CSS -->
+      <div class="task-actions shrink-0">
+        <TaskMenu
+            :is-completed="!!task.completed"
+            :pinned="task.pinned"
+            :has-deadline="!!task.deadline"
+            :has-rating="task.rating > 0"
+            :priority="task.priority"
+            :is-subtask="isSubtask"
+            @delete="remove"
+            @edit="startEditing"
+            @reset-deadline="resetDeadline"
+            @pin="togglePinned"
+            @un-complete="toggleComplete"
+            @reset-rating="resetRating"
+            @reset-priority="resetPriority"
+            @add-subtask="creatingSubtask = true"
+            @separate-task="openSeparateTask?.(task)"
+        />
       </div>
     </div>
 
-    <!-- Task overflow menu — hidden until row hover via .task-actions CSS -->
-    <div class="task-actions shrink-0">
-      <TaskMenu
-          :is-completed="!!task.completed"
-          :pinned="task.pinned"
-          :has-deadline="!!task.deadline"
-          :has-rating="task.rating > 0"
-          :priority="task.priority"
-          @delete="remove"
-          @edit="startEditing"
-          @reset-deadline="resetDeadline"
-          @pin="togglePinned"
-          @un-complete="toggleComplete"
-          @reset-rating="resetRating"
-          @reset-priority="resetPriority"
+    <!-- Subtasks (only for top-level tasks) -->
+    <div v-if="!isSubtask && (subtasks.length > 0 || creatingSubtask)" class="subtasks-container">
+      <TaskItem
+          v-for="sub in subtasks"
+          :key="sub.id"
+          :task="sub"
+          :is-subtask="true"
+      />
+      <SubtaskEdit
+          v-if="creatingSubtask"
+          :parent-task-id="task.id"
+          @close="creatingSubtask = false"
+          @created="creatingSubtask = false"
       />
     </div>
-  </li>
+  </component>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { PRIORITIES } from '../types/priority'
@@ -22,7 +22,7 @@ let clockInterval: ReturnType<typeof setInterval>
 
 const incompleteTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && !t.pinned)
+        .filter(t => !t.completed && !t.pinned && !t.parentId)
         .slice()
         .sort((a, b) => {
           const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
@@ -47,7 +47,7 @@ const onlyNoPriority = computed(() =>
 
 const pinnedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => !t.completed && t.pinned)
+        .filter(t => !t.completed && t.pinned && !t.parentId)
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
@@ -57,13 +57,13 @@ const pinnedTasks = computed(() =>
 
 const completedTasks = computed(() =>
     tasksStore.tasks
-        .filter(t => t.completed)
+        .filter(t => t.completed && !t.parentId)
         .slice()
         .sort((a, b) => new Date(b.completed!).getTime() - new Date(a.completed!).getTime())
 )
 
 const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
+    tasksStore.tasks.filter(t => !t.completed && !t.parentId && isOverdue(t.deadline)).length
 )
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
@@ -250,7 +250,21 @@ function handleJumpToTask(task: any) {
   }, delay)
 }
 const createTaskEdit = ref<any>(null)
-function handleModalClose() { createTaskEdit.value?.resetForm() }
+const separatingSubtask = ref<Task | null>(null)
+const taskWasCreated = ref(false)
+
+function handleModalClose() {
+  if (taskWasCreated.value && separatingSubtask.value) {
+    tasksStore.deleteTask(separatingSubtask.value.id)
+  }
+  createTaskEdit.value?.resetForm()
+  separatingSubtask.value = null
+  taskWasCreated.value = false
+}
+function handleTaskCreated() {
+  taskWasCreated.value = true
+  closeModal()
+}
 function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
 function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
 
@@ -258,6 +272,17 @@ function handleCreateTaskForDate(date: string) {
   openModal()
   nextTick(() => { createTaskEdit.value?.setDate(date) })
 }
+
+function openSeparateTask(task: Task) {
+  separatingSubtask.value = task
+  taskWasCreated.value = false
+  openModal()
+  nextTick(() => {
+    createTaskEdit.value?.prefill(task.title, task.notes ?? null, task.deadline ?? null)
+  })
+}
+
+provide('openSeparateTask', openSeparateTask)
 
 const { draggableGroups, displayGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd } = useTaskDrag(tasksByPriority)
 
@@ -493,7 +518,7 @@ const skeletonSections = [
           </button>
         </div>
         <!-- No padding wrapper — TaskEdit owns body + footer padding in create mode -->
-        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="closeModal" />
+        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="handleTaskCreated" />
       </div>
       <form method="dialog" class="modal-backdrop">
         <button>close</button>

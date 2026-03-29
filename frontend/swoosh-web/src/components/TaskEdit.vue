@@ -10,6 +10,8 @@ import { TASK_ICONS } from '../types/icon'
 
 const props = defineProps<{
   task?: Task
+  isSubtask?: boolean
+  parentTaskId?: string
 }>()
 
 const emit = defineEmits<{
@@ -18,6 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const isEdit = computed(() => !!props.task)
+const effectiveIsSubtask = computed(() => props.isSubtask || !!props.task?.parentId)
 const tasksStore = useTasksStore()
 const loading = ref(false)
 const showValidation = ref(false)
@@ -221,7 +224,15 @@ function setDate(dateStr: string) {
   editedDate.value = dateStr
 }
 
-defineExpose({ resetForm, isFormBlank, setDate })
+function prefill(title: string, notesVal: string | null, deadline: string | null) {
+  editedTitle.value = title
+  editedNotes.value = notesVal ?? ''
+  const { date, time } = splitDeadline(deadline)
+  editedDate.value = date
+  editedTime.value = time
+}
+
+defineExpose({ resetForm, isFormBlank, setDate, prefill })
 
 // Saves changes to the store
 async function finishEditing() {
@@ -260,12 +271,37 @@ async function finishEditing() {
       await tasksStore.editTask(props.task.id, {
         title:    editedTitle.value.trim(),
         notes:    editedNotes.value || null,
-        pinned:   editedPinned.value,
+        pinned:   effectiveIsSubtask.value ? false : editedPinned.value,
         deadline: currentDeadline,
-        priority: editedPriority.value,
-        rating:   editedRating.value,
-        icon:     selectedIcon.value
+        priority: effectiveIsSubtask.value ? 0 : editedPriority.value,
+        rating:   effectiveIsSubtask.value ? 0 : editedRating.value,
+        icon:     effectiveIsSubtask.value ? null : selectedIcon.value
       })
+      // Auto-clear subtask deadlines that now exceed the updated parent deadline
+      if (currentDeadline && !effectiveIsSubtask.value) {
+        const subtasks = tasksStore.tasks.filter(t => t.parentId === props.task!.id && t.deadline)
+        for (const subtask of subtasks) {
+          if (subtask.deadline && new Date(subtask.deadline) > new Date(currentDeadline)) {
+            await tasksStore.editTask(subtask.id, {
+              title:    subtask.title,
+              notes:    subtask.notes,
+              pinned:   false,
+              deadline: null,
+              priority: 0,
+              rating:   0,
+              icon:     null,
+            })
+          }
+        }
+      }
+    } else if (props.parentTaskId) {
+      await tasksStore.createSubtask(props.parentTaskId, {
+        title:    editedTitle.value.trim(),
+        notes:    editedNotes.value || null,
+        deadline: currentDeadline,
+      })
+      emit('created')
+      resetForm()
     } else {
       await tasksStore.createTask({
         title:    editedTitle.value.trim(),
@@ -331,14 +367,14 @@ async function moveToTop() {
   <div
       ref="editContainer"
       :class="[
-      isEdit
+      isEdit || effectiveIsSubtask
         ? 'fade-up bg-base-300 px-3.5 py-4 rounded-[10px] my-1'
         : 'flex flex-col'
     ]"
       @click.stop
   >
     <!-- Fields — modal: 18px top, 20px sides; inline: no extra padding -->
-    <div :class="isEdit ? 'flex flex-col gap-3' : 'px-5 pt-[18px] pb-0 flex flex-col gap-[13px]'">
+    <div :class="isEdit || effectiveIsSubtask ? 'flex flex-col gap-3' : 'px-5 pt-[18px] pb-0 flex flex-col gap-[13px]'">
 
       <!-- Title Input -->
       <div class="relative">
@@ -470,11 +506,11 @@ async function moveToTop() {
     <!-- Inline edit: margin-top + top border only -->
     <div :class="[
       'flex flex-wrap items-center gap-y-2 border-t border-swoosh',
-      isEdit
+      isEdit || effectiveIsSubtask
         ? 'mt-4 pt-3 pb-1'
         : 'mt-[13px] px-5 pt-3 pb-[18px]'
     ]">
-      <div class="flex items-center gap-[5px]">
+      <div v-if="!effectiveIsSubtask" class="flex items-center gap-[5px]">
         <!-- Priority Cycle -->
         <button
             type="button"
