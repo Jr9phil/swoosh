@@ -241,6 +241,18 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Converts a top-level task into a subtask of another task
+        async attachToParent(childId: string, parentId: string) {
+            await api.put(`/tasks/${childId}/parent/${parentId}`)
+            const task = this.tasks.find(t => t.id === childId)
+            if (task) {
+                task.parentId = parentId
+                task.pinned = false
+                task.rating = 0
+                task.icon = null
+            }
+        },
+
         // Removes a task and its subtasks from the backend and local store
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)

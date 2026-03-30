@@ -95,6 +95,15 @@ public class TasksController : ControllerBase
         );
     }
 
+    // PUT: api/tasks/{childId}/parent/{parentId}
+    [HttpPut("{childId:guid}/parent/{parentId:guid}")]
+    public async Task<IActionResult> AttachToParent(Guid childId, Guid parentId)
+    {
+        var userId = UserContext.GetUserId(User);
+        var result = await _tasks.AttachToParentAsync(userId, childId, parentId);
+        return result ? NoContent() : NotFound();
+    }
+
     // DELETE: api/tasks/{id}
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)

@@ -255,6 +255,31 @@ public class TaskService : ITaskService
         return true;
     }
 
+    /// Converts a top-level task into a subtask of another task.
+    public async Task<bool> AttachToParentAsync(Guid userId, Guid childId, Guid parentId)
+    {
+        var child = await _db.Tasks.FirstOrDefaultAsync(
+            t => t.Id == childId && t.UserId == userId && t.ParentId == null);
+        if (child == null) return false;
+
+        var parent = await _db.Tasks.FirstOrDefaultAsync(
+            t => t.Id == parentId && t.UserId == userId && t.ParentId == null);
+        if (parent == null) return false;
+
+        var hasSubtasks = await _db.Tasks.AnyAsync(t => t.ParentId == childId && t.UserId == userId);
+        if (hasSubtasks) return false;
+
+        var salt = await GetUserSalt(userId);
+        child.ParentId = parentId;
+        child.EncryptedPinned = _crypto.EncryptBool(false, userId, salt).Ciphertext;
+        child.EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext;
+        child.EncryptedIcon = null;
+        child.Modified = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     /// Deletes a task and its subtasks from the database.
     public async Task<bool> DeleteAsync(Guid userId, Guid taskId)
     {
