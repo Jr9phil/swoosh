@@ -104,6 +104,15 @@ public class TasksController : ControllerBase
         );
     }
 
+    // PATCH: api/tasks/{id}/order
+    [HttpPatch("{id:guid}/order")]
+    public async Task<IActionResult> Reorder(Guid id, [FromBody] ReorderTaskDto dto)
+    {
+        var userId = UserContext.GetUserId(User);
+        var result = await _tasks.ReorderAsync(userId, id, dto.Modified);
+        return result ? NoContent() : NotFound();
+    }
+
     // PUT: api/tasks/{childId}/parent/{parentId}
     [HttpPut("{childId:guid}/parent/{parentId:guid}")]
     public async Task<IActionResult> AttachToParent(Guid childId, Guid parentId)

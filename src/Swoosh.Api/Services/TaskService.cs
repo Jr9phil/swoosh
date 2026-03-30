@@ -265,8 +265,23 @@ public class TaskService : ITaskService
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
-        task.Modified = DateTime.UtcNow;
+        task.Modified = dto.Modified ?? DateTime.UtcNow;
 
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    /// Updates only the Modified timestamp of a task for manual reordering.
+    /// No re-encryption is needed since no encrypted fields change.
+    public async Task<bool> ReorderAsync(Guid userId, Guid taskId, DateTime modified)
+    {
+        var task = await _db.Tasks
+            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId);
+
+        if (task == null)
+            return false;
+
+        task.Modified = modified;
         await _db.SaveChangesAsync();
         return true;
     }

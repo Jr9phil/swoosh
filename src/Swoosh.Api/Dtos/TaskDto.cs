@@ -47,9 +47,9 @@ public class UpdateTaskDto
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; }
-    
+
     public DateTime? Completed { get; set; }
-    
+
     public bool Pinned { get; set; }
     [Range(0, 3)]
     public int Priority { get; set; } = 0;
@@ -58,6 +58,15 @@ public class UpdateTaskDto
     public int Rating { get; set; } = 0;
 
     public int? Icon { get; set; } = null;
+
+    // When provided (e.g. drag-to-reorder across priority groups), the backend uses this
+    // value instead of DateTime.UtcNow so the sort position is preserved exactly.
+    public DateTime? Modified { get; set; } = null;
+}
+
+public class ReorderTaskDto
+{
+    public DateTime Modified { get; set; }
 }
 
 public class SubtaskDto
