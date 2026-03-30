@@ -331,8 +331,8 @@
         border-radius: 0 0 calc(var(--radius-r) - 1px) calc(var(--radius-r) - 1px);
         padding-bottom: 4px;
     }
-    .subtasks-container > .task-item { border-bottom: none; }
-    .subtasks-container > .task-item > .task-main-row {
+    .subtasks-container .task-item { border-bottom: none; }
+    .subtasks-container .task-item > .task-main-row {
         padding-left: 44px;
         padding-right: 14px;
         padding-block: 9px;
