@@ -65,7 +65,16 @@ public class TasksController : ControllerBase
             return BadRequest(ModelState);
 
         var userId = UserContext.GetUserId(User);
-        var updated = await _tasks.UpdateAsync(userId, id, dto);
+
+        bool updated;
+        try
+        {
+            updated = await _tasks.UpdateAsync(userId, id, dto);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return UnprocessableEntity(new { error = ex.Message });
+        }
 
         if (!updated)
             return NotFound();
@@ -93,6 +102,24 @@ public class TasksController : ControllerBase
             new { id = subtask.Id },
             subtask
         );
+    }
+
+    // PATCH: api/tasks/{id}/order
+    [HttpPatch("{id:guid}/order")]
+    public async Task<IActionResult> Reorder(Guid id, [FromBody] ReorderTaskDto dto)
+    {
+        var userId = UserContext.GetUserId(User);
+        var result = await _tasks.ReorderAsync(userId, id, dto.Modified);
+        return result ? NoContent() : NotFound();
+    }
+
+    // PUT: api/tasks/{childId}/parent/{parentId}
+    [HttpPut("{childId:guid}/parent/{parentId:guid}")]
+    public async Task<IActionResult> AttachToParent(Guid childId, Guid parentId)
+    {
+        var userId = UserContext.GetUserId(User);
+        var result = await _tasks.AttachToParentAsync(userId, childId, parentId);
+        return result ? NoContent() : NotFound();
     }
 
     // DELETE: api/tasks/{id}

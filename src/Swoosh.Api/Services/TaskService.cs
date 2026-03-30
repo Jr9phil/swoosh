@@ -238,6 +238,22 @@ public class TaskService : ITaskService
             return false;
 
         var salt = await GetUserSalt(userId);
+
+        // Block completing a parent task when it has incomplete subtasks with deadlines.
+        if (dto.Completed.HasValue && task.ParentId == null)
+        {
+            var subtasks = await _db.Tasks
+                .Where(t => t.ParentId == taskId && t.UserId == userId)
+                .ToListAsync();
+
+            foreach (var subtask in subtasks)
+            {
+                var deadline = _crypto.DecryptNullableDateTime(subtask.EncryptedDeadline, userId, subtask.KeyVersion, salt);
+                var completed = _crypto.DecryptNullableDateTime(subtask.EncryptedCompletedAt, userId, subtask.KeyVersion, salt);
+                if (deadline.HasValue && !completed.HasValue)
+                    throw new InvalidOperationException("Cannot complete a task while subtasks with deadlines are still incomplete.");
+            }
+        }
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
 
         task.EncryptedTitle = encryptedTitle;
@@ -249,7 +265,47 @@ public class TaskService : ITaskService
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
-        task.Modified = DateTime.UtcNow;
+        task.Modified = dto.Modified ?? DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    /// Updates only the Modified timestamp of a task for manual reordering.
+    /// No re-encryption is needed since no encrypted fields change.
+    public async Task<bool> ReorderAsync(Guid userId, Guid taskId, DateTime modified)
+    {
+        var task = await _db.Tasks
+            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId);
+
+        if (task == null)
+            return false;
+
+        task.Modified = modified;
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    /// Converts a top-level task into a subtask of another task.
+    public async Task<bool> AttachToParentAsync(Guid userId, Guid childId, Guid parentId)
+    {
+        var child = await _db.Tasks.FirstOrDefaultAsync(
+            t => t.Id == childId && t.UserId == userId && t.ParentId == null);
+        if (child == null) return false;
+
+        var parent = await _db.Tasks.FirstOrDefaultAsync(
+            t => t.Id == parentId && t.UserId == userId && t.ParentId == null);
+        if (parent == null) return false;
+
+        var hasSubtasks = await _db.Tasks.AnyAsync(t => t.ParentId == childId && t.UserId == userId);
+        if (hasSubtasks) return false;
+
+        var salt = await GetUserSalt(userId);
+        child.ParentId = parentId;
+        child.EncryptedPinned = _crypto.EncryptBool(false, userId, salt).Ciphertext;
+        child.EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext;
+        child.EncryptedIcon = null;
+        child.Modified = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
         return true;

@@ -43,6 +43,7 @@ export const useTasksStore = defineStore('tasks', {
                 deadline: res.data.deadline ?? null,
                 completed: res.data.completed ?? null,
                 createdAt: res.data.createdAt,
+                modified: res.data.modified,
                 pinned: false,
                 priority: this.tasks.find(t => t.id === parentTaskId)?.priority ?? 0,
                 rating: 0,
@@ -53,7 +54,7 @@ export const useTasksStore = defineStore('tasks', {
         
         // Toggles the completion status of a task and updates the backend
         async toggleComplete(task: Task) {
-            const completedAt = task.completed 
+            const completedAt = task.completed
                 ? null
                 : new Date().toISOString()
 
@@ -61,12 +62,23 @@ export const useTasksStore = defineStore('tasks', {
                 ...task,
                 completed: completedAt
             }
-            
+
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
             if (index !== -1) {
                 this.tasks[index].completed = completedAt
+            }
+
+            // If a subtask with a deadline is uncompleted, auto-uncheck the parent
+            // to preserve the invariant that it can't be complete while this subtask isn't.
+            if (completedAt === null && task.deadline && task.parentId) {
+                const parent = this.tasks.find(t => t.id === task.parentId)
+                if (parent?.completed) {
+                    await api.put(`/tasks/${parent.id}`, { ...parent, completed: null })
+                    const parentIndex = this.tasks.findIndex(t => t.id === parent.id)
+                    if (parentIndex !== -1) this.tasks[parentIndex].completed = null
+                }
             }
         },
         
@@ -85,18 +97,14 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
-        // Resets the creation date to now, effectively moving it to the top of the creation-sorted list
+        // Resets the sort position to now, effectively moving it to the top of the sorted list
         async resetCreationDate(task: Task) {
-          const updated = {
-              ...task,
-              createdAt: new Date().toISOString()
-          }
-          await api.put(`/tasks/${task.id}`, updated)
-
+            const newModified = new Date().toISOString()
             const index = this.tasks.findIndex(t => t.id === task.id)
             if (index !== -1) {
-                this.tasks[index].createdAt = updated.createdAt
+                this.tasks[index].modified = newModified
             }
+            api.patch(`/tasks/${task.id}/order`, { modified: newModified })
         },
         
         // Removes the deadline from a task
@@ -113,7 +121,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
-        // Moves a task relative to another task by adjusting its creation timestamp
+        // Moves a task relative to another task by adjusting its modified timestamp
         async moveTaskRelative(source: Task, target: Task, before: boolean) {
             // Copy source and target
             const tasksCopy = [...this.tasks]
@@ -123,49 +131,48 @@ export const useTasksStore = defineStore('tasks', {
                 t => t.priority === source.priority && !t.completed && !t.pinned
             )
 
-            // Sort them by creation date descending
-            samePriorityTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            // Sort them by modified date descending (matches display order)
+            samePriorityTasks.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime())
 
             // Find target index in the sorted same-priority list
             const targetIndex = samePriorityTasks.findIndex(t => t.id === target.id)
             if (targetIndex === -1) return
 
-            let newCreatedAt: string
+            let newModified: string
 
             if (before) {
-                // Place source **before** target → make createdAt slightly later than target
+                // Place source **before** target → make modified slightly later than target
                 const nextTask = samePriorityTasks[targetIndex - 1] // task above target
                 if (nextTask) {
                     // Average timestamps to fit in between
-                    const avg = (new Date(nextTask.createdAt).getTime() + new Date(target.createdAt).getTime()) / 2
-                    newCreatedAt = new Date(avg).toISOString()
+                    const avg = (new Date(nextTask.modified).getTime() + new Date(target.modified).getTime()) / 2
+                    newModified = new Date(avg).toISOString()
                 } else {
                     // No task above → just slightly newer than target
-                    newCreatedAt = new Date(new Date(target.createdAt).getTime() + 1).toISOString()
+                    newModified = new Date(new Date(target.modified).getTime() + 1).toISOString()
                 }
             } else {
                 // Place source **after** target → slightly older than target
                 const nextTask = samePriorityTasks[targetIndex + 1] // task below target
                 if (nextTask) {
-                    const avg = (new Date(target.createdAt).getTime() + new Date(nextTask.createdAt).getTime()) / 2
-                    newCreatedAt = new Date(avg).toISOString()
+                    const avg = (new Date(target.modified).getTime() + new Date(nextTask.modified).getTime()) / 2
+                    newModified = new Date(avg).toISOString()
                 } else {
                     // No task below → slightly older than target
-                    newCreatedAt = new Date(new Date(target.createdAt).getTime() - 1).toISOString()
+                    newModified = new Date(new Date(target.modified).getTime() - 1).toISOString()
                 }
             }
 
-            // Update backend
-            const updated = { ...source, createdAt: newCreatedAt }
-            await api.put(`/tasks/${source.id}`, updated)
-
-            // Update local state
+            // Update local state immediately for seamless UX
             const index = this.tasks.findIndex(t => t.id === source.id)
-            if (index !== -1) this.tasks[index].createdAt = newCreatedAt
+            if (index !== -1) this.tasks[index].modified = newModified
+
+            // Persist to backend asynchronously (fire-and-forget)
+            api.patch(`/tasks/${source.id}/order`, { modified: newModified })
         },
 
-        // Moves a task to a different priority group, calculating a new createdAt to preserve its
-        // visual position within the destination group.
+        // Moves a task to a different priority group, calculating a new modified timestamp to preserve
+        // its visual position within the destination group.
         // destGroupTasks is the destination array after VueDraggable inserted the task at newIndex.
         async moveTaskToPriority(taskId: string, targetPriority: number, destGroupTasks: Task[], newIndex: number) {
             const task = this.tasks.find(t => t.id === taskId)
@@ -174,31 +181,32 @@ export const useTasksStore = defineStore('tasks', {
             const above = newIndex > 0 ? destGroupTasks[newIndex - 1] : undefined
             const below = newIndex < destGroupTasks.length - 1 ? destGroupTasks[newIndex + 1] : undefined
 
-            let newCreatedAt: string
+            let newModified: string
             if (above && below) {
-                const avg = (new Date(above.createdAt).getTime() + new Date(below.createdAt).getTime()) / 2
-                newCreatedAt = new Date(avg).toISOString()
+                const avg = (new Date(above.modified).getTime() + new Date(below.modified).getTime()) / 2
+                newModified = new Date(avg).toISOString()
             } else if (above) {
                 // Bottom of dest list
-                newCreatedAt = new Date(new Date(above.createdAt).getTime() - 1).toISOString()
+                newModified = new Date(new Date(above.modified).getTime() - 1).toISOString()
             } else if (below) {
                 // Top of dest list
-                newCreatedAt = new Date(new Date(below.createdAt).getTime() + 1).toISOString()
+                newModified = new Date(new Date(below.modified).getTime() + 1).toISOString()
             } else {
                 // Only item in dest — keep current timestamp
-                newCreatedAt = task.createdAt
+                newModified = task.modified
             }
 
-            const updated = { ...task, priority: targetPriority, createdAt: newCreatedAt }
+            // Pass modified so the backend stores exactly this timestamp (not DateTime.UtcNow).
+            const updated = { ...task, priority: targetPriority, modified: newModified }
 
             // Optimistically update before the API call so the tasksByPriority
             // watch sees the new state immediately and doesn't snap the task back.
             const index = this.tasks.findIndex(t => t.id === taskId)
             const oldPriority = task.priority
-            const oldCreatedAt = task.createdAt
+            const oldModified = task.modified
             if (index !== -1) {
                 this.tasks[index].priority = targetPriority
-                this.tasks[index].createdAt = newCreatedAt
+                this.tasks[index].modified = newModified
             }
 
             try {
@@ -206,7 +214,7 @@ export const useTasksStore = defineStore('tasks', {
             } catch (e) {
                 if (index !== -1) {
                     this.tasks[index].priority = oldPriority
-                    this.tasks[index].createdAt = oldCreatedAt
+                    this.tasks[index].modified = oldModified
                 }
                 throw e
             }
@@ -241,6 +249,18 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
         
+        // Converts a top-level task into a subtask of another task
+        async attachToParent(childId: string, parentId: string) {
+            await api.put(`/tasks/${childId}/parent/${parentId}`)
+            const task = this.tasks.find(t => t.id === childId)
+            if (task) {
+                task.parentId = parentId
+                task.pinned = false
+                task.rating = 0
+                task.icon = null
+            }
+        },
+
         // Removes a task and its subtasks from the backend and local store
         async deleteTask(taskId: string) {
             await api.delete(`/tasks/${taskId}`)

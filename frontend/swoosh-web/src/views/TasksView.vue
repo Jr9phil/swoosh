@@ -30,7 +30,7 @@ const incompleteTasks = computed(() =>
           const todayA = isDueToday(a.deadline),  todayB = isDueToday(b.deadline)
           if (todayA !== todayB) return todayA ? -1 : 1
           if (b.priority !== a.priority) return b.priority - a.priority
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          return new Date(b.modified).getTime() - new Date(a.modified).getTime()
         })
 )
 
@@ -51,7 +51,7 @@ const pinnedTasks = computed(() =>
         .slice()
         .sort((a, b) => {
           if (b.priority !== a.priority) return b.priority - a.priority
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          return new Date(b.modified).getTime() - new Date(a.modified).getTime()
         })
 )
 

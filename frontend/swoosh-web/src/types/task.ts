@@ -10,6 +10,7 @@ export interface Task {
     rating: number
     icon?: number | null
     createdAt: string
+    modified: string
 }
 
 export interface CreateTask {
