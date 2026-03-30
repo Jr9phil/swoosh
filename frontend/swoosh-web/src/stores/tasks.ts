@@ -53,7 +53,7 @@ export const useTasksStore = defineStore('tasks', {
         
         // Toggles the completion status of a task and updates the backend
         async toggleComplete(task: Task) {
-            const completedAt = task.completed 
+            const completedAt = task.completed
                 ? null
                 : new Date().toISOString()
 
@@ -61,12 +61,23 @@ export const useTasksStore = defineStore('tasks', {
                 ...task,
                 completed: completedAt
             }
-            
+
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
             if (index !== -1) {
                 this.tasks[index].completed = completedAt
+            }
+
+            // If a subtask with a deadline is uncompleted, auto-uncheck the parent
+            // to preserve the invariant that it can't be complete while this subtask isn't.
+            if (completedAt === null && task.deadline && task.parentId) {
+                const parent = this.tasks.find(t => t.id === task.parentId)
+                if (parent?.completed) {
+                    await api.put(`/tasks/${parent.id}`, { ...parent, completed: null })
+                    const parentIndex = this.tasks.findIndex(t => t.id === parent.id)
+                    if (parentIndex !== -1) this.tasks[parentIndex].completed = null
+                }
             }
         },
         

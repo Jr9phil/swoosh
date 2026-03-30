@@ -17,6 +17,7 @@ import { Calendar, Clock } from 'lucide-vue-next'
 const props = defineProps<{
   task: Task
   isSubtask?: boolean
+  highlight?: boolean
 }>()
 
 const editing = ref(false)
@@ -197,6 +198,7 @@ function cancelNotesExpand() {
 
 const completing = ref(false)
 const completingDone = ref(false)
+const blocked = ref(false)
 let completingTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Initiates the task completion animation and updates the store
@@ -207,6 +209,13 @@ async function onCompleteClick() {
     // Second click cancels the in-progress completion
     completing.value = false
     if (completingTimeout) { clearTimeout(completingTimeout); completingTimeout = null }
+    return
+  }
+
+  // Block completion if any subtask with a deadline is still incomplete
+  if (!props.isSubtask && subtasks.value.some(s => s.deadline !== null && !s.completed)) {
+    blocked.value = true
+    setTimeout(() => { blocked.value = false }, 600)
     return
   }
 
@@ -275,7 +284,7 @@ async function remove() {
       :is="isSubtask ? 'div' : 'li'"
       :id="'task-' + task.id"
       class="task-item"
-      :class="{ 'completing-done': completingDone }"
+      :class="{ 'completing-done': completingDone, 'subtask-highlight': highlight }"
   >
     <div v-if="completing" class="task-complete-bar"></div>
 
@@ -284,14 +293,14 @@ async function remove() {
       'title-only': !task.completed && !task.notes && !task.deadline && subtasks.length === 0 && !creatingSubtask,
       'cursor-grab': !task.completed && !task.pinned && !isSubtask,
     }">
-      <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline }]">
+      <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline, 'shake': blocked }]">
         <input
             type="checkbox"
-            :checked="!!task.completed"
+            :checked="!!task.completed || blocked"
             :disabled="!!task.completed"
             @change="onCompleteClick"
             class="swoosh-check"
-            :class="{ 'opacity-100' : task.completed || completing }"
+            :class="{ 'opacity-100' : task.completed || completing || blocked }"
         />
       </div>
 
@@ -363,6 +372,7 @@ async function remove() {
           :key="sub.id"
           :task="sub"
           :is-subtask="true"
+          :highlight="blocked && !!sub.deadline && !sub.completed"
       />
       <SubtaskEdit
           v-if="creatingSubtask"
@@ -387,5 +397,27 @@ async function remove() {
 .task-notes.notes-expanded {
   -webkit-line-clamp: unset;
   /* max-height driven by inline :style binding */
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px); }
+}
+
+.shake {
+  animation: shake 0.5s ease;
+}
+
+@keyframes subtask-highlight {
+  0%, 100% { background-color: transparent; }
+  30%       { background-color: oklch(0.85 0.12 80 / 0.35); }
+}
+
+.subtask-highlight {
+  border-radius: 6px;
+  animation: subtask-highlight 0.6s ease;
 }
 </style>

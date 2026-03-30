@@ -65,7 +65,16 @@ public class TasksController : ControllerBase
             return BadRequest(ModelState);
 
         var userId = UserContext.GetUserId(User);
-        var updated = await _tasks.UpdateAsync(userId, id, dto);
+
+        bool updated;
+        try
+        {
+            updated = await _tasks.UpdateAsync(userId, id, dto);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return UnprocessableEntity(new { error = ex.Message });
+        }
 
         if (!updated)
             return NotFound();

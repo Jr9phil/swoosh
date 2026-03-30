@@ -238,6 +238,22 @@ public class TaskService : ITaskService
             return false;
 
         var salt = await GetUserSalt(userId);
+
+        // Block completing a parent task when it has incomplete subtasks with deadlines.
+        if (dto.Completed.HasValue && task.ParentId == null)
+        {
+            var subtasks = await _db.Tasks
+                .Where(t => t.ParentId == taskId && t.UserId == userId)
+                .ToListAsync();
+
+            foreach (var subtask in subtasks)
+            {
+                var deadline = _crypto.DecryptNullableDateTime(subtask.EncryptedDeadline, userId, subtask.KeyVersion, salt);
+                var completed = _crypto.DecryptNullableDateTime(subtask.EncryptedCompletedAt, userId, subtask.KeyVersion, salt);
+                if (deadline.HasValue && !completed.HasValue)
+                    throw new InvalidOperationException("Cannot complete a task while subtasks with deadlines are still incomplete.");
+            }
+        }
         var (encryptedTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
 
         task.EncryptedTitle = encryptedTitle;
