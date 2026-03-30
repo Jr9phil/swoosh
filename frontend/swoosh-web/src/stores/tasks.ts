@@ -281,6 +281,28 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
+        // Reorders a subtask within its sibling list by averaging the modified timestamps of its neighbors
+        async moveSubtaskRelative(source: Task, siblings: Task[], newIndex: number) {
+            const above = newIndex > 0 ? siblings[newIndex - 1] : undefined
+            const below = newIndex < siblings.length - 1 ? siblings[newIndex + 1] : undefined
+
+            let newModified: string
+            if (above && below) {
+                const avg = (new Date(above.modified).getTime() + new Date(below.modified).getTime()) / 2
+                newModified = new Date(avg).toISOString()
+            } else if (above) {
+                newModified = new Date(new Date(above.modified).getTime() + 1).toISOString()
+            } else if (below) {
+                newModified = new Date(new Date(below.modified).getTime() - 1).toISOString()
+            } else {
+                newModified = source.modified
+            }
+
+            const index = this.tasks.findIndex(t => t.id === source.id)
+            if (index !== -1) this.tasks[index].modified = newModified
+            api.patch(`/tasks/${source.id}/order`, { modified: newModified })
+        },
+
         // Resets a task's priority to 0 (none)
         async resetPriority(task: Task) {
             const updated = {

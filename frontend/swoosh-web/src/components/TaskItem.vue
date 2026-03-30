@@ -7,12 +7,13 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
 import TaskEdit from './TaskEdit.vue'
 import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { Calendar, Clock } from 'lucide-vue-next'
+import { VueDraggable } from 'vue-draggable-plus'
 
 const props = defineProps<{
   task: Task
@@ -24,12 +25,37 @@ const editing = ref(false)
 const creatingSubtask = ref(false)
 const openSeparateTask = inject<(task: Task) => void>('openSeparateTask')
 
+const tasksStore = useTasksStore()
+
 const subtasks = computed(() => {
   if (props.isSubtask) return []
   return tasksStore.tasks
     .filter(t => t.parentId === props.task.id)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .sort((a, b) => new Date(a.modified).getTime() - new Date(b.modified).getTime())
 })
+
+// Mutable list bound to VueDraggable; synced from the computed while respecting drag order.
+const draggableSubtasks = ref<Task[]>([])
+let subtaskDragActive = false
+
+watch(subtasks, (fresh) => {
+  if (subtaskDragActive) return
+  const storeMap = new Map(fresh.map(t => [t.id, t]))
+  const preserved = draggableSubtasks.value
+    .filter(t => storeMap.has(t.id))
+    .map(t => storeMap.get(t.id)!)
+  const preservedIds = new Set(preserved.map(t => t.id))
+  const added = fresh.filter(t => !preservedIds.has(t.id))
+  draggableSubtasks.value = [...preserved, ...added]
+}, { immediate: true })
+
+function onSubtaskDragEnd(evt: any) {
+  subtaskDragActive = false
+  const { oldIndex, newIndex } = evt
+  if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
+  const source = draggableSubtasks.value[newIndex]
+  if (source) tasksStore.moveSubtaskRelative(source, draggableSubtasks.value, newIndex)
+}
 
 // Reactive current time — updated every second for live deadline display
 const now = ref(Date.now())
@@ -63,8 +89,6 @@ const isDueToday = computed(() => {
       today.getDate() === deadline.getDate()
   )
 })
-
-const tasksStore = useTasksStore()
 
 // Formats the deadline into a human-readable relative string
 function formattedDeadline() {
@@ -291,7 +315,7 @@ async function remove() {
     <!-- Main row: checkbox + content + menu -->
     <div class="task-main-row" :class="{
       'title-only': !task.completed && !task.notes && !task.deadline && subtasks.length === 0 && !creatingSubtask,
-      'cursor-grab': !task.completed && !task.pinned && !isSubtask,
+      'cursor-grab': !task.completed && (isSubtask || !task.pinned),
     }">
       <div :class="['shrink-0 relative', { 'mt-0.5': task.completed || task.notes || task.deadline, 'shake': blocked }]">
         <input
@@ -366,14 +390,27 @@ async function remove() {
     </div>
 
     <!-- Subtasks (only for top-level tasks) -->
-    <div v-if="!isSubtask && (subtasks.length > 0 || creatingSubtask)" class="subtasks-container">
-      <TaskItem
-          v-for="sub in subtasks"
-          :key="sub.id"
-          :task="sub"
-          :is-subtask="true"
-          :highlight="blocked && !!sub.deadline && !sub.completed"
-      />
+    <!-- @pointerdown.stop prevents the outer VueDraggable from seeing events that originate
+         here and mistakenly dragging the whole parent task. The inner VueDraggable's Sortable
+         listener fires first (it's a descendant), so subtask dragging is unaffected. -->
+    <div v-if="!isSubtask && (subtasks.length > 0 || creatingSubtask)" class="subtasks-container" @pointerdown.stop>
+      <VueDraggable
+        v-model="draggableSubtasks"
+        :animation="150"
+        :delay="500"
+        :delay-on-touch-only="true"
+        ghost-class="drag-ghost"
+        @choose="subtaskDragActive = true"
+        @end="onSubtaskDragEnd"
+      >
+        <TaskItem
+            v-for="sub in draggableSubtasks"
+            :key="sub.id"
+            :task="sub"
+            :is-subtask="true"
+            :highlight="blocked && !!sub.deadline && !sub.completed"
+        />
+      </VueDraggable>
       <SubtaskEdit
           v-if="creatingSubtask"
           :parent-task-id="task.id"
