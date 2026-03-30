@@ -212,7 +212,7 @@ function startNotesExpand() {
       notesFullHeight.value = notesEl.value.scrollHeight
       notesExpanded.value = true
     }
-  }, 1000)
+  }, 500)
 }
 
 function cancelNotesExpand() {
