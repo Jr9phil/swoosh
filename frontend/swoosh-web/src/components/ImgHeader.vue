@@ -67,6 +67,7 @@ const isYearBoundary = computed(() =>
   (hdMonthIndex.value === 0  && hdDay.value === '01') ||
   (hdMonthIndex.value === 11 && hdDay.value === '31')
 )
+const isAprilFools = computed(() => hdMonthIndex.value === 3 && hdDay.value === '01')
 const canvasEl   = ref<HTMLCanvasElement | null>(null)
 const imgHeaderEl  = ref<HTMLElement | null>(null)
 const dayPanelEl   = ref<HTMLElement | null>(null)
@@ -590,7 +591,7 @@ defineExpose({ resetTimeline, focusOffset })
         :key="i"
         v-show="i === activeDow"
         :src="src"
-        :style="{ ...PLANET_POS[i], filter: planetFilter, transition: 'filter 0.4s ease' }"
+        :style="{ ...PLANET_POS[i], filter: planetFilter, transition: 'filter 0.4s ease', transform: isAprilFools ? 'scaleX(-1)' : undefined }"
         class="header-planet"
         alt=""
       />
