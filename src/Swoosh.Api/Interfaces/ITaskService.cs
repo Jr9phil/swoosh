@@ -11,5 +11,6 @@ public interface ITaskService
     Task<bool> UpdateAsync(Guid userId, Guid taskId, UpdateTaskDto dto);
     Task<bool> ReorderAsync(Guid userId, Guid taskId, DateTime modified);
     Task<bool> AttachToParentAsync(Guid userId, Guid childId, Guid parentId);
+    Task<bool> DetachFromParentAsync(Guid userId, Guid taskId, int targetPriority, DateTime modified);
     Task<bool> DeleteAsync(Guid userId, Guid taskId);
 }

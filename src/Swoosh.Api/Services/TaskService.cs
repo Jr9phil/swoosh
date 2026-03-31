@@ -311,6 +311,22 @@ public class TaskService : ITaskService
         return true;
     }
 
+    /// Promotes a subtask to a top-level task, assigning it a target priority and sort position.
+    public async Task<bool> DetachFromParentAsync(Guid userId, Guid taskId, int targetPriority, DateTime modified)
+    {
+        var task = await _db.Tasks.FirstOrDefaultAsync(
+            t => t.Id == taskId && t.UserId == userId && t.ParentId != null);
+        if (task == null) return false;
+
+        var salt = await GetUserSalt(userId);
+        task.ParentId = null;
+        task.EncryptedPriority = _crypto.EncryptInt(Math.Clamp(targetPriority, 0, 3), userId, salt).Ciphertext;
+        task.Modified = modified;
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     /// Deletes a task and its subtasks from the database.
     public async Task<bool> DeleteAsync(Guid userId, Guid taskId)
     {

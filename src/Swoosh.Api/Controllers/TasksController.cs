@@ -122,6 +122,18 @@ public class TasksController : ControllerBase
         return result ? NoContent() : NotFound();
     }
 
+    // DELETE: api/tasks/{id}/parent
+    [HttpDelete("{id:guid}/parent")]
+    public async Task<IActionResult> DetachFromParent(Guid id, [FromBody] DetachFromParentDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = UserContext.GetUserId(User);
+        var result = await _tasks.DetachFromParentAsync(userId, id, dto.Priority, dto.Modified);
+        return result ? NoContent() : NotFound();
+    }
+
     // DELETE: api/tasks/{id}
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)

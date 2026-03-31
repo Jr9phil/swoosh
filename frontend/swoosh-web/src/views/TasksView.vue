@@ -254,14 +254,14 @@ const separatingSubtask = ref<Task | null>(null)
 const taskWasCreated = ref(false)
 
 function handleModalClose() {
-  if (taskWasCreated.value && separatingSubtask.value) {
-    tasksStore.deleteTask(separatingSubtask.value.id)
-  }
   createTaskEdit.value?.resetForm()
   separatingSubtask.value = null
   taskWasCreated.value = false
 }
 function handleTaskCreated() {
+  if (separatingSubtask.value) {
+    tasksStore.deleteTask(separatingSubtask.value.id)
+  }
   taskWasCreated.value = true
   closeModal()
 }
@@ -273,18 +273,20 @@ function handleCreateTaskForDate(date: string) {
   nextTick(() => { createTaskEdit.value?.setDate(date) })
 }
 
-function openSeparateTask(task: Task) {
+function openSeparateTask(task: Task, priority?: number) {
   separatingSubtask.value = task
   taskWasCreated.value = false
   openModal()
   nextTick(() => {
-    createTaskEdit.value?.prefill(task.title, task.notes ?? null, task.deadline ?? null)
+    createTaskEdit.value?.prefill(task.title, task.notes ?? null, task.deadline ?? null, priority)
   })
 }
 
 provide('openSeparateTask', openSeparateTask)
 
 const { draggableGroups, displayGroups, handleDragChoose, handleModelUpdate, onGroupDragEnd } = useTaskDrag(tasksByPriority)
+
+provide('draggableGroups', draggableGroups)
 
 // ── Skeleton data — realistic mix of variants and widths ──────────────────────
 const skeletonSections = [

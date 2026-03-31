@@ -123,11 +123,8 @@ export const useTasksStore = defineStore('tasks', {
 
         // Moves a task relative to another task by adjusting its modified timestamp
         async moveTaskRelative(source: Task, target: Task, before: boolean) {
-            // Copy source and target
-            const tasksCopy = [...this.tasks]
-
             // Get all tasks of the same priority and not completed/pinned
-            const samePriorityTasks = tasksCopy.filter(
+            const samePriorityTasks = this.tasks.filter(
                 t => t.priority === source.priority && !t.completed && !t.pinned
             )
 
@@ -263,8 +260,8 @@ export const useTasksStore = defineStore('tasks', {
 
         // Removes a task and its subtasks from the backend and local store
         async deleteTask(taskId: string) {
-            await api.delete(`/tasks/${taskId}`)
             this.tasks = this.tasks.filter(t => t.id !== taskId && t.parentId !== taskId)
+            await api.delete(`/tasks/${taskId}`)
         },
 
         // Resets a task's rating to 0

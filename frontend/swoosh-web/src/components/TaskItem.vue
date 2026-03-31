@@ -7,7 +7,7 @@
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
 import TaskMenu from './TaskMenu.vue'
-import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
 import TaskEdit from './TaskEdit.vue'
 import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
@@ -23,7 +23,7 @@ const props = defineProps<{
 
 const editing = ref(false)
 const creatingSubtask = ref(false)
-const openSeparateTask = inject<(task: Task) => void>('openSeparateTask')
+const openSeparateTask = inject<(task: Task, priority?: number) => void>('openSeparateTask')
 
 const tasksStore = useTasksStore()
 
@@ -51,6 +51,31 @@ watch(subtasks, (fresh) => {
 
 function onSubtaskDragEnd(evt: any) {
   subtaskDragActive = false
+
+  if (evt.from !== evt.to) {
+    // Subtask dragged out — snap it back and open the separate-task modal
+    const taskId = (evt.item as HTMLElement).id.replace('task-', '')
+    const task = tasksStore.tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const destPriorityRaw = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
+    const destPriority = Number.isNaN(destPriorityRaw) ? undefined : destPriorityRaw
+
+    // Restore the subtask list to store state (it was optimistically removed by VueDraggable)
+    draggableSubtasks.value = subtasks.value.slice()
+    openSeparateTask?.(task, destPriority)
+
+    // The drag physically moved the element to the destination container, but
+    // displayGroups never renders the subtask there (it still has parentId).
+    // Remove the orphan after Vue has reconciled the source list.
+    const taskElId = 'task-' + taskId
+    const destContainer = evt.to as HTMLElement
+    nextTick(() => {
+      destContainer.querySelector('#' + taskElId)?.remove()
+    })
+    return
+  }
+
   const { oldIndex, newIndex } = evt
   if (oldIndex == null || newIndex == null || oldIndex === newIndex) return
   const source = draggableSubtasks.value[newIndex]
@@ -399,6 +424,7 @@ async function remove() {
         :animation="150"
         :delay="500"
         :delay-on-touch-only="true"
+        :group="{ name: 'tasks', put: false }"
         ghost-class="drag-ghost"
         @choose="subtaskDragActive = true"
         @end="onSubtaskDragEnd"
