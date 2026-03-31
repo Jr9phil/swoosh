@@ -82,20 +82,27 @@ const combinedDeadline = computed(() => {
   if (date && !time) {
     time = '23:59'
   } else if (!date && time) {
-    date = new Date().toISOString().split('T')[0]
+    date = localDateString(new Date())
   }
 
   return `${date}T${time}:00`
 })
 
+function localDateString(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function setToday() {
-  editedDate.value = new Date().toISOString().split('T')[0]
+  editedDate.value = localDateString(new Date())
 }
 
 function setTomorrow() {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  editedDate.value = d.toISOString().split('T')[0]
+  editedDate.value = localDateString(d)
 }
 
 function openDatePicker() {
