@@ -54,6 +54,25 @@ const displaySubtasks = computed(() => {
   return [...added, ...inOrder]
 })
 
+// Allow dropping a top-level task (no existing parent, no subtasks of its own) into this list.
+function canDropAsSubtask(_to: any, _from: any, dragEl: HTMLElement) {
+  const taskId = dragEl.id.replace('task-', '')
+  const task = tasksStore.tasks.find(t => t.id === taskId)
+  return !!task && !task.parentId && !tasksStore.tasks.some(t => t.parentId === taskId)
+}
+
+async function onSubtaskAdded(evt: any) {
+  const taskId = (evt.item as HTMLElement).id.replace('task-', '')
+  const task = tasksStore.tasks.find(t => t.id === taskId)
+
+  if (!confirm(`Make "${task?.title ?? 'this task'}" a subtask of "${props.task.title}"?`)) {
+    draggableSubtasks.value = draggableSubtasks.value.filter(t => t.id !== taskId)
+    return
+  }
+
+  await tasksStore.attachToParent(taskId, props.task.id)
+}
+
 function onSubtaskDragEnd(evt: any) {
   subtaskDragActive = false
 
@@ -404,10 +423,11 @@ async function remove() {
         :animation="150"
         :delay="500"
         :delay-on-touch-only="true"
-        :group="{ name: 'tasks', put: false }"
+        :group="{ name: 'tasks', put: canDropAsSubtask }"
         ghost-class="drag-ghost"
         @choose="subtaskDragActive = true"
         @end="onSubtaskDragEnd"
+        @add="onSubtaskAdded"
       >
         <TaskItem
             v-for="sub in displaySubtasks"
