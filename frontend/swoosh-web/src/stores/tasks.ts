@@ -248,13 +248,23 @@ export const useTasksStore = defineStore('tasks', {
         
         // Converts a top-level task into a subtask of another task
         async attachToParent(childId: string, parentId: string) {
-            await api.put(`/tasks/${childId}/parent/${parentId}`)
             const task = this.tasks.find(t => t.id === childId)
-            if (task) {
-                task.parentId = parentId
-                task.pinned = false
-                task.rating = 0
-                task.icon = null
+            if (!task) return
+
+            const prev = { parentId: task.parentId, pinned: task.pinned, rating: task.rating, icon: task.icon }
+            task.parentId = parentId
+            task.pinned = false
+            task.rating = 0
+            task.icon = null
+
+            try {
+                await api.put(`/tasks/${childId}/parent/${parentId}`)
+            } catch (e) {
+                task.parentId = prev.parentId
+                task.pinned = prev.pinned
+                task.rating = prev.rating
+                task.icon = prev.icon
+                throw e
             }
         },
 
