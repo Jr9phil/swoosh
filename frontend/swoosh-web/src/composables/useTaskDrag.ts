@@ -57,7 +57,7 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
     }
 
     function handleModelUpdate(priority: number, val: Task[]) {
-        draggableGroups.value[priority] = val
+        draggableGroups.value[priority] = val.filter(t => !t.parentId)
     }
 
     function onGroupDragEnd(evt: any, sourcePriorityValue: number) {

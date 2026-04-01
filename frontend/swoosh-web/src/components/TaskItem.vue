@@ -1,8 +1,3 @@
-<!--
-  TaskItem.vue
-  Represents a single task in the list.
-  Handles inline editing, completion toggling, pinning, and priority management.
--->
 <script setup lang="ts">
 import type { Task } from '../types/task'
 import { useTasksStore } from '../stores/tasks'
@@ -34,7 +29,6 @@ const subtasks = computed(() => {
     .sort((a, b) => new Date(a.modified).getTime() - new Date(b.modified).getTime())
 })
 
-// Mutable list bound to VueDraggable; synced from the computed while respecting drag order.
 const draggableSubtasks = ref<Task[]>([])
 let subtaskDragActive = false
 
@@ -53,7 +47,6 @@ function onSubtaskDragEnd(evt: any) {
   subtaskDragActive = false
 
   if (evt.from !== evt.to) {
-    // Subtask dragged out — snap it back and open the separate-task modal
     const taskId = (evt.item as HTMLElement).id.replace('task-', '')
     const task = tasksStore.tasks.find(t => t.id === taskId)
     if (!task) return
@@ -61,17 +54,18 @@ function onSubtaskDragEnd(evt: any) {
     const destPriorityRaw = parseInt((evt.to as HTMLElement).dataset.priority ?? '')
     const destPriority = Number.isNaN(destPriorityRaw) ? undefined : destPriorityRaw
 
-    // Restore the subtask list to store state (it was optimistically removed by VueDraggable)
     draggableSubtasks.value = subtasks.value.slice()
     openSeparateTask?.(task, destPriority)
 
-    // The drag physically moved the element to the destination container, but
-    // displayGroups never renders the subtask there (it still has parentId).
-    // Remove the orphan after Vue has reconciled the source list.
+    // SortableJS physically moved the element into the destination container.
+    // Remove it from there after Vue has reconciled the source list.
+    // Search only direct children — querySelector would find the Vue-managed element
+    // nested inside the parent task if the orphan landed after it.
     const taskElId = 'task-' + taskId
     const destContainer = evt.to as HTMLElement
     nextTick(() => {
-      destContainer.querySelector('#' + taskElId)?.remove()
+      const orphan = Array.from(destContainer.children).find(el => el.id === taskElId)
+      orphan?.remove()
     })
     return
   }
@@ -82,7 +76,6 @@ function onSubtaskDragEnd(evt: any) {
   if (source) tasksStore.moveSubtaskRelative(source, draggableSubtasks.value, newIndex)
 }
 
-// Reactive current time — updated every second for live deadline display
 const now = ref(Date.now())
 let clockInterval: ReturnType<typeof setInterval>
 
@@ -95,13 +88,11 @@ onUnmounted(() => {
   if (notesHoverTimer) clearTimeout(notesHoverTimer)
 })
 
-// True if the deadline has passed (and is not today)
 const deadlineExpired = computed(() => {
   if (!props.task.deadline) return false
   return now.value >= new Date(props.task.deadline).getTime()
 })
 
-// True if the deadline falls on the current calendar day and hasn't expired yet
 const isDueToday = computed(() => {
   if (!props.task.deadline || deadlineExpired.value) return false
 
@@ -115,7 +106,6 @@ const isDueToday = computed(() => {
   )
 })
 
-// Formats the deadline into a human-readable relative string
 function formattedDeadline() {
   if (!props.task.deadline) return null
 
@@ -125,7 +115,6 @@ function formattedDeadline() {
   const diffMs = deadline.getTime() - current.getTime()
   const diffSec = Math.floor(diffMs / 1000)
 
-  // Calculate calendar day difference
   const startOfCurrent = new Date(current.getFullYear(), current.getMonth(), current.getDate())
   const startOfDeadline = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate())
   const calendarDiffDays = Math.round((startOfDeadline.getTime() - startOfCurrent.getTime()) / 86400000)
@@ -176,27 +165,22 @@ function formattedDeadline() {
   return deadline.toLocaleDateString()
 }
 
-// Formats the completion date for display
 function formattedCompletionDate() {
   if (!props.task.completed) return null
   return new Date(props.task.completed).toLocaleDateString()
 }
 
-// Switches the component to editing mode
 function startEditing() {
   editing.value = true
 }
 
-// ── Mobile double-tap to edit ────────────────────────────────────────────────
-// On touch devices, a single tap should not open the editor (it would conflict
-// with the long-press-to-drag gesture). Double-tap opens it instead.
+// On touch devices a single tap conflicts with long-press-to-drag, so double-tap opens the editor.
 let touchStartX = 0
 let touchStartY = 0
 let lastTapTime = 0
 
 function handleContentClick() {
-  // Touch devices fire a synthetic click after touchend — ignore it here and
-  // let the touchend handler decide (double-tap detection).
+  // Synthetic click fires after touchend on touch devices — ignore here, handled by touchend.
   if (navigator.maxTouchPoints > 0) return
   startEditing()
 }
@@ -210,7 +194,6 @@ function handleContentTouchEnd(e: TouchEvent) {
   const t = e.changedTouches[0]
   if (!t) return
 
-  // Ignore if the finger moved significantly (scroll, not a tap)
   if (Math.abs(t.clientX - touchStartX) > 10 || Math.abs(t.clientY - touchStartY) > 10) return
 
   const now = Date.now()
@@ -223,7 +206,6 @@ function handleContentTouchEnd(e: TouchEvent) {
   }
 }
 
-// ── Notes expand on hover ────────────────────────────────────────────────────
 const notesEl = ref<HTMLElement | null>(null)
 const notesExpanded = ref(false)
 const notesFullHeight = ref(0)
@@ -250,7 +232,6 @@ const completingDone = ref(false)
 const blocked = ref(false)
 let completingTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Initiates the task completion animation and updates the store
 async function onCompleteClick() {
   if (props.task.completed || completingDone.value) return
 
@@ -261,7 +242,6 @@ async function onCompleteClick() {
     return
   }
 
-  // Block completion if any subtask with a deadline is still incomplete
   if (!props.isSubtask && subtasks.value.some(s => s.deadline !== null && !s.completed)) {
     blocked.value = true
     setTimeout(() => { blocked.value = false }, 600)
@@ -282,7 +262,6 @@ async function onCompleteClick() {
   await tasksStore.toggleComplete(props.task)
 }
 
-// Toggles completion status for already-completed tasks (with confirmation)
 async function toggleComplete() {
   if (props.task.completed) {
     if (!confirm('Mark task as incomplete?')) return
@@ -290,31 +269,26 @@ async function toggleComplete() {
   }
 }
 
-// Toggles the pinned status of the task
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
 
-// Resets the task's rating to 0
 async function resetRating() {
   if (props.task.rating === 0) return
   await tasksStore.resetRating(props.task)
 }
 
-// Resets the task's priority to none
 async function resetPriority() {
   if (props.task.priority === 0) return
   await tasksStore.resetPriority(props.task)
 }
 
-// Removes the task's deadline
 async function resetDeadline() {
   if (confirm('Remove deadline?')) {
     await tasksStore.resetDeadline(props.task)
   }
 }
 
-// Deletes the task after confirmation
 async function remove() {
   if (confirm('Delete this task?')) {
     await tasksStore.deleteTask(props.task.id)
@@ -322,13 +296,10 @@ async function remove() {
 }
 </script>
 
-<!-- Component Template: Renders either the task display or the inline editor -->
 <template>
-  <!-- Inline Editor Mode -->
   <SubtaskEdit v-if="editing && isSubtask" :task="task" @close="editing = false" />
   <TaskEdit v-else-if="editing" :task="task" @close="editing = false" />
 
-  <!-- Display Mode -->
   <component v-else
       :is="isSubtask ? 'div' : 'li'"
       :id="'task-' + task.id"
@@ -337,7 +308,6 @@ async function remove() {
   >
     <div v-if="completing" class="task-complete-bar"></div>
 
-    <!-- Main row: checkbox + content + menu -->
     <div class="task-main-row" :class="{
       'title-only': !task.completed && !task.notes && !task.deadline && subtasks.length === 0 && !creatingSubtask,
       'cursor-grab': !task.completed && (isSubtask || !task.pinned),
@@ -353,7 +323,6 @@ async function remove() {
         />
       </div>
 
-      <!-- Task content: title, notes, deadline badge -->
       <div
         @click="handleContentClick"
         @touchstart.passive="handleContentTouchStart"
@@ -392,7 +361,7 @@ async function remove() {
         </div>
       </div>
 
-      <!-- Task overflow menu — hidden until row hover via .task-actions CSS -->
+      <!-- task-actions is hidden until row hover via CSS -->
       <div class="task-actions shrink-0">
         <TaskMenu
             :is-completed="!!task.completed"
@@ -414,10 +383,8 @@ async function remove() {
       </div>
     </div>
 
-    <!-- Subtasks (only for top-level tasks) -->
     <!-- @pointerdown.stop prevents the outer VueDraggable from seeing events that originate
-         here and mistakenly dragging the whole parent task. The inner VueDraggable's Sortable
-         listener fires first (it's a descendant), so subtask dragging is unaffected. -->
+         here and mistakenly dragging the whole parent task. -->
     <div v-if="!isSubtask && (subtasks.length > 0 || creatingSubtask)" class="subtasks-container" @pointerdown.stop>
       <VueDraggable
         v-model="draggableSubtasks"
