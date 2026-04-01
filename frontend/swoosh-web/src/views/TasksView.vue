@@ -63,7 +63,7 @@ const completedTasks = computed(() =>
 )
 
 const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && !t.parentId && isOverdue(t.deadline)).length
+    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
 )
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
@@ -85,8 +85,20 @@ function isOverdue(deadline?: string | null) {
   return now.value > d.getTime()
 }
 
-function hasOverdueInGroup(tasks: any[]) { return tasks.some(t => !t.completed && isOverdue(t.deadline)) }
-function hasTodayInGroup(tasks: any[])   { return tasks.some(t => !t.completed && isDueToday(t.deadline)) }
+function hasOverdueInGroup(tasks: any[]) {
+  return tasks.some(t => {
+    if (!t.completed && isOverdue(t.deadline)) return true
+    if (t.parentId) return false // Subtasks don't have nested subtasks in this app
+    return tasksStore.tasks.some(st => st.parentId === t.id && !st.completed && isOverdue(st.deadline))
+  })
+}
+function hasTodayInGroup(tasks: any[])   {
+  return tasks.some(t => {
+    if (!t.completed && isDueToday(t.deadline)) return true
+    if (t.parentId) return false
+    return tasksStore.tasks.some(st => st.parentId === t.id && !st.completed && isDueToday(st.deadline))
+  })
+}
 
 
 const imgHeader = ref<InstanceType<typeof ImgHeader> | null>(null)
@@ -204,6 +216,12 @@ function jumpToOverdue() {
 
   const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline))
   if (firstOverdue) {
+    const targetTask = firstOverdue.parentId
+        ? tasksStore.tasks.find(t => t.id === firstOverdue.parentId)
+        : firstOverdue
+
+    if (!targetTask) return
+
     const d = new Date(firstOverdue.deadline!)
     const today = new Date()
     today.setHours(0,0,0,0)
@@ -212,7 +230,7 @@ function jumpToOverdue() {
     imgHeader.value?.focusOffset(offset)
 
     nextTick(() => {
-      const el = document.getElementById('task-' + firstOverdue.id)
+      const el = document.getElementById('task-' + targetTask.id)
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         el.classList.add('highlight-pulse')
