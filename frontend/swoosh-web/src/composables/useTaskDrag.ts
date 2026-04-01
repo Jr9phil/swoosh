@@ -57,7 +57,7 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
     }
 
     function handleModelUpdate(priority: number, val: Task[]) {
-        draggableGroups.value[priority] = val
+        draggableGroups.value[priority] = val.filter(t => !t.parentId)
     }
 
     function onGroupDragEnd(evt: any, sourcePriorityValue: number) {
@@ -107,9 +107,9 @@ export function useTaskDrag(tasksByPriority: ComputedRef<PriorityGroup[]>) {
         const source = items[newIndex]
         if (!source) return
 
-        const target = newIndex < items.length - 1 ? items[newIndex + 1] : items[newIndex - 1]
-        if (!target) return
         const before = newIndex < items.length - 1
+        const target = before ? items[newIndex + 1] : items[newIndex - 1]
+        if (!target) return
 
         tasksStore.moveTaskRelative(source, target, before)
         resyncAnimatedChildren(evt.item as HTMLElement)

@@ -128,31 +128,35 @@
   ══════════════════════════════════════ -->
 
   <!-- Large foreground moon — lower-right, lit from upper-right -->
-  <ellipse cx="528" cy="552" rx="22" ry="7" fill="#0a0000" opacity="0.38"/>
-  <circle  cx="528" cy="526" r="32" fill="url(#mGrad)"/>
-  <!-- Craters -->
-  <circle cx="516" cy="516" r="6"   fill="none" stroke="#4a2810" stroke-width="1.4" opacity="0.62"/>
-  <circle cx="516" cy="516" r="3"   fill="#3a1e08" opacity="0.42"/>
-  <circle cx="540" cy="530" r="4"   fill="none" stroke="#4a2810" stroke-width="1.2" opacity="0.52"/>
-  <circle cx="540" cy="530" r="2"   fill="#3a1e08" opacity="0.32"/>
-  <circle cx="524" cy="538" r="5"   fill="none" stroke="#4a2810" stroke-width="1.2" opacity="0.46"/>
-  <circle cx="524" cy="538" r="2.5" fill="#3a1e08" opacity="0.28"/>
-  <circle cx="545" cy="516" r="2.8" fill="none" stroke="#4a2810" stroke-width="1"   opacity="0.44"/>
-  <!-- Lit highlight -->
-  <ellipse cx="538" cy="516" rx="12" ry="9" fill="#e8c088" opacity="0.24"/>
-  <!-- Night side shadow -->
-  <rect x="496" y="494" width="64" height="64" fill="url(#nightShadow)" opacity="0.88" style="clip-path: circle(32px at 32px 32px)"/>
-  <!-- Planet glow rim -->
-  <circle cx="528" cy="526" r="32" fill="none" stroke="#ff4400" stroke-width="4" opacity="0.16"/>
+  <g transform="translate(41, -102)">
+    <ellipse cx="528" cy="552" rx="22" ry="7" fill="#0a0000" opacity="0.38"/>
+    <circle  cx="528" cy="526" r="32" fill="url(#mGrad)"/>
+    <!-- Craters -->
+    <circle cx="516" cy="516" r="6"   fill="none" stroke="#4a2810" stroke-width="1.4" opacity="0.62"/>
+    <circle cx="516" cy="516" r="3"   fill="#3a1e08" opacity="0.42"/>
+    <circle cx="540" cy="530" r="4"   fill="none" stroke="#4a2810" stroke-width="1.2" opacity="0.52"/>
+    <circle cx="540" cy="530" r="2"   fill="#3a1e08" opacity="0.32"/>
+    <circle cx="524" cy="538" r="5"   fill="none" stroke="#4a2810" stroke-width="1.2" opacity="0.46"/>
+    <circle cx="524" cy="538" r="2.5" fill="#3a1e08" opacity="0.28"/>
+    <circle cx="545" cy="516" r="2.8" fill="none" stroke="#4a2810" stroke-width="1"   opacity="0.44"/>
+    <!-- Lit highlight -->
+    <ellipse cx="538" cy="516" rx="12" ry="9" fill="#e8c088" opacity="0.24"/>
+    <!-- Night side shadow -->
+    <rect x="496" y="494" width="64" height="64" fill="url(#nightShadow)" opacity="0.88" style="clip-path: circle(32px at 32px 32px)"/>
+    <!-- Planet glow rim -->
+    <circle cx="528" cy="526" r="32" fill="none" stroke="#ff4400" stroke-width="4" opacity="0.16"/>
+  </g>
 
   <!-- Small distant moon — upper-left, mostly in shadow -->
-  <circle cx="112" cy="122" r="14" fill="url(#m2Grad)"/>
-  <!-- Night shadow covers most of it — sun is on the right so left moon is dark -->
-  <rect x="98" y="108" width="28" height="28" fill="url(#nightShadow)" opacity="0.92" style="clip-path: circle(14px at 14px 14px)"/>
-  <!-- Craters just barely visible on lit sliver -->
-  <circle cx="120" cy="116" r="2.8" fill="none" stroke="#5a3018" stroke-width="0.9" opacity="0.50"/>
-  <circle cx="113" cy="126" r="1.8" fill="none" stroke="#5a3018" stroke-width="0.9" opacity="0.40"/>
-  <!-- Faint rim glow -->
-  <circle cx="112" cy="122" r="14" fill="none" stroke="#ff4400" stroke-width="3" opacity="0.10"/>
+  <g transform="translate(-52, 85)">
+    <circle cx="112" cy="122" r="14" fill="url(#m2Grad)"/>
+    <!-- Night shadow covers most of it — sun is on the right so left moon is dark -->
+    <rect x="98" y="108" width="28" height="28" fill="url(#nightShadow)" opacity="0.92" style="clip-path: circle(14px at 14px 14px)"/>
+    <!-- Craters just barely visible on lit sliver -->
+    <circle cx="120" cy="116" r="2.8" fill="none" stroke="#5a3018" stroke-width="0.9" opacity="0.50"/>
+    <circle cx="113" cy="126" r="1.8" fill="none" stroke="#5a3018" stroke-width="0.9" opacity="0.40"/>
+    <!-- Faint rim glow -->
+    <circle cx="112" cy="122" r="14" fill="none" stroke="#ff4400" stroke-width="3" opacity="0.10"/>
+  </g>
 
 </svg>

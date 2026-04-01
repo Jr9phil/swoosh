@@ -231,12 +231,16 @@ function setDate(dateStr: string) {
   editedDate.value = dateStr
 }
 
-function prefill(title: string, notesVal: string | null, deadline: string | null) {
+function prefill(title: string, notesVal: string | null, deadline: string | null, priority?: number) {
   editedTitle.value = title
   editedNotes.value = notesVal ?? ''
   const { date, time } = splitDeadline(deadline)
   editedDate.value = date
   editedTime.value = time
+  if (priority !== undefined) {
+    const idx = PRIORITIES.findIndex(p => p.value === priority)
+    if (idx !== -1) priorityIndex.value = idx
+  }
 }
 
 defineExpose({ resetForm, isFormBlank, setDate, prefill })
