@@ -30,7 +30,7 @@ const subtasks = computed(() => {
 })
 
 const draggableSubtasks = ref<Task[]>([])
-let subtaskDragActive = false
+let subtaskDragActive = false // plain let, not ref — changing it must not trigger renders
 
 watch(subtasks, (fresh) => {
   if (subtaskDragActive) return
@@ -42,6 +42,17 @@ watch(subtasks, (fresh) => {
   const added = fresh.filter(t => !preservedIds.has(t.id))
   draggableSubtasks.value = [...preserved, ...added]
 }, { immediate: true })
+
+// v-model for VueDraggable (preserves drag order); v-for renders displaySubtasks.
+const displaySubtasks = computed(() => {
+  const storeMap = new Map(subtasks.value.map(t => [t.id, t]))
+  const inOrder = draggableSubtasks.value
+    .filter(t => storeMap.has(t.id))
+    .map(t => storeMap.get(t.id)!)
+  const inOrderIds = new Set(inOrder.map(t => t.id))
+  const added = subtasks.value.filter(t => !inOrderIds.has(t.id))
+  return [...added, ...inOrder]
+})
 
 function onSubtaskDragEnd(evt: any) {
   subtaskDragActive = false
@@ -57,10 +68,8 @@ function onSubtaskDragEnd(evt: any) {
     draggableSubtasks.value = subtasks.value.slice()
     openSeparateTask?.(task, destPriority)
 
-    // SortableJS physically moved the element into the destination container.
-    // Remove it from there after Vue has reconciled the source list.
-    // Search only direct children — querySelector would find the Vue-managed element
-    // nested inside the parent task if the orphan landed after it.
+    // SortableJS moved the DOM element into the dest container; remove it after Vue reconciles.
+    // Direct children only — querySelector descends into nested subtask lists.
     const taskElId = 'task-' + taskId
     const destContainer = evt.to as HTMLElement
     nextTick(() => {
@@ -112,6 +121,8 @@ function formattedDeadline() {
   const deadline = new Date(props.task.deadline)
   const current = new Date(now.value)
 
+  // diffSec: exact elapsed time, used to determine expiry and sub-day labels.
+  // calendarDiffDays: midnight-to-midnight difference, used for human-readable day labels.
   const diffMs = deadline.getTime() - current.getTime()
   const diffSec = Math.floor(diffMs / 1000)
 
@@ -232,11 +243,12 @@ const completingDone = ref(false)
 const blocked = ref(false)
 let completingTimeout: ReturnType<typeof setTimeout> | null = null
 
+// Hold-to-complete: checking the box starts a 2.5s countdown; a second click cancels it.
+// Blocked (with shake) if the task has incomplete subtasks with deadlines.
 async function onCompleteClick() {
   if (props.task.completed || completingDone.value) return
 
   if (completing.value) {
-    // Second click cancels the in-progress completion
     completing.value = false
     if (completingTimeout) { clearTimeout(completingTimeout); completingTimeout = null }
     return
@@ -253,7 +265,7 @@ async function onCompleteClick() {
   await new Promise<void>(resolve => { completingTimeout = setTimeout(resolve, 2500) })
   completingTimeout = null
 
-  if (!completing.value) return // was cancelled
+  if (!completing.value) return // cancelled by second click
 
   completing.value = false
   completingDone.value = true
@@ -269,6 +281,7 @@ async function toggleComplete() {
   }
 }
 
+// Taskmenu functions
 async function togglePinned() {
   await tasksStore.togglePinned(props.task)
 }
@@ -397,7 +410,7 @@ async function remove() {
         @end="onSubtaskDragEnd"
       >
         <TaskItem
-            v-for="sub in draggableSubtasks"
+            v-for="sub in displaySubtasks"
             :key="sub.id"
             :task="sub"
             :is-subtask="true"
