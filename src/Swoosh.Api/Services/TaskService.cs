@@ -211,6 +211,7 @@ public class TaskService : ITaskService
             EncryptedPriority = _crypto.EncryptInt(0, userId, salt).Ciphertext,
             EncryptedRating = _crypto.EncryptInt(0, userId, salt).Ciphertext,
             EncryptedIcon = null,
+            EncryptedTimerDuration = dto.TimerDuration.HasValue ? _crypto.EncryptNullableInt(dto.TimerDuration.Value, userId, salt).Ciphertext : null,
             KeyVersion = keyVersion,
             CreatedAt = now,
             Modified = now
@@ -227,6 +228,7 @@ public class TaskService : ITaskService
             Notes = dto.Notes,
             Completed = dto.Completed,
             Deadline = dto.Deadline,
+            TimerDuration = dto.TimerDuration,
             CreatedAt = task.CreatedAt,
             Modified = task.Modified
         };
