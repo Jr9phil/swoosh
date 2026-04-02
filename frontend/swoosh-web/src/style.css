@@ -520,9 +520,7 @@
     padding: 12px 14px;
     margin: 0;
     margin-block-end: 6px;
-    width: 100%;
-    border-bottom: 1px solid var(--color-swoosh-border);
-    border-radius: 0;
+    width: auto;
     color: var(--color-swoosh-text-faint);
     transition: color 0.15s, background-color 0.15s;
     cursor: pointer;
@@ -577,7 +575,6 @@
     transition: background-color 0.15s, color 0.15s;
 }
 .sidebar-user-btn:hover {
-    background: var(--color-base-300);
     color: var(--color-base-content);
 }
 
