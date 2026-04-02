@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import type { Task } from '../types/task'
-import { X } from 'lucide-vue-next'
+import { X, Menu } from 'lucide-vue-next'
 import sundaySvg    from '../assets/sunday.svg'
 import mondaySvg    from '../assets/monday.svg'
 import tuesdaySvg   from '../assets/tuesday.svg'
@@ -605,7 +605,12 @@ defineExpose({ resetTimeline, focusOffset })
         alt=""
       />
 
-      <!-- Add button (top-left, hidden when day badge is visible) -->
+      <!-- Sidebar toggle (mobile only, top-left) -->
+      <label for="sidebar" class="header-menu-btn" aria-label="Open sidebar">
+        <Menu :size="16" :stroke-width="2" />
+      </label>
+
+      <!-- Add button (top-left on desktop, shifted right on mobile) -->
       <button
         class="header-add-btn"
         :class="{ 'btn-hidden': dayBadgeText }"
@@ -796,6 +801,30 @@ defineExpose({ resetTimeline, focusOffset })
   opacity: 0.7;
 }
 
+/* ── Sidebar hamburger (mobile only, top-left) ── */
+.header-menu-btn {
+  position: absolute; top: 14px; left: 16px; z-index: 3;
+  width: 34px; height: 34px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.40);
+  background: rgba(0,0,0,0.60);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, background .15s, color .15s, transform .1s;
+}
+.header-menu-btn:hover {
+  border-color: var(--header-accent, rgba(255,255,255,0.45));
+  background: rgba(255,255,255,0.10);
+  color: var(--header-accent-text, rgba(255,255,255,0.9));
+  transform: translateY(-1px);
+}
+.header-menu-btn:active { transform: translateY(1px); }
+
+@media (min-width: 1024px) {
+  .header-menu-btn { display: none; }
+}
+
 /* ── Add button (top-left) ── */
 .header-add-btn {
   position: absolute; top: 14px; left: 16px; z-index: 3;
@@ -819,6 +848,12 @@ defineExpose({ resetTimeline, focusOffset })
 .header-add-btn.btn-hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+/* On mobile the hamburger occupies the top-left slot; push add button and badge right */
+@media (max-width: 1023px) {
+  .header-add-btn,
+  .header-day-badge { left: 60px; }
 }
 
 /* ── Relative day badge (top-left) ── */

@@ -2,7 +2,7 @@
 import { useAuthStore } from './stores/auth'
 import { useTasksStore } from './stores/tasks'
 import { useRouter } from 'vue-router'
-import { Github, User, LogOut, KeyRound, Download } from 'lucide-vue-next'
+import { LogOut, KeyRound, Download, PanelLeft, ChevronUp } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 
 const auth = useAuthStore()
@@ -94,23 +94,56 @@ async function exportCsv() {
 
 <template>
   <div id="app" class="min-h-screen flex flex-col">
-
-    <router-view />
-
-    <!-- Application footer, visible only when the user is authenticated -->
-    <footer v-if="auth.token">
-      <!-- Floating Action Button (FAB) menu for user-related actions -->
-      <div class="fab">
-        <div>
-          <div tabindex="0" role="button" class="btn btn-lg btn-circle btn-outline max-sm:btn-md"><User /></div>
-        </div>
-
-        <div class="fab-close">{{ auth.currentUser }}<span class="btn btn-circle btn-lg btn-outline max-sm:btn-md"><User /></span></div>
-
-        <div>Logout <button class="btn btn-lg btn-circle max-sm:btn-md" @click="logout"><LogOut /></button></div>
-        <div>Change Password <button class="btn btn-lg btn-circle max-sm:btn-md" @click="changePassword"><KeyRound /></button></div>
-        <div>Export CSV <button class="btn btn-lg btn-circle max-sm:btn-md" @click="exportCsv"><Download /></button></div>
+    <div :class="auth.token ? 'drawer lg:drawer-open' : ''">
+      <input v-if="auth.token" id="sidebar" type="checkbox" class="drawer-toggle" />
+      <div :class="auth.token ? 'drawer-content' : ''">
+        <router-view />
       </div>
-    </footer>
+
+      <div v-if="auth.token" class="drawer-side is-drawer-close:overflow-visible">
+        <label for="sidebar" aria-label="close sidebar" class="drawer-overlay"></label>
+        <div class="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-64 border-r border-swoosh">
+          <ul class="menu w-full grow">
+            <li>
+              <label for="sidebar" class="hover:cursor-pointer is-drawer-close:tooltip is-drawer-close:tooltip-right">
+                <span class="sidebar-brand is-drawer-close:hidden">Swoosh</span>
+                <PanelLeft class="flex-shrink-0" />
+              </label>
+            </li>
+          </ul>
+
+          <!-- Sidebar footer: user section with dropup actions -->
+          <footer v-if="auth.token" class="w-full border-t border-swoosh">
+            <div class="dropdown dropdown-top w-full">
+              <div tabindex="0" role="button" class="sidebar-user-btn">
+                <div class="sidebar-user-avatar">{{ auth.currentUser?.[0]?.toUpperCase() }}</div>
+                <span class="is-drawer-close:hidden sidebar-user-name truncate flex-1 min-w-0">{{ auth.currentUser }}</span>
+                <ChevronUp class="is-drawer-close:hidden w-3 h-3 flex-shrink-0 sidebar-user-chevron" />
+              </div>
+              <ul tabindex="0" class="sidebar-user-menu dropdown-content menu">
+                <li>
+                  <button @click="exportCsv">
+                    <Download class="w-4 h-4" />
+                    Export CSV
+                  </button>
+                </li>
+                <li>
+                  <button @click="changePassword">
+                    <KeyRound class="w-4 h-4" />
+                    Change Password
+                  </button>
+                </li>
+                <li class="sidebar-user-menu-divider">
+                  <button @click="logout">
+                    <LogOut class="w-4 h-4" />
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
