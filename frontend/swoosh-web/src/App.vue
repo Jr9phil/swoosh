@@ -2,7 +2,7 @@
 import { useAuthStore } from './stores/auth'
 import { useTasksStore } from './stores/tasks'
 import { useRouter } from 'vue-router'
-import { LogOut, KeyRound, Download, PanelLeft, ChevronUp, SquareCheckBig, Plus, Repeat2, Lightbulb, Archive, ChartColumn, Network } from 'lucide-vue-next'
+import { LogOut, KeyRound, Download, PanelLeft, ChevronUp, SquareCheckBig, Plus, CalendarSync, Lightbulb, BellRing, Archive, ChartColumn, Network } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
 
 const auth = useAuthStore()
@@ -145,12 +145,17 @@ async function exportCsv() {
             </li>
             <li>
               <label class="hover:cursor-pointer">
-                <Repeat2 /> <span class="is-drawer-close:hidden">Recurring</span>
+                <CalendarSync /> <span class="is-drawer-close:hidden">Recurring</span>
               </label>
             </li>
             <li>
               <label class="hover:cursor-pointer">
                 <Lightbulb /> <span class="is-drawer-close:hidden">Noteboard</span>
+              </label>
+            </li>
+            <li>
+              <label class="hover:cursor-pointer">
+                <BellRing /> <span class="is-drawer-close:hidden">Reminders</span>
               </label>
             </li>
             <div class="divider" />
