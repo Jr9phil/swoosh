@@ -107,17 +107,19 @@ export const useTasksStore = defineStore('tasks', {
             api.patch(`/tasks/${task.id}/order`, { modified: newModified })
         },
         
-        // Removes the deadline from a task
+        // Removes the deadline (and timer) from a task
         async resetDeadline(task: Task) {
             const updated = {
                 ...task,
-                deadline : null
+                deadline: null,
+                timerDuration: null
             }
             await api.put(`/tasks/${task.id}`, updated)
 
             const index = this.tasks.findIndex(t => t.id === task.id)
             if (index !== -1) {
-                this.tasks[index].deadline = updated.deadline
+                this.tasks[index].deadline = null
+                this.tasks[index].timerDuration = null
             }
         },
 
@@ -217,7 +219,7 @@ export const useTasksStore = defineStore('tasks', {
             }
         },
 
-        // Edits multiple task fields at once (title, notes, pinned, deadline, priority, rating, icon)
+        // Edits multiple task fields at once (title, notes, pinned, deadline, priority, rating, icon, timerDuration)
         async editTask(
             taskId: string,
             payload: {
@@ -228,6 +230,7 @@ export const useTasksStore = defineStore('tasks', {
                 priority?: number,
                 rating: number,
                 icon?: number | null,
+                timerDuration?: number | null,
             }
             ) {
             await api.put(`/tasks/${taskId}`, payload)
@@ -241,8 +244,8 @@ export const useTasksStore = defineStore('tasks', {
                 if (payload.priority !== undefined) task.priority = payload.priority
                 task.rating = payload.rating
                 task.icon = payload.icon ?? null
-
                 task.deadline = payload.deadline ?? null
+                task.timerDuration = payload.timerDuration ?? null
             }
         },
         

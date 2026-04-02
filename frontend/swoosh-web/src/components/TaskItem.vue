@@ -7,7 +7,7 @@ import TaskEdit from './TaskEdit.vue'
 import SubtaskEdit from './SubtaskEdit.vue'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
-import { Calendar, Clock } from 'lucide-vue-next'
+import { Calendar, Clock, Timer } from 'lucide-vue-next'
 import { VueDraggable } from 'vue-draggable-plus'
 
 const props = defineProps<{
@@ -116,9 +116,29 @@ onUnmounted(() => {
   if (notesHoverTimer) clearTimeout(notesHoverTimer)
 })
 
+// Has the original deadline moment passed (regardless of grace period)?
 const deadlineExpired = computed(() => {
   if (!props.task.deadline) return false
   return now.value >= new Date(props.task.deadline).getTime()
+})
+
+// The moment when the grace period (if any) ends
+const gracePeriodExpiry = computed(() => {
+  if (!props.task.deadline || !props.task.timerDuration) return null
+  return new Date(props.task.deadline).getTime() + props.task.timerDuration
+})
+
+// Deadline passed but the grace-period timer is still running
+const isInGracePeriod = computed(() => {
+  if (!deadlineExpired.value || !gracePeriodExpiry.value) return false
+  return now.value < gracePeriodExpiry.value
+})
+
+// Truly overdue: past the deadline AND past any grace period
+const isOverdue = computed(() => {
+  if (!props.task.deadline) return false
+  if (gracePeriodExpiry.value) return now.value >= gracePeriodExpiry.value
+  return deadlineExpired.value
 })
 
 const isDueToday = computed(() => {
@@ -136,6 +156,19 @@ const isDueToday = computed(() => {
 
 function formattedDeadline() {
   if (!props.task.deadline) return null
+
+  // Grace period: show countdown to when the timer expires
+  if (isInGracePeriod.value && gracePeriodExpiry.value) {
+    const remaining = Math.max(0, gracePeriodExpiry.value - now.value)
+    const totalSec = Math.floor(remaining / 1000)
+    const h = Math.floor(totalSec / 3600)
+    const m = Math.floor((totalSec % 3600) / 60)
+    const s = totalSec % 60
+    if (h > 0) {
+      return `Now · ${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    }
+    return `Now · ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
 
   const deadline = new Date(props.task.deadline)
   const current = new Date(now.value)
@@ -385,8 +418,9 @@ async function remove() {
         >{{ task.notes }}</p>
         <p v-else-if="task.completed" class="text-[11px] text-swoosh-text-muted mt-0.5">Completed {{ formattedCompletionDate() }}</p>
         <div v-if="!task.completed && task.deadline" class="badges">
-          <span class="badge" :class="{ 'overdue': deadlineExpired, 'due-today': isDueToday }" v-animate-sync:overdue="deadlineExpired ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
-            <Calendar v-if="!deadlineExpired" :size="11" />
+          <span class="badge" :class="{ 'overdue': isOverdue, 'grace': isInGracePeriod, 'due-today': isDueToday }" v-animate-sync:overdue="isOverdue ? 'badge' : isDueToday ? { group: 'today', type: 'border' } : null">
+            <Timer v-if="isInGracePeriod" :size="11" />
+            <Calendar v-else-if="!deadlineExpired" :size="11" />
             <Clock v-else :size="11" />
             {{ formattedDeadline() }}
           </span>

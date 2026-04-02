@@ -68,6 +68,7 @@ public class TaskService : ITaskService
                     Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                     Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                     Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
+                    TimerDuration = t.EncryptedTimerDuration != null ? _crypto.DecryptNullableInt(t.EncryptedTimerDuration, userId, t.KeyVersion, salt) : null,
                     CreatedAt = t.CreatedAt,
                     Modified = t.Modified
                 });
@@ -110,6 +111,7 @@ public class TaskService : ITaskService
                 Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
                 Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
                 Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
+                TimerDuration = t.EncryptedTimerDuration != null ? _crypto.DecryptNullableInt(t.EncryptedTimerDuration, userId, t.KeyVersion, salt) : null,
                 CreatedAt = t.CreatedAt,
                 Modified = t.Modified
             })
@@ -163,6 +165,7 @@ public class TaskService : ITaskService
             EncryptedPriority = encryptedPriority.Ciphertext,
             EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext,
             EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null,
+            EncryptedTimerDuration = dto.TimerDuration.HasValue ? _crypto.EncryptNullableInt(dto.TimerDuration.Value, userId, salt).Ciphertext : null,
             KeyVersion = keyVersion,
             CreatedAt = now,
             Modified = now
@@ -182,6 +185,7 @@ public class TaskService : ITaskService
             Priority = dto.Priority,
             Rating = dto.Rating,
             Icon = dto.Icon,
+            TimerDuration = dto.TimerDuration,
             CreatedAt = task.CreatedAt,
             Modified = task.Modified
         };
@@ -264,6 +268,7 @@ public class TaskService : ITaskService
         task.EncryptedPriority = _crypto.EncryptInt(Math.Clamp(dto.Priority, 0, 3), userId, salt).Ciphertext;
         task.EncryptedRating = _crypto.EncryptInt(Math.Clamp(dto.Rating, 0, 5), userId, salt).Ciphertext;
         task.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
+        task.EncryptedTimerDuration = dto.TimerDuration.HasValue ? _crypto.EncryptNullableInt(dto.TimerDuration.Value, userId, salt).Ciphertext : null;
         task.KeyVersion = keyVersion;
         task.Modified = dto.Modified ?? DateTime.UtcNow;
 

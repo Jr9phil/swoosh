@@ -101,6 +101,12 @@ public class ReencryptionService : BackgroundService
 
             if (notes != null)
                 task.EncryptedNotes = crypto.Encrypt(notes, task.UserId, salt).Ciphertext;
+
+            if (task.EncryptedTimerDuration != null)
+            {
+                var timerDuration = crypto.DecryptNullableInt(task.EncryptedTimerDuration, task.UserId, task.KeyVersion, salt);
+                task.EncryptedTimerDuration = crypto.EncryptNullableInt(timerDuration, task.UserId, salt).Ciphertext;
+            }
         }
 
         await db.SaveChangesAsync(ct);
