@@ -117,6 +117,9 @@ public class TasksController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        var timerError = ValidateTimerDuration(dto.TimerDuration, dto.Deadline);
+        if (timerError != null) return timerError;
+
         var userId = UserContext.GetUserId(User);
 
         var parent = await _tasks.GetByIdAsync(userId, parentId);

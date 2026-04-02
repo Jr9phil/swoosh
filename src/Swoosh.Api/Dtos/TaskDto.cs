@@ -84,6 +84,7 @@ public class SubtaskDto
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; }
     public DateTime? Completed { get; set; }
+    public int? TimerDuration { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime Modified { get; set; }
 }
@@ -98,6 +99,9 @@ public class CreateSubtaskDto
     public string? Notes { get; set; }
     public DateTime? Deadline { get; set; } = null;
     public DateTime? Completed { get; set; }
+
+    [Range(1, 28_800_000)]
+    public int? TimerDuration { get; set; } = null;
 }
 
 public class DetachFromParentDto
