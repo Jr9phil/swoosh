@@ -525,7 +525,7 @@
     transition: color 0.15s, background-color 0.15s;
     cursor: pointer;
 }
-.drawer-side .menu li label[for="sidebar"] svg:hover {
+.drawer-side .menu li label[for="sidebar"]:hover {
     background: var(--color-base-300);
     color: var(--color-base-content);
 }
@@ -575,7 +575,6 @@
     transition: background-color 0.15s, color 0.15s;
 }
 .sidebar-user-btn:hover {
-    background: var(--color-base-300);
     color: var(--color-base-content);
 }
 
