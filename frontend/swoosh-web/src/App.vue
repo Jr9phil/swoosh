@@ -20,12 +20,34 @@ function handleScroll() {
   }, 1000)
 }
 
+function getSidebarCheckbox() {
+  return document.getElementById('sidebar') as HTMLInputElement | null
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (!auth.token || !e.ctrlKey) return
+  // Ctrl++ (= or + key) → expand sidebar
+  if (e.key === '=' || e.key === '+') {
+    e.preventDefault()
+    const cb = getSidebarCheckbox()
+    if (cb) cb.checked = true
+  }
+  // Ctrl+- → collapse sidebar
+  if (e.key === '-') {
+    e.preventDefault()
+    const cb = getSidebarCheckbox()
+    if (cb) cb.checked = false
+  }
+}
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true, capture: true })
+  window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll, { capture: true })
+  window.removeEventListener('keydown', handleKeydown)
 })
 
 // Logs the user out after confirmation and redirects to the login page
