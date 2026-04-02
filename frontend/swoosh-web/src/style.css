@@ -765,19 +765,37 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 /* ─────────────────────────────────────────────────────────
    Auth page headers
 ───────────────────────────────────────────────────────── */
+.auth-deco-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.auth-deco-line {
+    flex: 1;
+    height: 1px;
+    background: var(--color-swoosh-border);
+}
+.auth-deco-diamond {
+    font-size: 8px;
+    color: var(--color-secondary);
+    opacity: 0.75;
+}
 .auth-page-title {
-    font-size: 24px;
+    font-family: var(--font-mono);
+    font-size: 18px;
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
     color: var(--color-base-content);
 }
 .auth-page-subtitle {
-    font-size: 13px;
+    font-size: 10px;
     color: var(--color-swoosh-text-faint);
     font-family: var(--font-mono);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 4px;
+    letter-spacing: 0.14em;
+    margin-top: 5px;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -809,6 +827,14 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 /* ─────────────────────────────────────────────────────────
    Auth forms
 ───────────────────────────────────────────────────────── */
+.auth-card {
+    background: var(--color-base-200);
+    border: 1px solid var(--color-swoosh-border);
+    border-top: 2px solid color-mix(in srgb, var(--color-secondary) 55%, transparent);
+    border-radius: var(--radius-r);
+    padding: 24px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 6px 28px rgba(0,0,0,0.35);
+}
 .auth-field {
     display: flex;
     flex-direction: column;
@@ -827,9 +853,13 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
     width: 100%;
     background: var(--color-base-content);
     color: var(--color-base-100);
-    padding-block: 14px;
-    font-weight: 800;
-    font-size: 15px;
+    padding-block: 13px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-radius: var(--radius-r-sm);
     transition: transform 0.15s, opacity 0.15s;
 }
 .auth-submit-btn:hover  { transform: scale(1.01); }
