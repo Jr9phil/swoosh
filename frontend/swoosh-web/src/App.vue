@@ -143,6 +143,9 @@ async function exportCsv() {
                 <ChevronUp class="is-drawer-close:hidden w-3 h-3 flex-shrink-0 sidebar-user-chevron" />
               </div>
               <ul tabindex="0" class="sidebar-user-menu dropdown-content menu">
+                <li class="is-drawer-open: hidden is-drawer-close:flex text-center sidebar-user-name">
+                  {{ auth.currentUser }}
+                </li>
                 <li>
                   <button @click="exportCsv">
                     <Download class="w-4 h-4" />
