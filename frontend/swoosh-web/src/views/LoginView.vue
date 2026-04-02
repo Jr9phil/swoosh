@@ -62,42 +62,49 @@ function focusPassword() {
 
 <!-- View Template: Login form with email and password fields -->
 <template>
-  <main class="flex-1 flex justify-center pt-20 px-5">
-    <div class="w-full max-w-[360px]">
-      <header class="mb-8 text-center">
+  <main class="flex-1 flex justify-center items-center px-5 py-10">
+    <div class="w-full max-w-[340px]">
+      <header class="mb-7 text-center">
+        <div class="auth-deco-row">
+          <span class="auth-deco-line"></span>
+          <span class="auth-deco-diamond">◆</span>
+          <span class="auth-deco-line"></span>
+        </div>
         <h1 class="auth-page-title">Swoosh</h1>
-        <p class="auth-page-subtitle">Ultraminimalist Tasks</p>
+        <p class="auth-page-subtitle">Reprogram your brain</p>
       </header>
 
-      <form class="flex flex-col gap-4" @submit.prevent="submit">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" class="swoosh-input" placeholder="Enter your email" required v-model="email" />
-        </div>
-
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <div class="relative">
-            <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="••••••••" required v-model="password" />
-            <button type="button" class="pw-toggle" @click="showPassword = !showPassword">
-              <Eye v-if="!showPassword" :size="18" />
-              <EyeOff v-else :size="18" />
-            </button>
+      <div class="auth-card">
+        <form class="flex flex-col gap-4" @submit.prevent="submit">
+          <div class="auth-field">
+            <label class="auth-label">Email</label>
+            <input type="email" class="swoosh-input" placeholder="Enter your email" required v-model="email" />
           </div>
-        </div>
 
-        <div v-if="error" class="text-error text-[13px] font-medium text-center mt-1">
-          {{ error }}
-        </div>
+          <div class="auth-field">
+            <label class="auth-label">Password</label>
+            <div class="relative">
+              <input :type="showPassword ? 'text' : 'password'" class="swoosh-input w-full pr-10" placeholder="••••••••" required v-model="password" />
+              <button type="button" class="pw-toggle" @click="showPassword = !showPassword">
+                <Eye v-if="!showPassword" :size="18" />
+                <EyeOff v-else :size="18" />
+              </button>
+            </div>
+          </div>
 
-        <button type="submit" class="auth-submit-btn rounded-sm mt-2" :disabled="loading">
-          {{ loading ? 'Signing in...' : 'Sign In' }}
-        </button>
+          <div v-if="error" class="text-error text-[13px] font-medium text-center mt-1">
+            {{ error }}
+          </div>
 
-        <div class="flex justify-center mt-4">
-          <router-link to="/register" class="text-[13px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors">Don't have an account? Register</router-link>
-        </div>
-      </form>
+          <button type="submit" class="auth-submit-btn mt-2" :disabled="loading">
+            {{ loading ? 'Signing in...' : 'Sign In' }}
+          </button>
+        </form>
+      </div>
+
+      <div class="flex justify-center mt-5">
+        <router-link to="/register" class="text-[11px] font-mono font-bold tracking-widest uppercase text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors">Register</router-link>
+      </div>
     </div>
   </main>
 </template>
