@@ -442,6 +442,24 @@ async function handleTouchEnd(e: TouchEvent) {
   await changeWeek(dir)
 }
 
+let headerTouchStartX: number | null = null
+function handleHeaderTouchStart(e: TouchEvent) {
+  headerTouchStartX = e.touches[0].clientX
+}
+
+async function handleHeaderTouchEnd(e: TouchEvent) {
+  if (headerTouchStartX === null || slideState.value !== 'idle') return
+  const dx = e.changedTouches[0].clientX - headerTouchStartX
+  headerTouchStartX = null
+  if (Math.abs(dx) < 40) return
+  const dir = dx < 0 ? 1 : -1
+  if (selectedDayOffset.value !== null) {
+    await stepDay(dir)
+  } else {
+    await changeWeek(dir)
+  }
+}
+
 async function animateToOffset(next: number, dir: number) {
   // Carry the selection to the same day-of-week in the new week, with two special cases:
   //   today → scroll back          → yesterday (-1),     set yesterdayFromToday flag
@@ -584,6 +602,8 @@ defineExpose({ resetTimeline, focusOffset })
     <div
       ref="imgHeaderEl"
       class="img-header"
+      @touchstart="handleHeaderTouchStart"
+      @touchend="handleHeaderTouchEnd"
     >
       <canvas ref="canvasEl" class="star-canvas" :style="{ filter: planetFilter, transition: 'filter 0.4s ease' }"></canvas>
       <img
@@ -660,8 +680,8 @@ defineExpose({ resetTimeline, focusOffset })
             'slide-in': slideState === 'sliding-in',
           }"
           @wheel.prevent="handleWheel"
-          @touchstart="handleTouchStart"
-          @touchend="handleTouchEnd"
+          @touchstart.stop="handleTouchStart"
+          @touchend.stop="handleTouchEnd"
         >
           <div
             v-for="day in weekDays"
