@@ -25,9 +25,11 @@ const incompleteTasks = computed(() =>
         .filter(t => !t.completed && !t.pinned && !t.parentId)
         .slice()
         .sort((a, b) => {
-          const overdueA = isOverdue(a.deadline), overdueB = isOverdue(b.deadline)
+          const overdueA = isOverdue(a.deadline, a.timerDuration), overdueB = isOverdue(b.deadline, b.timerDuration)
           if (overdueA !== overdueB) return overdueA ? -1 : 1
-          const todayA = isDueToday(a.deadline),  todayB = isDueToday(b.deadline)
+          const graceA = isInGrace(a.deadline, a.timerDuration), graceB = isInGrace(b.deadline, b.timerDuration)
+          if (graceA !== graceB) return graceA ? -1 : 1
+          const todayA = isDueToday(a.deadline), todayB = isDueToday(b.deadline)
           if (todayA !== todayB) return todayA ? -1 : 1
           if (b.priority !== a.priority) return b.priority - a.priority
           return new Date(b.modified).getTime() - new Date(a.modified).getTime()
@@ -63,7 +65,7 @@ const completedTasks = computed(() =>
 )
 
 const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline)).length
+    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline, t.timerDuration)).length
 )
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
@@ -79,20 +81,27 @@ function isDueToday(deadline?: string | null) {
   const d = new Date(deadline)
   return isSameDay(new Date(now.value), d) && now.value <= d.getTime()
 }
-function isOverdue(deadline?: string | null) {
+function isOverdue(deadline?: string | null, timerDuration?: number | null) {
   if (!deadline) return false
   const d = new Date(deadline)
-  return now.value > d.getTime()
+  const expiry = d.getTime() + (timerDuration ?? 0)
+  return now.value > expiry
+}
+function isInGrace(deadline?: string | null, timerDuration?: number | null) {
+  if (!deadline || !timerDuration) return false
+  const d = new Date(deadline)
+  const expiry = d.getTime() + timerDuration
+  return now.value > d.getTime() && now.value <= expiry
 }
 
 function hasOverdueInGroup(tasks: any[]) {
   return tasks.some(t => {
-    if (!t.completed && isOverdue(t.deadline)) return true
+    if (!t.completed && (isOverdue(t.deadline, t.timerDuration) || isInGrace(t.deadline, t.timerDuration))) return true
     if (t.parentId) return false // Subtasks don't have nested subtasks in this app
-    return tasksStore.tasks.some(st => st.parentId === t.id && !st.completed && isOverdue(st.deadline))
+    return tasksStore.tasks.some(st => st.parentId === t.id && !st.completed && (isOverdue(st.deadline, st.timerDuration) || isInGrace(st.deadline, st.timerDuration)))
   })
 }
-function hasTodayInGroup(tasks: any[])   {
+function hasTodayInGroup(tasks: any[]) {
   return tasks.some(t => {
     if (!t.completed && isDueToday(t.deadline)) return true
     if (t.parentId) return false
@@ -214,7 +223,7 @@ function jumpToOverdue() {
     if (hasOverdueInGroup(group.tasks)) priorityExpanded.value[group.priority.value.toString()] = true
   })
 
-  const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline))
+  const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline, t.timerDuration))
   if (firstOverdue) {
     const targetTask = firstOverdue.parentId
         ? tasksStore.tasks.find(t => t.id === firstOverdue.parentId)
@@ -246,7 +255,7 @@ function handleJumpToTask(task: any) {
   if (!task.completed) completedExpanded.value = false
 
   const key = task.pinned &&
-  !isOverdue(task.deadline) &&
+  !isOverdue(task.deadline, task.timerDuration) &&
   !isDueToday(task.deadline)
       ? 'pinned'
       : task.priority.toString()

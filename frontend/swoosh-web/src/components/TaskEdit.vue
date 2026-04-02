@@ -2,8 +2,8 @@
 import type { Task } from '../types/task'
 import { PRIORITIES } from '../types/priority'
 import { useTasksStore } from '../stores/tasks'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Pin, X, Check, Ban, Calendar, Clock } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { Pin, X, Check, Ban, Calendar, Clock, Timer } from 'lucide-vue-next'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -48,6 +48,78 @@ const editedTitle  = ref(props.task?.title  ?? '')
 const editedNotes  = ref(props.task?.notes  ?? '')
 const editedPinned = ref(props.task?.pinned ?? false)
 const editedRating = ref(props.task?.rating ?? 0)
+
+// Timer duration state (milliseconds; 0 = no timer)
+const editedTimerMs  = ref<number>(props.task?.timerDuration ?? 0)
+const showCustomTimer = ref(false)
+const customTimerH   = ref(0)
+const customTimerM   = ref(0)
+
+// Max allowed timer: min(8h, time remaining until midnight on the deadline's date)
+const maxTimerMs = computed(() => {
+  if (!editedDate.value || !editedTime.value || editedTime.value === '23:59' || editedTime.value === '') return 0
+  const [year, month, day] = editedDate.value.split('-').map(Number)
+  const [hour, minute]     = editedTime.value.split(':').map(Number)
+  const deadline = new Date(year, month - 1, day, hour, minute, 0, 0)
+  const nextDay  = new Date(year, month - 1, day)
+  nextDay.setDate(nextDay.getDate() + 1)
+  return Math.max(0, Math.min(28_800_000, nextDay.getTime() - deadline.getTime()))
+})
+
+// Only show the timer section when the task has both a specific date and time
+const hasDateAndTime = computed(() =>
+  !!editedDate.value &&
+  !!editedTime.value &&
+  editedTime.value !== '23:59' &&
+  editedTime.value !== '' &&
+  maxTimerMs.value > 0
+)
+
+const TIMER_PRESETS = [
+  { label: '15m', ms: 15 * 60_000 },
+  { label: '30m', ms: 30 * 60_000 },
+  { label: '1h',  ms: 60 * 60_000 },
+  { label: '2h',  ms: 120 * 60_000 },
+  { label: '4h',  ms: 240 * 60_000 },
+  { label: '8h',  ms: 480 * 60_000 },
+]
+
+const timerPresets = computed(() =>
+  TIMER_PRESETS.filter(p => p.ms <= maxTimerMs.value)
+)
+
+function formatTimerMs(ms: number): string {
+  const totalMin = Math.floor(ms / 60_000)
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  if (h > 0 && m > 0) return `${h}h ${m}m`
+  if (h > 0) return `${h}h`
+  return `${m}m`
+}
+
+function openCustomTimer() {
+  const totalMin = Math.floor(editedTimerMs.value / 60_000)
+  customTimerH.value = Math.floor(totalMin / 60)
+  customTimerM.value = totalMin % 60
+  showCustomTimer.value = true
+}
+
+function applyCustomTimer() {
+  const ms = (customTimerH.value * 60 + customTimerM.value) * 60_000
+  editedTimerMs.value = Math.min(ms, maxTimerMs.value)
+  showCustomTimer.value = false
+}
+
+function clearTimer() {
+  editedTimerMs.value = 0
+  showCustomTimer.value = false
+}
+
+// Clear the timer whenever the date or time changes
+watch([editedDate, editedTime], () => {
+  editedTimerMs.value = 0
+  showCustomTimer.value = false
+})
 
 const priorityIndex = ref(
     PRIORITIES.findIndex(p => p.value === (props.task?.priority ?? 0))
@@ -189,10 +261,12 @@ function cancelEditing() {
     emit('close')
     return
   }
-  editedTitle.value  = originalTitle.value
-  editedNotes.value  = originalNotes.value
-  editedPinned.value = originalPinned.value
-  editedRating.value = props.task?.rating ?? 0
+  editedTitle.value    = originalTitle.value
+  editedNotes.value    = originalNotes.value
+  editedPinned.value   = originalPinned.value
+  editedRating.value   = props.task?.rating ?? 0
+  editedTimerMs.value  = props.task?.timerDuration ?? 0
+  showCustomTimer.value = false
   const { date, time } = splitDeadline(originalDeadline.value)
   editedDate.value  = date
   editedTime.value  = time
@@ -204,12 +278,14 @@ function cancelEditing() {
 function resetForm() {
   if (isEdit.value) return
 
-  editedTitle.value  = ''
-  editedNotes.value  = ''
-  editedDate.value   = ''
-  editedTime.value   = ''
-  editedPinned.value = false
-  editedRating.value = 0
+  editedTitle.value    = ''
+  editedNotes.value    = ''
+  editedDate.value     = ''
+  editedTime.value     = ''
+  editedPinned.value   = false
+  editedRating.value   = 0
+  editedTimerMs.value  = 0
+  showCustomTimer.value = false
   priorityIndex.value = PRIORITIES.findIndex(p => p.value === 0)
   selectedIcon.value = null
   showValidation.value = false
@@ -263,7 +339,8 @@ async function finishEditing() {
       editedRating.value   === (props.task?.rating ?? 0) &&
       currentDeadline      === (originalDeadline.value || null) &&
       editedPriority.value === originalPriority.value &&
-      selectedIcon.value   === (props.task?.icon ?? null)
+      selectedIcon.value   === (props.task?.icon ?? null) &&
+      editedTimerMs.value  === (props.task?.timerDuration ?? 0)
   ) {
     emit('close')
     return
@@ -280,13 +357,14 @@ async function finishEditing() {
   try {
     if (isEdit.value && props.task) {
       await tasksStore.editTask(props.task.id, {
-        title:    editedTitle.value.trim(),
-        notes:    editedNotes.value || null,
-        pinned:   effectiveIsSubtask.value ? false : editedPinned.value,
-        deadline: currentDeadline,
-        priority: effectiveIsSubtask.value ? 0 : editedPriority.value,
-        rating:   effectiveIsSubtask.value ? 0 : editedRating.value,
-        icon:     effectiveIsSubtask.value ? null : selectedIcon.value
+        title:         editedTitle.value.trim(),
+        notes:         editedNotes.value || null,
+        pinned:        effectiveIsSubtask.value ? false : editedPinned.value,
+        deadline:      currentDeadline,
+        priority:      effectiveIsSubtask.value ? 0 : editedPriority.value,
+        rating:        effectiveIsSubtask.value ? 0 : editedRating.value,
+        icon:          effectiveIsSubtask.value ? null : selectedIcon.value,
+        timerDuration: effectiveIsSubtask.value ? null : (editedTimerMs.value || null)
       })
       // Auto-clear subtask deadlines that now exceed the updated parent deadline
       if (currentDeadline && !effectiveIsSubtask.value) {
@@ -315,13 +393,14 @@ async function finishEditing() {
       resetForm()
     } else {
       await tasksStore.createTask({
-        title:    editedTitle.value.trim(),
-        notes:    editedNotes.value || null,
-        deadline: currentDeadline,
-        pinned:   editedPinned.value,
-        priority: editedPriority.value,
-        rating:   editedRating.value,
-        icon:     selectedIcon.value
+        title:         editedTitle.value.trim(),
+        notes:         editedNotes.value || null,
+        deadline:      currentDeadline,
+        pinned:        editedPinned.value,
+        priority:      editedPriority.value,
+        rating:        editedRating.value,
+        icon:          selectedIcon.value,
+        timerDuration: editedTimerMs.value || null
       })
       emit('created')
       resetForm()
@@ -508,6 +587,96 @@ async function moveToTop() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Grace Period Timer — only when the task has a specific date + time -->
+      <div v-if="!effectiveIsSubtask && hasDateAndTime && !task?.completed">
+        <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[11px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Grace Period</div>
+
+        <!-- Custom input row -->
+        <div v-if="showCustomTimer" class="flex gap-2 items-center">
+          <div class="flex flex-1 rounded-sm overflow-hidden border border-swoosh bg-base-100 focus-within:border-swoosh-border-hover focus-within:bg-base-200 transition-colors">
+            <input
+                type="number"
+                class="w-12 bg-transparent text-base-content font-mono outline-none text-center disabled:opacity-40"
+                :class="isEdit ? 'py-2 px-2 text-[13px]' : 'py-[10px] px-2 text-[14px]'"
+                v-model.number="customTimerH"
+                min="0"
+                :max="Math.floor(maxTimerMs / 3_600_000)"
+                placeholder="0"
+            />
+            <span class="self-center text-swoosh-text-faint font-mono text-[13px] pr-1">h</span>
+            <span class="self-center text-swoosh-border font-mono text-[13px]">:</span>
+            <input
+                type="number"
+                class="w-12 bg-transparent text-base-content font-mono outline-none text-center disabled:opacity-40"
+                :class="isEdit ? 'py-2 px-2 text-[13px]' : 'py-[10px] px-2 text-[14px]'"
+                v-model.number="customTimerM"
+                min="0"
+                max="59"
+                placeholder="0"
+            />
+            <span class="self-center text-swoosh-text-faint font-mono text-[13px] pl-1">m</span>
+          </div>
+          <button
+              type="button"
+              @click="applyCustomTimer"
+              class="deadline-shortcut rounded-full font-mono disabled:opacity-40"
+              :class="isEdit ? 'py-[5px] px-3.5 text-[13px]' : 'py-[7px] px-3.5 text-[14px]'"
+          >Set</button>
+          <button
+              type="button"
+              @click="showCustomTimer = false"
+              class="text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
+          ><X :size="13" /></button>
+        </div>
+
+        <!-- Timer set: show badge with clear button -->
+        <div v-else-if="editedTimerMs > 0" class="flex gap-2 items-center">
+          <div class="flex rounded-sm overflow-hidden border border-warning/25 bg-warning/8 transition-colors">
+            <span
+                class="flex items-center gap-1.5 text-warning font-mono"
+                :class="isEdit ? 'py-2 px-3 text-[13px]' : 'py-[10px] px-[13px] text-[14px]'"
+            >
+              <Timer :size="isEdit ? 13 : 14" />
+              {{ formatTimerMs(editedTimerMs) }}
+            </span>
+            <button
+                type="button"
+                @click="clearTimer"
+                title="Remove timer"
+                class="border-l border-warning/25 px-2 text-warning/60 hover:text-error hover:bg-base-200 transition-colors flex items-center"
+            >
+              <X :size="11" />
+            </button>
+          </div>
+          <button
+              type="button"
+              @click="openCustomTimer"
+              class="text-swoosh-text-faint hover:text-swoosh-text-muted text-[12px] font-mono transition-colors"
+          >Edit</button>
+        </div>
+
+        <!-- No timer: quick-pick presets + custom button -->
+        <div v-else class="flex gap-1.5 items-center flex-wrap py-[3px]">
+          <button
+              v-for="preset in timerPresets"
+              :key="preset.ms"
+              type="button"
+              @click="editedTimerMs = preset.ms"
+              class="deadline-shortcut rounded-full font-mono disabled:opacity-40"
+              :class="isEdit ? 'py-[5px] px-3.5 text-[13px]' : 'py-[7px] px-3.5 text-[14px]'"
+          >{{ preset.label }}</button>
+          <button
+              type="button"
+              @click="openCustomTimer"
+              title="Custom duration"
+              class="deadline-shortcut rounded-full flex items-center justify-center disabled:opacity-40"
+              :class="isEdit ? 'py-2 px-2.5' : 'py-[10px] px-2.5'"
+          >
+            <Timer :size="isEdit ? 14 : 15" />
+          </button>
         </div>
       </div>
     </div>

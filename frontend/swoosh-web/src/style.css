@@ -437,6 +437,12 @@
         color: var(--color-swoosh-today);
         border-color: color-mix(in srgb, var(--color-swoosh-today) 32%, transparent);
     }
+    .badge.grace {
+        background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+        color: var(--color-warning);
+        border-color: color-mix(in srgb, var(--color-warning) 32%, transparent);
+        font-variant-numeric: tabular-nums;
+    }
 
     /* ── Completed section header ── */
     .collapse-header {

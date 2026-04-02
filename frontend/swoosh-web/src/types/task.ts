@@ -9,6 +9,7 @@ export interface Task {
     priority: number
     rating: number
     icon?: number | null
+    timerDuration?: number | null
     createdAt: string
     modified: string
 }
@@ -21,4 +22,5 @@ export interface CreateTask {
     priority?: number
     rating?: number
     icon?: number | null
+    timerDuration?: number | null
 }

@@ -17,6 +17,7 @@ public class TaskDto
     public int Priority { get; set; }
     public int Rating { get; set; }
     public int? Icon { get; set; }
+    public int? TimerDuration { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime Modified { get; set; }
@@ -40,6 +41,9 @@ public class CreateTaskDto
     public int Rating { get; set; } = 0;
 
     public int? Icon { get; set; } = null;
+
+    [Range(1, 28_800_000)]
+    public int? TimerDuration { get; set; } = null;
 }
 
 public class UpdateTaskDto
@@ -58,6 +62,9 @@ public class UpdateTaskDto
     public int Rating { get; set; } = 0;
 
     public int? Icon { get; set; } = null;
+
+    [Range(1, 28_800_000)]
+    public int? TimerDuration { get; set; } = null;
 
     // When provided (e.g. drag-to-reorder across priority groups), the backend uses this
     // value instead of DateTime.UtcNow so the sort position is preserved exactly.

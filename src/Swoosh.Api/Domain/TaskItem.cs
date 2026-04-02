@@ -14,7 +14,8 @@ public class TaskItem
     public string EncryptedPriority { get; set; } = null!;
     public string? EncryptedRating { get; set; }
     public string? EncryptedIcon { get; set; }
-    
+    public string? EncryptedTimerDuration { get; set; }
+
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime Modified { get; set; } = DateTime.UtcNow;

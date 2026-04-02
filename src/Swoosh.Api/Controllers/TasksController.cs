@@ -40,12 +40,37 @@ public class TasksController : ControllerBase
         return Ok(task);
     }
 
+    // Validates that the timer duration is within allowed bounds.
+    // Returns null if valid, or a BadRequest result if invalid.
+    private IActionResult? ValidateTimerDuration(int? timerDuration, DateTime? deadline)
+    {
+        if (timerDuration is null or 0) return null;
+
+        if (deadline is null)
+            return BadRequest(new { error = "A timer can only be set when a deadline is specified." });
+
+        const int maxMs = 28_800_000; // 8 hours
+        if (timerDuration > maxMs)
+            return BadRequest(new { error = "Timer cannot exceed 8 hours (28,800,000 ms)." });
+
+        // Timer must not cause expiry past midnight on the deadline's date.
+        var midnight = deadline.Value.Date.AddDays(1);
+        var expiry = deadline.Value.AddMilliseconds(timerDuration.Value);
+        if (expiry > midnight)
+            return BadRequest(new { error = "Timer would expire past midnight on the deadline's date." });
+
+        return null;
+    }
+
     // POST: api/tasks
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTaskDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        var timerError = ValidateTimerDuration(dto.TimerDuration, dto.Deadline);
+        if (timerError != null) return timerError;
 
         var userId = UserContext.GetUserId(User);
         var task = await _tasks.CreateAsync(userId, dto);
@@ -63,6 +88,9 @@ public class TasksController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        var timerError = ValidateTimerDuration(dto.TimerDuration, dto.Deadline);
+        if (timerError != null) return timerError;
 
         var userId = UserContext.GetUserId(User);
 
