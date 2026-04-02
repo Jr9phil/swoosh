@@ -33,7 +33,7 @@ export const useTasksStore = defineStore('tasks', {
         },
 
         // Creates a new subtask under the given parent task
-        async createSubtask(parentTaskId: string, payload: { title: string, notes?: string | null, deadline?: string | null }) {
+        async createSubtask(parentTaskId: string, payload: { title: string, notes?: string | null, deadline?: string | null, timerDuration?: number | null }) {
             const res = await api.post(`/tasks/${parentTaskId}/subtasks`, payload)
             const subtask: Task = {
                 id: res.data.id,
@@ -42,6 +42,7 @@ export const useTasksStore = defineStore('tasks', {
                 notes: res.data.notes ?? null,
                 deadline: res.data.deadline ?? null,
                 completed: res.data.completed ?? null,
+                timerDuration: res.data.timerDuration ?? null,
                 createdAt: res.data.createdAt,
                 modified: res.data.modified,
                 pinned: false,

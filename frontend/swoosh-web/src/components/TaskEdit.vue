@@ -364,7 +364,7 @@ async function finishEditing() {
         priority:      effectiveIsSubtask.value ? 0 : editedPriority.value,
         rating:        effectiveIsSubtask.value ? 0 : editedRating.value,
         icon:          effectiveIsSubtask.value ? null : selectedIcon.value,
-        timerDuration: effectiveIsSubtask.value ? null : (editedTimerMs.value || null)
+        timerDuration: editedTimerMs.value || null
       })
       // Auto-clear subtask deadlines that now exceed the updated parent deadline
       if (currentDeadline && !effectiveIsSubtask.value) {
@@ -591,7 +591,7 @@ async function moveToTop() {
       </div>
 
       <!-- Grace Period Timer — only when the task has a specific date + time -->
-      <div v-if="!effectiveIsSubtask && hasDateAndTime && !task?.completed">
+      <div v-if="hasDateAndTime && !task?.completed">
         <div :class="['font-bold font-mono uppercase text-swoosh-text-faint', isEdit ? 'text-[11px] tracking-widest mb-1.5' : 'text-[11px] tracking-[0.10em] mb-1.5']">Grace Period</div>
 
         <!-- Custom input row -->
