@@ -531,7 +531,7 @@ const skeletonSections = [
     </div>
 
     <!-- ── Create Task Modal ── -->
-    <dialog id="create_modal" class="modal bg-black/60 backdrop-blur-[2px]" @close="handleModalClose">
+    <dialog id="create_modal" class="modal bg-black/60" @close="handleModalClose">
       <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] xl:max-w-[640px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
         <!-- Modal header -->
         <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
