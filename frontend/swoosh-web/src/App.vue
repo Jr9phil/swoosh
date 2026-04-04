@@ -5,6 +5,7 @@ import { useUiStore } from './stores/ui'
 import { useRouter, RouterLink } from 'vue-router'
 import { LogOut, KeyRound, Download, PanelLeft, ChevronUp, SquareCheckBig, Plus, CalendarSync, Lightbulb, BellRing, Archive, ChartColumn, Network } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
+import CreateModal from './components/CreateModal.vue'
 
 const auth = useAuthStore()
 const tasksStore = useTasksStore()
@@ -51,6 +52,12 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll, { capture: true })
   window.removeEventListener('keydown', handleKeydown)
 })
+
+// Navigate to tasks view and close sidebar on mobile
+function goHome() {
+  router.push('/')
+  closeSidebarOnMobile()
+}
 
 // Closes sidebar on mobile after nav
 function closeSidebarOnMobile() {
@@ -144,7 +151,7 @@ async function exportCsv() {
           <ul class="menu w-full grow">
             <li>
               <label for="sidebar" class="hover:cursor-pointer">
-                <span class="sidebar-brand is-drawer-close:hidden">Swoosh</span>
+                <span class="sidebar-brand is-drawer-close:hidden" @click.stop="goHome">Swoosh</span>
                 <PanelLeft class="flex-shrink-0" />
               </label>
             </li>
@@ -237,5 +244,8 @@ async function exportCsv() {
       </div>
 
     </div>
+
+    <!-- Global create modal (always mounted when logged in) -->
+    <CreateModal v-if="auth.token" />
   </div>
 </template>

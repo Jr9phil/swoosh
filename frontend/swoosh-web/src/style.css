@@ -501,6 +501,12 @@
     color: var(--color-base-content);
     flex: 1;
     opacity: 0.85;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.sidebar-brand:hover {
+    opacity: 1;
 }
 
 /* Sidebar toggle header */
@@ -655,7 +661,7 @@
 .drawer-side .menu li > a.router-link-active,
 .drawer-side .menu li > a.router-link-exact-active {
     background-color: var(--color-base-300);
-    color: var(--color-base-content);
+    color: #ffffff;
 }
 
 .drawer-side .menu li > a.router-link-active svg,

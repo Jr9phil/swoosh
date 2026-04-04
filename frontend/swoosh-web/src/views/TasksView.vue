@@ -1,31 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick, provide, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { useUiStore } from '../stores/ui'
 import { PRIORITIES } from '../types/priority'
 import type { Task } from '../types/task'
 import { useRouter } from 'vue-router'
-import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import ImgHeader from '../components/ImgHeader.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { useTaskDrag } from '../composables/useTaskDrag'
-import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
+import { Plus, Pin, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 const router = useRouter()
-
-// Open the create modal when the sidebar Add button is clicked
-watch(() => ui.openCreateModal, (val) => {
-    if (val) {
-        openModal()
-        ui.consumeCreateModal()
-    }
-})
 
 const now = ref(Date.now())
 let clockInterval: ReturnType<typeof setInterval>
@@ -286,36 +277,14 @@ function handleJumpToTask(task: any) {
     })
   }, delay)
 }
-const createTaskEdit = ref<any>(null)
-const separatingSubtask = ref<Task | null>(null)
-const taskWasCreated = ref(false)
-
-function handleModalClose() {
-  createTaskEdit.value?.resetForm()
-  separatingSubtask.value = null
-  taskWasCreated.value = false
-}
-function handleTaskCreated() {
-  if (separatingSubtask.value) {
-    tasksStore.deleteTask(separatingSubtask.value.id)
-  }
-  taskWasCreated.value = true
-  closeModal()
-}
-function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
-function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
-
 function handleCreateTaskForDate(date: string) {
-  openModal()
-  nextTick(() => { createTaskEdit.value?.setDate(date) })
+  ui.triggerCreateModal('task', { date })
 }
 
 function openSeparateTask(task: Task, priority?: number) {
-  separatingSubtask.value = task
-  taskWasCreated.value = false
-  openModal()
-  nextTick(() => {
-    createTaskEdit.value?.prefill(task.title, task.notes ?? null, task.deadline ?? null, priority)
+  ui.triggerCreateModal('task', {
+    prefill: { title: task.title, notes: task.notes, deadline: task.deadline, priority },
+    onCreated: () => tasksStore.deleteTask(task.id),
   })
 }
 
@@ -356,7 +325,7 @@ const skeletonSections = [
     <div class="w-full max-w-[540px] xl:max-w-[700px] 2xl:max-w-[840px]">
 
       <!-- ── Image Header + Timeline ── -->
-      <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="openModal" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
+      <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="ui.triggerCreateModal('task')" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
 
       <!-- ── Overdue banner ── -->
       <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">
@@ -403,7 +372,7 @@ const skeletonSections = [
           </div>
           <h3 class="empty-state-title">No tasks yet</h3>
           <p class="empty-state-text">Create a new task to get started</p>
-          <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
+          <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="ui.triggerCreateModal('task')"><Plus /> Add a task</button>
         </div>
 
         <!-- ── All tasks completed ── -->
@@ -540,29 +509,6 @@ const skeletonSections = [
 
     </div>
 
-    <!-- ── Create Task Modal ── -->
-    <dialog id="create_modal" class="modal bg-black/60" @close="handleModalClose">
-      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] xl:max-w-[640px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
-        <!-- Modal header -->
-        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
-          <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase text-swoosh-text-muted">
-            <CheckSquare :size="13" stroke-width="2" />
-            New Task
-          </div>
-          <button
-              @click="closeModal"
-              class="w-7 h-7 flex items-center justify-center rounded-[6px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
-          >
-            <X :size="15" stroke-width="2" />
-          </button>
-        </div>
-        <!-- No padding wrapper — TaskEdit owns body + footer padding in create mode -->
-        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="handleTaskCreated" />
-      </div>
-      <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
   </main>
 </template>
 

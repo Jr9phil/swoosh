@@ -1,64 +1,42 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRemindersStore } from '../stores/reminders'
-import { Plus, Trash2, BellRing, Check } from 'lucide-vue-next'
-import type { CreateReminder } from '../types/reminder'
+import { useUiStore } from '../stores/ui'
+import { Plus, Trash2, BellRing, Check, Pencil } from 'lucide-vue-next'
 
 const store = useRemindersStore()
+const ui = useUiStore()
 
-const showForm = ref(false)
 const editingId = ref<string | null>(null)
-
-const defaultRemindAt = () => {
-    const d = new Date()
-    d.setMinutes(0, 0, 0)
-    d.setHours(d.getHours() + 1)
-    return d.toISOString().slice(0, 16)
-}
-
-const form = ref<{ title: string; notes: string; remindAt: string }>({
+const editForm = ref<{ title: string; notes: string; remindAt: string }>({
     title: '',
     notes: '',
-    remindAt: defaultRemindAt(),
+    remindAt: '',
 })
-
-function openCreate() {
-    editingId.value = null
-    form.value = { title: '', notes: '', remindAt: defaultRemindAt() }
-    showForm.value = true
-}
 
 function openEdit(id: string) {
     const item = store.items.find(r => r.id === id)
     if (!item) return
     editingId.value = id
-    form.value = {
+    editForm.value = {
         title: item.title,
         notes: item.notes ?? '',
         remindAt: new Date(item.remindAt).toISOString().slice(0, 16),
     }
-    showForm.value = true
 }
 
-function cancelForm() {
-    showForm.value = false
+function cancelEdit() {
     editingId.value = null
 }
 
-async function submitForm() {
-    if (!form.value.title.trim()) return
-    const payload: CreateReminder = {
-        title: form.value.title,
-        notes: form.value.notes || null,
-        remindAt: new Date(form.value.remindAt).toISOString(),
-        isCompleted: false,
-    }
-    if (editingId.value) {
-        await store.update(editingId.value, payload)
-    } else {
-        await store.create(payload)
-    }
-    cancelForm()
+async function submitEdit() {
+    if (!editForm.value.title.trim() || !editingId.value) return
+    await store.update(editingId.value, {
+        title: editForm.value.title,
+        notes: editForm.value.notes || null,
+        remindAt: new Date(editForm.value.remindAt).toISOString(),
+    })
+    editingId.value = null
 }
 
 async function toggleComplete(id: string) {
@@ -111,85 +89,60 @@ onMounted(() => store.fetchAll())
                 <BellRing class="view-header-icon" />
                 <h1 class="view-title">Reminders</h1>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="openCreate">
+            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('reminder')">
                 <Plus class="w-4 h-4" /> New
             </button>
-        </div>
-
-        <!-- Form -->
-        <div v-if="showForm" class="reminder-form-card">
-            <h2 class="form-section-title">{{ editingId ? 'Edit Reminder' : 'New Reminder' }}</h2>
-            <div class="form-field">
-                <label class="form-label">Title</label>
-                <input
-                    v-model="form.title"
-                    class="input input-sm w-full"
-                    placeholder="Remind me to..."
-                    maxlength="200"
-                    @keydown.escape="cancelForm"
-                    autofocus
-                />
-            </div>
-            <div class="form-field">
-                <label class="form-label">When</label>
-                <input
-                    v-model="form.remindAt"
-                    type="datetime-local"
-                    class="input input-sm w-full"
-                />
-            </div>
-            <div class="form-field">
-                <label class="form-label">Notes</label>
-                <textarea
-                    v-model="form.notes"
-                    class="textarea textarea-sm w-full resize-none"
-                    placeholder="Optional notes"
-                    rows="2"
-                    maxlength="1000"
-                />
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-sm btn-ghost" @click="cancelForm">Cancel</button>
-                <button class="btn btn-sm btn-primary" @click="submitForm" :disabled="!form.title.trim()">
-                    {{ editingId ? 'Save' : 'Create' }}
-                </button>
-            </div>
         </div>
 
         <!-- Loading -->
         <div v-if="store.loading" class="view-empty">Loading...</div>
 
         <!-- Empty state -->
-        <div v-else-if="!store.items.length && !showForm" class="view-empty">
+        <div v-else-if="!store.items.length" class="view-empty">
             <BellRing class="view-empty-icon" />
             <p>No reminders yet.</p>
-            <button class="btn btn-sm btn-ghost mt-2" @click="openCreate">Create one</button>
+            <button class="btn btn-sm btn-ghost mt-2" @click="ui.triggerCreateModal('reminder')">Create one</button>
         </div>
 
         <!-- Upcoming -->
         <template v-if="upcoming.length">
             <p class="section-label">Upcoming</p>
             <div class="reminder-list">
-                <div
-                    v-for="item in upcoming"
-                    :key="item.id"
-                    class="reminder-item"
-                    :class="{ 'is-overdue': isPast(item.remindAt) }"
-                >
-                    <button class="reminder-check" @click="toggleComplete(item.id)" :title="'Mark done'">
-                        <Check class="w-3 h-3" />
-                    </button>
-                    <div class="reminder-main" @click="openEdit(item.id)">
-                        <span class="reminder-title">{{ item.title }}</span>
-                        <span class="reminder-time" :class="{ 'overdue-text': isPast(item.remindAt) }">
-                            {{ formatRemindAt(item.remindAt) }}
-                        </span>
-                        <p v-if="item.notes" class="reminder-notes">{{ item.notes }}</p>
+                <template v-for="item in upcoming" :key="item.id">
+                    <!-- Inline edit -->
+                    <div v-if="editingId === item.id" class="reminder-edit-card">
+                        <input v-model="editForm.title" class="input input-sm w-full" maxlength="200" @keydown.escape="cancelEdit" autofocus />
+                        <input v-model="editForm.remindAt" type="datetime-local" class="input input-sm w-full" />
+                        <textarea v-model="editForm.notes" class="textarea textarea-sm w-full resize-none" rows="2" maxlength="1000" />
+                        <div class="form-actions">
+                            <button class="btn btn-xs btn-ghost" @click="cancelEdit">Cancel</button>
+                            <button class="btn btn-xs btn-primary" @click="submitEdit" :disabled="!editForm.title.trim()">Save</button>
+                        </div>
                     </div>
-                    <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
-                        <Trash2 class="w-3.5 h-3.5" />
-                    </button>
-                </div>
+                    <!-- Normal row -->
+                    <div
+                        v-else
+                        class="reminder-item"
+                        :class="{ 'is-overdue': isPast(item.remindAt) }"
+                    >
+                        <button class="reminder-check" @click="toggleComplete(item.id)" title="Mark done">
+                            <Check class="w-3 h-3" />
+                        </button>
+                        <div class="reminder-main">
+                            <span class="reminder-title">{{ item.title }}</span>
+                            <span class="reminder-time" :class="{ 'overdue-text': isPast(item.remindAt) }">
+                                {{ formatRemindAt(item.remindAt) }}
+                            </span>
+                            <p v-if="item.notes" class="reminder-notes">{{ item.notes }}</p>
+                        </div>
+                        <button class="icon-action-btn" @click="openEdit(item.id)" title="Edit">
+                            <Pencil class="w-3.5 h-3.5" />
+                        </button>
+                        <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
+                            <Trash2 class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </template>
             </div>
         </template>
 
@@ -261,24 +214,15 @@ onMounted(() => store.fetchAll())
     letter-spacing: 0.08em;
 }
 
-.reminder-form-card {
-    background: var(--color-base-200);
-    border: 1px solid var(--color-swoosh-border);
-    border-radius: var(--radius-r);
-    padding: 20px;
-    margin-bottom: 24px;
+.reminder-edit-card {
+    background: var(--color-base-300);
+    border: 1px solid var(--color-swoosh-border-hover);
+    border-radius: var(--radius-r-sm);
+    padding: 12px 14px;
+    margin-bottom: 4px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-}
-
-.form-section-title {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-swoosh-text-muted);
+    gap: 10px;
 }
 
 .form-field {

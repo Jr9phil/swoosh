@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useNoteCardsStore } from '../stores/notecards'
 import { useTasksStore } from '../stores/tasks'
+import { useUiStore } from '../stores/ui'
 import { Plus, Trash2, X, Check, ArrowUpRight, Lightbulb } from 'lucide-vue-next'
 import type { NoteCard } from '../types/notecard'
 
 const store = useNoteCardsStore()
 const tasksStore = useTasksStore()
+const ui = useUiStore()
 
 // Drag state
 const dragging = ref<string | null>(null)
@@ -17,10 +19,6 @@ const editingId = ref<string | null>(null)
 const editTitle = ref('')
 const editBody = ref('')
 
-// New card form
-const showNewForm = ref(false)
-const newTitle = ref('')
-const newBody = ref('')
 
 function startDrag(e: MouseEvent | TouchEvent, card: NoteCard) {
     if (editingId.value === card.id) return
@@ -82,32 +80,6 @@ async function convertToTask(card: NoteCard) {
     await store.remove(card.id)
 }
 
-function openNewForm() {
-    newTitle.value = ''
-    newBody.value = ''
-    showNewForm.value = true
-    nextTick(() => {
-        const el = document.querySelector<HTMLInputElement>('.new-card-title-input')
-        el?.focus()
-    })
-}
-
-async function createCard() {
-    if (!newTitle.value.trim()) return
-    const boardEl = document.querySelector<HTMLElement>('.noteboard-canvas')
-    const scrollX = boardEl?.scrollLeft ?? 0
-    const scrollY = boardEl?.scrollTop ?? 0
-    // Place near center of visible area
-    const x = scrollX + 80 + Math.random() * 120
-    const y = scrollY + 80 + Math.random() * 80
-    await store.create({
-        title: newTitle.value,
-        body: newBody.value || null,
-        positionX: Math.round(x),
-        positionY: Math.round(y),
-    })
-    showNewForm.value = false
-}
 
 onMounted(() => store.fetchAll())
 </script>
@@ -126,39 +98,9 @@ onMounted(() => store.fetchAll())
                 <Lightbulb class="w-5 h-5 text-swoosh-text-muted" style="color: var(--color-swoosh-text-muted)" />
                 <span class="view-title">Noteboard</span>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="openNewForm">
+            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('notecard')">
                 <Plus class="w-4 h-4" /> New card
             </button>
-        </div>
-
-        <!-- New card modal -->
-        <div v-if="showNewForm" class="noteboard-overlay" @click.self="showNewForm = false">
-            <div class="noteboard-new-form">
-                <h2 class="form-section-title">New Note Card</h2>
-                <div class="form-field">
-                    <input
-                        v-model="newTitle"
-                        class="input input-sm w-full new-card-title-input"
-                        placeholder="Title"
-                        maxlength="200"
-                        @keydown.enter="createCard"
-                        @keydown.escape="showNewForm = false"
-                    />
-                </div>
-                <div class="form-field">
-                    <textarea
-                        v-model="newBody"
-                        class="textarea textarea-sm w-full resize-none"
-                        placeholder="Note (optional)"
-                        rows="4"
-                        maxlength="4000"
-                    />
-                </div>
-                <div class="form-actions">
-                    <button class="btn btn-sm btn-ghost" @click="showNewForm = false">Cancel</button>
-                    <button class="btn btn-sm btn-primary" @click="createCard" :disabled="!newTitle.trim()">Create</button>
-                </div>
-            </div>
         </div>
 
         <!-- Loading -->
@@ -168,7 +110,7 @@ onMounted(() => store.fetchAll())
         <div v-else-if="!store.items.length" class="noteboard-empty">
             <Lightbulb class="w-8 h-8 opacity-30" />
             <p>No note cards yet.</p>
-            <button class="btn btn-sm btn-ghost mt-2" @click="openNewForm">Create one</button>
+            <button class="btn btn-sm btn-ghost mt-2" @click="ui.triggerCreateModal('notecard')">Create one</button>
         </div>
 
         <!-- Canvas -->
@@ -289,36 +231,6 @@ onMounted(() => store.fetchAll())
     gap: 8px;
     color: var(--color-swoosh-text-faint);
     font-size: 0.875rem;
-}
-
-.noteboard-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.noteboard-new-form {
-    background: var(--color-base-200);
-    border: 1px solid var(--color-swoosh-border);
-    border-radius: var(--radius-r);
-    padding: 24px;
-    width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.form-section-title {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-swoosh-text-muted);
 }
 
 .form-field {

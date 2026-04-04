@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRecurringStore } from '../stores/recurring'
+import { useUiStore } from '../stores/ui'
 import { Plus, Pencil, Trash2, CalendarSync, ToggleLeft, ToggleRight } from 'lucide-vue-next'
 import type { RecurrenceType, CreateRecurringTask } from '../types/recurring'
 
 const store = useRecurringStore()
+const ui = useUiStore()
 
-const showForm = ref(false)
 const editingId = ref<string | null>(null)
-
-const form = ref<CreateRecurringTask>({
+const editForm = ref<CreateRecurringTask>({
     title: '',
     notes: null,
     recurrenceType: 'daily',
@@ -30,39 +30,27 @@ function recurrenceDescription(type: RecurrenceType, interval: number | null): s
     return recurrenceLabels[type]
 }
 
-function openCreate() {
-    editingId.value = null
-    form.value = { title: '', notes: null, recurrenceType: 'daily', recurrenceInterval: null, isActive: true }
-    showForm.value = true
-}
-
 function openEdit(id: string) {
     const item = store.items.find(r => r.id === id)
     if (!item) return
     editingId.value = id
-    form.value = {
+    editForm.value = {
         title: item.title,
         notes: item.notes,
         recurrenceType: item.recurrenceType,
         recurrenceInterval: item.recurrenceInterval,
         isActive: item.isActive,
     }
-    showForm.value = true
 }
 
-function cancelForm() {
-    showForm.value = false
+function cancelEdit() {
     editingId.value = null
 }
 
-async function submitForm() {
-    if (!form.value.title.trim()) return
-    if (editingId.value) {
-        await store.update(editingId.value, { ...form.value })
-    } else {
-        await store.create({ ...form.value })
-    }
-    cancelForm()
+async function submitEdit() {
+    if (!editForm.value.title.trim() || !editingId.value) return
+    await store.update(editingId.value, { ...editForm.value })
+    editingId.value = null
 }
 
 async function toggleActive(id: string) {
@@ -96,97 +84,68 @@ onMounted(() => store.fetchAll())
                 <CalendarSync class="view-header-icon" />
                 <h1 class="view-title">Recurring</h1>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="openCreate">
+            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('recurring')">
                 <Plus class="w-4 h-4" /> New
             </button>
-        </div>
-
-        <!-- Form -->
-        <div v-if="showForm" class="recurring-form-card">
-            <h2 class="form-section-title">{{ editingId ? 'Edit Recurring Task' : 'New Recurring Task' }}</h2>
-            <div class="form-field">
-                <label class="form-label">Title</label>
-                <input
-                    v-model="form.title"
-                    class="input input-sm w-full"
-                    placeholder="Task title"
-                    maxlength="200"
-                    @keydown.enter="submitForm"
-                    @keydown.escape="cancelForm"
-                    autofocus
-                />
-            </div>
-            <div class="form-field">
-                <label class="form-label">Notes</label>
-                <textarea
-                    v-model="form.notes"
-                    class="textarea textarea-sm w-full resize-none"
-                    placeholder="Optional notes"
-                    rows="2"
-                    maxlength="1000"
-                />
-            </div>
-            <div class="form-field">
-                <label class="form-label">Recurrence</label>
-                <select v-model="form.recurrenceType" class="select select-sm w-full">
-                    <option value="daily">Every day</option>
-                    <option value="interval">Every X days</option>
-                    <option value="weekly">Every week</option>
-                    <option value="monthly">Every month</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div v-if="form.recurrenceType === 'interval'" class="form-field">
-                <label class="form-label">Interval (days)</label>
-                <input
-                    v-model.number="form.recurrenceInterval"
-                    type="number"
-                    min="1"
-                    max="365"
-                    class="input input-sm w-full"
-                    placeholder="e.g. 3"
-                />
-            </div>
-            <div class="form-actions">
-                <button class="btn btn-sm btn-ghost" @click="cancelForm">Cancel</button>
-                <button class="btn btn-sm btn-primary" @click="submitForm" :disabled="!form.title.trim()">
-                    {{ editingId ? 'Save' : 'Create' }}
-                </button>
-            </div>
         </div>
 
         <!-- Loading -->
         <div v-if="store.loading" class="view-empty">Loading...</div>
 
         <!-- Empty state -->
-        <div v-else-if="!store.items.length && !showForm" class="view-empty">
+        <div v-else-if="!store.items.length" class="view-empty">
             <CalendarSync class="view-empty-icon" />
             <p>No recurring tasks yet.</p>
-            <button class="btn btn-sm btn-ghost mt-2" @click="openCreate">Create one</button>
+            <button class="btn btn-sm btn-ghost mt-2" @click="ui.triggerCreateModal('recurring')">Create one</button>
         </div>
 
         <!-- Active -->
         <template v-if="active.length">
             <p class="recurring-section-label">Active</p>
             <div class="recurring-list">
-                <div v-for="item in active" :key="item.id" class="recurring-item">
-                    <div class="recurring-item-main">
-                        <span class="recurring-item-title">{{ item.title }}</span>
-                        <span class="recurring-item-rate">{{ recurrenceDescription(item.recurrenceType, item.recurrenceInterval) }}</span>
-                        <p v-if="item.notes" class="recurring-item-notes">{{ item.notes }}</p>
+                <template v-for="item in active" :key="item.id">
+                    <!-- Inline edit form -->
+                    <div v-if="editingId === item.id" class="recurring-edit-card">
+                        <div class="form-field">
+                            <input v-model="editForm.title" class="input input-sm w-full" maxlength="200" @keydown.escape="cancelEdit" autofocus />
+                        </div>
+                        <div class="form-field">
+                            <select v-model="editForm.recurrenceType" class="select select-sm w-full">
+                                <option value="daily">Every day</option>
+                                <option value="interval">Every X days</option>
+                                <option value="weekly">Every week</option>
+                                <option value="monthly">Every month</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div v-if="editForm.recurrenceType === 'interval'" class="form-field">
+                            <input v-model.number="editForm.recurrenceInterval" type="number" min="1" max="365" class="input input-sm w-full" placeholder="Days" />
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-xs btn-ghost" @click="cancelEdit">Cancel</button>
+                            <button class="btn btn-xs btn-primary" @click="submitEdit" :disabled="!editForm.title.trim()">Save</button>
+                        </div>
                     </div>
-                    <div class="recurring-item-actions">
-                        <button class="icon-action-btn" @click="toggleActive(item.id)" title="Pause">
-                            <ToggleRight class="w-4 h-4 text-success" />
-                        </button>
-                        <button class="icon-action-btn" @click="openEdit(item.id)" title="Edit">
-                            <Pencil class="w-3.5 h-3.5" />
-                        </button>
-                        <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
-                            <Trash2 class="w-3.5 h-3.5" />
-                        </button>
+                    <!-- Normal row -->
+                    <div v-else class="recurring-item">
+                        <div class="recurring-item-main">
+                            <span class="recurring-item-title">{{ item.title }}</span>
+                            <span class="recurring-item-rate">{{ recurrenceDescription(item.recurrenceType, item.recurrenceInterval) }}</span>
+                            <p v-if="item.notes" class="recurring-item-notes">{{ item.notes }}</p>
+                        </div>
+                        <div class="recurring-item-actions">
+                            <button class="icon-action-btn" @click="toggleActive(item.id)" title="Pause">
+                                <ToggleRight class="w-4 h-4 text-success" />
+                            </button>
+                            <button class="icon-action-btn" @click="openEdit(item.id)" title="Edit">
+                                <Pencil class="w-3.5 h-3.5" />
+                            </button>
+                            <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
+                                <Trash2 class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </template>
             </div>
         </template>
 
@@ -211,6 +170,7 @@ onMounted(() => store.fetchAll())
                         </button>
                     </div>
                 </div>
+
             </div>
         </template>
     </div>
@@ -259,24 +219,15 @@ onMounted(() => store.fetchAll())
     letter-spacing: 0.08em;
 }
 
-.recurring-form-card {
-    background: var(--color-base-200);
-    border: 1px solid var(--color-swoosh-border);
-    border-radius: var(--radius-r);
-    padding: 20px;
-    margin-bottom: 24px;
+.recurring-edit-card {
+    background: var(--color-base-300);
+    border: 1px solid var(--color-swoosh-border-hover);
+    border-radius: var(--radius-r-sm);
+    padding: 12px 14px;
+    margin-bottom: 4px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-}
-
-.form-section-title {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-swoosh-text-muted);
+    gap: 10px;
 }
 
 .form-field {
