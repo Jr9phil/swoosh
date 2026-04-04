@@ -651,6 +651,80 @@
     margin-inline: 0;
 }
 
+/* Active route link in sidebar */
+.drawer-side .menu li > a.router-link-active,
+.drawer-side .menu li > a.router-link-exact-active {
+    background-color: var(--color-base-300);
+    color: var(--color-base-content);
+}
+
+.drawer-side .menu li > a.router-link-active svg,
+.drawer-side .menu li > a.router-link-exact-active svg {
+    opacity: 1;
+}
+
+/* Add button */
+.sidebar-add-item {
+    margin-bottom: 4px;
+}
+
+.sidebar-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: calc(100% - 16px);
+    margin-inline: 8px;
+    margin-block: 2px;
+    padding-block: 10px;
+    padding-inline: 10px;
+    border-radius: var(--radius-r-sm);
+    background: none;
+    border: none;
+    color: var(--color-swoosh-text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.sidebar-add-btn:hover {
+    background-color: var(--color-base-300);
+    color: var(--color-base-content);
+}
+
+.sidebar-add-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-add-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    flex-shrink: 0;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.sidebar-add-btn:hover .sidebar-add-circle {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #fff;
+}
+
+/* Center Add button when collapsed */
+.drawer-toggle:not(:checked) ~ .drawer-side .sidebar-add-btn {
+    justify-content: center;
+    padding-inline: 0;
+    margin-inline: 0;
+    width: 100%;
+}
+
 /* ─────────────────────────────────────────────────────────
    Rating diamonds
 ───────────────────────────────────────────────────────── */

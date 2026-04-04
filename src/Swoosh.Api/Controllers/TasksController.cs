@@ -27,6 +27,15 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
 
+    // GET: api/tasks/archive
+    [HttpGet("archive")]
+    public async Task<IActionResult> GetArchived()
+    {
+        var userId = UserContext.GetUserId(User);
+        var tasks = await _tasks.GetArchivedAsync(userId);
+        return Ok(tasks);
+    }
+
     // GET: api/tasks/{id}
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)

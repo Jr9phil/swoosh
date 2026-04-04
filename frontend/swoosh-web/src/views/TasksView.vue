@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick, provide, watch } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
+import { useUiStore } from '../stores/ui'
 import { PRIORITIES } from '../types/priority'
 import type { Task } from '../types/task'
 import { useRouter } from 'vue-router'
@@ -15,7 +16,16 @@ import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from '
 
 const tasksStore = useTasksStore()
 const auth = useAuthStore()
+const ui = useUiStore()
 const router = useRouter()
+
+// Open the create modal when the sidebar Add button is clicked
+watch(() => ui.openCreateModal, (val) => {
+    if (val) {
+        openModal()
+        ui.consumeCreateModal()
+    }
+})
 
 const now = ref(Date.now())
 let clockInterval: ReturnType<typeof setInterval>
