@@ -7,8 +7,10 @@ public class RecurringTaskDto
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }
-    public string RecurrenceType { get; set; } = "daily";
-    public int? RecurrenceInterval { get; set; }
+    public string RecurrenceType { get; set; } = "day";
+    public int RecurrenceInterval { get; set; } = 1;
+    public string? RecurrenceDate { get; set; }
+    public string? RecurrenceTime { get; set; }
     public bool IsActive { get; set; } = true;
     public int Priority { get; set; }
     public bool Pinned { get; set; }
@@ -28,11 +30,17 @@ public class CreateRecurringTaskDto
     public string? Notes { get; set; }
 
     [Required]
-    [RegularExpression("^(daily|interval|weekly|monthly|custom)$")]
-    public string RecurrenceType { get; set; } = "daily";
+    [RegularExpression("^(day|week|month|year)$")]
+    public string RecurrenceType { get; set; } = "day";
 
-    [Range(1, 365)]
-    public int? RecurrenceInterval { get; set; }
+    [Range(1, 999)]
+    public int RecurrenceInterval { get; set; } = 1;
+
+    [RegularExpression("^\\d{4}-\\d{2}-\\d{2}$")]
+    public string? RecurrenceDate { get; set; }
+
+    [RegularExpression("^([01]\\d|2[0-3]):[0-5]\\d$")]
+    public string? RecurrenceTime { get; set; }
 
     public bool IsActive { get; set; } = true;
 
@@ -57,11 +65,17 @@ public class UpdateRecurringTaskDto
     public string? Notes { get; set; }
 
     [Required]
-    [RegularExpression("^(daily|interval|weekly|monthly|custom)$")]
-    public string RecurrenceType { get; set; } = "daily";
+    [RegularExpression("^(day|week|month|year)$")]
+    public string RecurrenceType { get; set; } = "day";
 
-    [Range(1, 365)]
-    public int? RecurrenceInterval { get; set; }
+    [Range(1, 999)]
+    public int RecurrenceInterval { get; set; } = 1;
+
+    [RegularExpression("^\\d{4}-\\d{2}-\\d{2}$")]
+    public string? RecurrenceDate { get; set; }
+
+    [RegularExpression("^([01]\\d|2[0-3]):[0-5]\\d$")]
+    public string? RecurrenceTime { get; set; }
 
     public bool IsActive { get; set; } = true;
 

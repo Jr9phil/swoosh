@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Pin, X, Ban } from 'lucide-vue-next'
+import { Pin, X, Ban, Clock, Calendar } from 'lucide-vue-next'
 import { PRIORITIES } from '../types/priority'
 import { useRecurringStore } from '../stores/recurring'
 import TaskRating from './TaskRating.vue'
@@ -19,25 +19,43 @@ const showValidation = ref(false)
 
 const editedTitle    = ref('')
 const editedNotes    = ref('')
-const rType          = ref<RecurrenceType>('daily')
-const rInterval      = ref<number | null>(null)
+const rInterval      = ref(1)
+const rType          = ref<RecurrenceType>('day')
+const rDate          = ref('')
+const rTime          = ref('')
 const editedPinned   = ref(false)
 const editedRating   = ref(0)
 const selectedIcon   = ref<number | null>(null)
 const showIconPicker = ref(false)
+const hiddenDateInput = ref<HTMLInputElement | null>(null)
+const hiddenTimeInput = ref<HTMLInputElement | null>(null)
 
-const priorityIndex = ref(PRIORITIES.findIndex(p => p.value === 0))
+const priorityIndex  = ref(PRIORITIES.findIndex(p => p.value === 0))
 const editedPriority = computed(() => PRIORITIES[priorityIndex.value].value)
 
 function cyclePriority() {
     priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
 }
 
+function openDatePicker() {
+    const input = hiddenDateInput.value
+    if (!input) return
+    try { input.showPicker() } catch { input.click() }
+}
+
+function openTimePicker() {
+    const input = hiddenTimeInput.value
+    if (!input) return
+    try { input.showPicker() } catch { input.click() }
+}
+
 function resetForm() {
     editedTitle.value    = ''
     editedNotes.value    = ''
-    rType.value          = 'daily'
-    rInterval.value      = null
+    rInterval.value      = 1
+    rType.value          = 'day'
+    rDate.value          = ''
+    rTime.value          = ''
     editedPinned.value   = false
     editedRating.value   = 0
     selectedIcon.value   = null
@@ -64,15 +82,17 @@ async function submit() {
     loading.value = true
     try {
         await recurringStore.create({
-            title: editedTitle.value.trim(),
-            notes: editedNotes.value || null,
-            recurrenceType: rType.value,
-            recurrenceInterval: rType.value === 'interval' ? rInterval.value : null,
-            isActive: true,
-            priority: editedPriority.value,
-            pinned: editedPinned.value,
-            rating: editedRating.value,
-            icon: selectedIcon.value,
+            title:             editedTitle.value.trim(),
+            notes:             editedNotes.value || null,
+            recurrenceType:    rType.value,
+            recurrenceInterval: Math.max(1, rInterval.value || 1),
+            recurrenceDate:    rDate.value || null,
+            recurrenceTime:    rTime.value || null,
+            isActive:          true,
+            priority:          editedPriority.value,
+            pinned:            editedPinned.value,
+            rating:            editedRating.value,
+            icon:              selectedIcon.value,
         })
         emit('created')
         resetForm()
@@ -114,36 +134,85 @@ defineExpose({ resetForm, isFormBlank })
                 v-model="editedNotes"
             />
 
-            <!-- Recurrence -->
+            <!-- Recurrence + Time -->
             <div>
-                <div class="font-bold font-mono uppercase text-swoosh-text-faint text-[11px] tracking-[0.10em] mb-1.5">Recurrence</div>
+                <div class="font-bold font-mono uppercase text-swoosh-text-faint text-[11px] tracking-[0.10em] mb-1.5">Repeat every</div>
                 <div class="flex gap-2 items-center">
-                    <!-- Type select -->
-                    <div class="flex flex-1 rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200">
-                        <select
-                            v-model="rType"
-                            class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px] appearance-none cursor-pointer"
-                        >
-                            <option value="daily">Every day</option>
-                            <option value="interval">Every X days</option>
-                            <option value="weekly">Every week</option>
-                            <option value="monthly">Every month</option>
-                            <option value="custom">Custom</option>
-                        </select>
+                    <!-- Interval number -->
+                    <div class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 w-[72px] flex-shrink-0">
+                        <input
+                            v-model.number="rInterval"
+                            type="number"
+                            min="1"
+                            max="999"
+                            class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[10px] text-[14px] w-full text-center"
+                        />
                     </div>
-                    <!-- Interval input (only for "interval" type) -->
-                    <template v-if="rType === 'interval'">
-                        <div class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 w-[110px]">
-                            <input
-                                v-model.number="rInterval"
-                                type="number"
-                                min="1"
-                                max="365"
-                                class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px] w-full"
-                                placeholder="days"
-                            />
-                        </div>
+                    <!-- Unit dropdown -->
+                    <select
+                        v-model="rType"
+                        class="rounded-sm border border-swoosh bg-base-100 text-base-content font-mono outline-none py-[10px] px-[10px] text-[14px] appearance-none cursor-pointer w-[90px] flex-shrink-0 transition-colors hover:border-swoosh-border-hover focus:border-swoosh-border-hover focus:bg-base-200"
+                    >
+                        <option value="day">{{ rInterval === 1 ? 'day' : 'days' }}</option>
+                        <option value="week">{{ rInterval === 1 ? 'week' : 'weeks' }}</option>
+                        <option value="month">{{ rInterval === 1 ? 'month' : 'months' }}</option>
+                        <option value="year">{{ rInterval === 1 ? 'year' : 'years' }}</option>
+                    </select>
+                    <!-- Date: pill when unset, input when set -->
+                    <template v-if="!rDate">
+                        <button
+                            type="button"
+                            @click="openDatePicker"
+                            class="deadline-shortcut rounded-full font-mono flex items-center gap-1.5 py-[7px] px-3.5 text-[14px] flex-shrink-0"
+                        >
+                            <Calendar :size="15" />
+                            From
+                        </button>
+                        <input type="date" ref="hiddenDateInput" v-model="rDate" class="sr-only" tabindex="-1" />
                     </template>
+                    <div v-else class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 flex-shrink-0">
+                        <input
+                            type="date"
+                            v-model="rDate"
+                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px]"
+                        />
+                        <button
+                            type="button"
+                            @click="rDate = ''"
+                            title="Remove date"
+                            class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
+                        >
+                            <X :size="11" />
+                        </button>
+                    </div>
+
+                    <!-- Time: pill when unset, input when set -->
+                    <template v-if="!rTime">
+                        <button
+                            type="button"
+                            @click="openTimePicker"
+                            class="deadline-shortcut rounded-full font-mono flex items-center gap-1.5 py-[7px] px-3.5 text-[14px] flex-shrink-0"
+                        >
+                            <Clock :size="15" />
+                            Add Time
+                        </button>
+                        <input type="time" ref="hiddenTimeInput" v-model="rTime" class="sr-only" tabindex="-1" />
+                    </template>
+                    <div v-else class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 flex-shrink-0">
+                        <input
+                            type="time"
+                            v-model="rTime"
+                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px]"
+                        />
+                        <button
+                            type="button"
+                            @click="rTime = ''"
+                            title="Remove time"
+                            class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
+                        >
+                            <X :size="11" />
+                        </button>
+                    </div>
                 </div>
             </div>
 

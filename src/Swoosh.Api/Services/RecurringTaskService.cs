@@ -19,6 +19,20 @@ public class RecurringTaskService : IRecurringTaskService
         _crypto = crypto;
     }
 
+    // Promotes interval+type to a coarser unit when the division is exact.
+    // e.g. 7 days → 1 week, 14 days → 2 weeks, 52 weeks → 1 year, 12 months → 1 year
+    private static (string Type, int Interval) Normalize(string type, int interval)
+    {
+        return type switch
+        {
+            "day" when interval % 365 == 0 => ("year",  interval / 365),
+            "day" when interval % 7   == 0 => ("week",  interval / 7),
+            "week"  when interval % 52 == 0 => ("year",  interval / 52),
+            "month" when interval % 12 == 0 => ("year",  interval / 12),
+            _ => (type, interval)
+        };
+    }
+
     private async Task<byte[]> GetUserSalt(Guid userId)
     {
         return await _db.Users
@@ -36,7 +50,13 @@ public class RecurringTaskService : IRecurringTaskService
             Notes = _crypto.DecryptNullableString(r.EncryptedNotes, userId, r.KeyVersion, salt),
             RecurrenceType = _crypto.Decrypt(r.EncryptedRecurrenceType, userId, r.KeyVersion, salt),
             RecurrenceInterval = r.EncryptedRecurrenceInterval != null
-                ? _crypto.DecryptNullableInt(r.EncryptedRecurrenceInterval, userId, r.KeyVersion, salt)
+                ? (_crypto.DecryptNullableInt(r.EncryptedRecurrenceInterval, userId, r.KeyVersion, salt) ?? 1)
+                : 1,
+            RecurrenceDate = r.EncryptedDate != null
+                ? _crypto.DecryptNullableString(r.EncryptedDate, userId, r.KeyVersion, salt)
+                : null,
+            RecurrenceTime = r.EncryptedTime != null
+                ? _crypto.DecryptNullableString(r.EncryptedTime, userId, r.KeyVersion, salt)
                 : null,
             IsActive = _crypto.DecryptBool(r.EncryptedIsActive, userId, r.KeyVersion, salt),
             Priority = r.EncryptedPriority != null ? _crypto.DecryptInt(r.EncryptedPriority, userId, r.KeyVersion, salt) : 0,
@@ -78,6 +98,8 @@ public class RecurringTaskService : IRecurringTaskService
 
     public async Task<RecurringTaskDto> CreateAsync(Guid userId, CreateRecurringTaskDto dto)
     {
+        (dto.RecurrenceType, dto.RecurrenceInterval) = Normalize(dto.RecurrenceType, dto.RecurrenceInterval);
+
         var salt = await GetUserSalt(userId);
         var (encTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
         var now = DateTime.UtcNow;
@@ -89,8 +111,12 @@ public class RecurringTaskService : IRecurringTaskService
             EncryptedTitle = encTitle,
             EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
             EncryptedRecurrenceType = _crypto.Encrypt(dto.RecurrenceType, userId, salt).Ciphertext,
-            EncryptedRecurrenceInterval = dto.RecurrenceInterval.HasValue
-                ? _crypto.EncryptNullableInt(dto.RecurrenceInterval.Value, userId, salt).Ciphertext
+            EncryptedRecurrenceInterval = _crypto.EncryptInt(dto.RecurrenceInterval, userId, salt).Ciphertext,
+            EncryptedDate = dto.RecurrenceDate != null
+                ? _crypto.EncryptNullableString(dto.RecurrenceDate, userId, salt).Ciphertext
+                : null,
+            EncryptedTime = dto.RecurrenceTime != null
+                ? _crypto.EncryptNullableString(dto.RecurrenceTime, userId, salt).Ciphertext
                 : null,
             EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext,
             EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext,
@@ -112,6 +138,8 @@ public class RecurringTaskService : IRecurringTaskService
             Notes = dto.Notes,
             RecurrenceType = dto.RecurrenceType,
             RecurrenceInterval = dto.RecurrenceInterval,
+            RecurrenceDate = dto.RecurrenceDate,
+            RecurrenceTime = dto.RecurrenceTime,
             IsActive = dto.IsActive,
             Priority = dto.Priority,
             Pinned = dto.Pinned,
@@ -128,14 +156,20 @@ public class RecurringTaskService : IRecurringTaskService
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
         if (entity == null) return false;
 
+        (dto.RecurrenceType, dto.RecurrenceInterval) = Normalize(dto.RecurrenceType, dto.RecurrenceInterval);
+
         var salt = await GetUserSalt(userId);
         var (encTitle, keyVersion) = _crypto.Encrypt(dto.Title, userId, salt);
 
         entity.EncryptedTitle = encTitle;
         entity.EncryptedNotes = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext;
         entity.EncryptedRecurrenceType = _crypto.Encrypt(dto.RecurrenceType, userId, salt).Ciphertext;
-        entity.EncryptedRecurrenceInterval = dto.RecurrenceInterval.HasValue
-            ? _crypto.EncryptNullableInt(dto.RecurrenceInterval.Value, userId, salt).Ciphertext
+        entity.EncryptedRecurrenceInterval = _crypto.EncryptInt(dto.RecurrenceInterval, userId, salt).Ciphertext;
+        entity.EncryptedDate = dto.RecurrenceDate != null
+            ? _crypto.EncryptNullableString(dto.RecurrenceDate, userId, salt).Ciphertext
+            : null;
+        entity.EncryptedTime = dto.RecurrenceTime != null
+            ? _crypto.EncryptNullableString(dto.RecurrenceTime, userId, salt).Ciphertext
             : null;
         entity.EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext;
         entity.EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext;

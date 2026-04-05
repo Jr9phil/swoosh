@@ -15,6 +15,8 @@ public class RecurringTask
     public string EncryptedPinned { get; set; } = null!;
     public string? EncryptedRating { get; set; }             // 0–5, nullable
     public string? EncryptedIcon { get; set; }               // nullable int
+    public string? EncryptedDate { get; set; }               // nullable YYYY-MM-DD string
+    public string? EncryptedTime { get; set; }               // nullable HH:mm string
 
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
