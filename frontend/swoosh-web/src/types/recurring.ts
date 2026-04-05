@@ -7,6 +7,10 @@ export interface RecurringTask {
     recurrenceType: RecurrenceType
     recurrenceInterval: number | null
     isActive: boolean
+    priority: number
+    pinned: boolean
+    rating: number
+    icon: number | null
     createdAt: string
     modified: string
 }
@@ -17,4 +21,8 @@ export interface CreateRecurringTask {
     recurrenceType: RecurrenceType
     recurrenceInterval?: number | null
     isActive: boolean
+    priority?: number
+    pinned?: boolean
+    rating?: number
+    icon?: number | null
 }

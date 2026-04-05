@@ -10,7 +10,7 @@ export const useNoteCardsStore = defineStore('notecards', () => {
     async function fetchAll() {
         loading.value = true
         try {
-            const res = await api.get<NoteCard[]>('/api/notecards')
+            const res = await api.get<NoteCard[]>('/notecards')
             items.value = res.data
         } finally {
             loading.value = false
@@ -18,7 +18,7 @@ export const useNoteCardsStore = defineStore('notecards', () => {
     }
 
     async function create(payload: CreateNoteCard) {
-        const res = await api.post<NoteCard>('/api/notecards', payload)
+        const res = await api.post<NoteCard>('/notecards', payload)
         items.value.unshift(res.data)
         return res.data
     }
@@ -27,13 +27,13 @@ export const useNoteCardsStore = defineStore('notecards', () => {
         const card = items.value.find(c => c.id === id)
         if (!card) return
         const merged = { ...card, ...payload }
-        await api.put(`/api/notecards/${id}`, merged)
+        await api.put(`/notecards/${id}`, merged)
         const idx = items.value.findIndex(c => c.id === id)
         if (idx !== -1) items.value[idx] = { ...items.value[idx], ...payload } as NoteCard
     }
 
     async function remove(id: string) {
-        await api.delete(`/api/notecards/${id}`)
+        await api.delete(`/notecards/${id}`)
         items.value = items.value.filter(c => c.id !== id)
     }
 

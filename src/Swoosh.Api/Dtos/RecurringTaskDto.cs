@@ -10,6 +10,10 @@ public class RecurringTaskDto
     public string RecurrenceType { get; set; } = "daily";
     public int? RecurrenceInterval { get; set; }
     public bool IsActive { get; set; } = true;
+    public int Priority { get; set; }
+    public bool Pinned { get; set; }
+    public int Rating { get; set; }
+    public int? Icon { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime Modified { get; set; }
 }
@@ -31,6 +35,16 @@ public class CreateRecurringTaskDto
     public int? RecurrenceInterval { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    [Range(0, 3)]
+    public int Priority { get; set; } = 0;
+
+    public bool Pinned { get; set; } = false;
+
+    [Range(0, 5)]
+    public int Rating { get; set; } = 0;
+
+    public int? Icon { get; set; } = null;
 }
 
 public class UpdateRecurringTaskDto
@@ -50,4 +64,14 @@ public class UpdateRecurringTaskDto
     public int? RecurrenceInterval { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    [Range(0, 3)]
+    public int Priority { get; set; } = 0;
+
+    public bool Pinned { get; set; } = false;
+
+    [Range(0, 5)]
+    public int Rating { get; set; } = 0;
+
+    public int? Icon { get; set; } = null;
 }

@@ -39,6 +39,10 @@ public class RecurringTaskService : IRecurringTaskService
                 ? _crypto.DecryptNullableInt(r.EncryptedRecurrenceInterval, userId, r.KeyVersion, salt)
                 : null,
             IsActive = _crypto.DecryptBool(r.EncryptedIsActive, userId, r.KeyVersion, salt),
+            Priority = r.EncryptedPriority != null ? _crypto.DecryptInt(r.EncryptedPriority, userId, r.KeyVersion, salt) : 0,
+            Pinned = r.EncryptedPinned != null && _crypto.DecryptBool(r.EncryptedPinned, userId, r.KeyVersion, salt),
+            Rating = r.EncryptedRating != null ? _crypto.DecryptInt(r.EncryptedRating, userId, r.KeyVersion, salt) : 0,
+            Icon = r.EncryptedIcon != null ? _crypto.DecryptNullableInt(r.EncryptedIcon, userId, r.KeyVersion, salt) : null,
             CreatedAt = r.CreatedAt,
             Modified = r.Modified
         };
@@ -89,6 +93,10 @@ public class RecurringTaskService : IRecurringTaskService
                 ? _crypto.EncryptNullableInt(dto.RecurrenceInterval.Value, userId, salt).Ciphertext
                 : null,
             EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext,
+            EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext,
+            EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
+            EncryptedRating = _crypto.EncryptInt(dto.Rating, userId, salt).Ciphertext,
+            EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null,
             KeyVersion = keyVersion,
             CreatedAt = now,
             Modified = now
@@ -105,6 +113,10 @@ public class RecurringTaskService : IRecurringTaskService
             RecurrenceType = dto.RecurrenceType,
             RecurrenceInterval = dto.RecurrenceInterval,
             IsActive = dto.IsActive,
+            Priority = dto.Priority,
+            Pinned = dto.Pinned,
+            Rating = dto.Rating,
+            Icon = dto.Icon,
             CreatedAt = now,
             Modified = now
         };
@@ -126,6 +138,10 @@ public class RecurringTaskService : IRecurringTaskService
             ? _crypto.EncryptNullableInt(dto.RecurrenceInterval.Value, userId, salt).Ciphertext
             : null;
         entity.EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext;
+        entity.EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext;
+        entity.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
+        entity.EncryptedRating = _crypto.EncryptInt(dto.Rating, userId, salt).Ciphertext;
+        entity.EncryptedIcon = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null;
         entity.KeyVersion = keyVersion;
         entity.Modified = DateTime.UtcNow;
 

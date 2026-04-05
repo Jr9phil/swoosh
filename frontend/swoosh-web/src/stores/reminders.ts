@@ -10,7 +10,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     async function fetchAll() {
         loading.value = true
         try {
-            const res = await api.get<Reminder[]>('/api/reminders')
+            const res = await api.get<Reminder[]>('/reminders')
             items.value = res.data
         } finally {
             loading.value = false
@@ -18,7 +18,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     }
 
     async function create(payload: CreateReminder) {
-        const res = await api.post<Reminder>('/api/reminders', payload)
+        const res = await api.post<Reminder>('/reminders', payload)
         items.value.unshift(res.data)
         return res.data
     }
@@ -27,13 +27,13 @@ export const useRemindersStore = defineStore('reminders', () => {
         const reminder = items.value.find(r => r.id === id)
         if (!reminder) return
         const merged = { ...reminder, ...payload }
-        await api.put(`/api/reminders/${id}`, merged)
+        await api.put(`/reminders/${id}`, merged)
         const idx = items.value.findIndex(r => r.id === id)
         if (idx !== -1) items.value[idx] = { ...items.value[idx], ...payload } as Reminder
     }
 
     async function remove(id: string) {
-        await api.delete(`/api/reminders/${id}`)
+        await api.delete(`/reminders/${id}`)
         items.value = items.value.filter(r => r.id !== id)
     }
 

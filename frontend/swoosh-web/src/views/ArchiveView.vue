@@ -16,7 +16,7 @@ function formatCompleted(iso: string | undefined): string {
 onMounted(async () => {
     loading.value = true
     try {
-        const res = await api.get<Task[]>('/api/tasks/archive')
+        const res = await api.get<Task[]>('/tasks/archive')
         tasks.value = res.data
     } finally {
         loading.value = false

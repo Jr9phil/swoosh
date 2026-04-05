@@ -10,7 +10,7 @@ export const useRecurringStore = defineStore('recurring', () => {
     async function fetchAll() {
         loading.value = true
         try {
-            const res = await api.get<RecurringTask[]>('/api/recurringtasks')
+            const res = await api.get<RecurringTask[]>('/recurringtasks')
             items.value = res.data
         } finally {
             loading.value = false
@@ -18,19 +18,19 @@ export const useRecurringStore = defineStore('recurring', () => {
     }
 
     async function create(payload: CreateRecurringTask) {
-        const res = await api.post<RecurringTask>('/api/recurringtasks', payload)
+        const res = await api.post<RecurringTask>('/recurringtasks', payload)
         items.value.unshift(res.data)
         return res.data
     }
 
     async function update(id: string, payload: CreateRecurringTask) {
-        await api.put(`/api/recurringtasks/${id}`, payload)
+        await api.put(`/recurringtasks/${id}`, payload)
         const idx = items.value.findIndex(r => r.id === id)
         if (idx !== -1) items.value[idx] = { ...items.value[idx], ...payload } as RecurringTask
     }
 
     async function remove(id: string) {
-        await api.delete(`/api/recurringtasks/${id}`)
+        await api.delete(`/recurringtasks/${id}`)
         items.value = items.value.filter(r => r.id !== id)
     }
 

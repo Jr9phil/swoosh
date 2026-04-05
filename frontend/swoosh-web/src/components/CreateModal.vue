@@ -1,28 +1,20 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { useUiStore } from '../stores/ui'
-import { useRecurringStore } from '../stores/recurring'
 import { useNoteCardsStore } from '../stores/notecards'
 import { useRemindersStore } from '../stores/reminders'
 import TaskEdit from './TaskEdit.vue'
+import RecurringEdit from './RecurringEdit.vue'
 import { X } from 'lucide-vue-next'
 import type { CreateModalTab } from '../stores/ui'
-import type { RecurrenceType } from '../types/recurring'
 
 const ui = useUiStore()
-const recurringStore = useRecurringStore()
 const noteCardsStore = useNoteCardsStore()
 const remindersStore = useRemindersStore()
 
 const dialogEl = ref<HTMLDialogElement | null>(null)
 const taskEditRef = ref<InstanceType<typeof TaskEdit> | null>(null)
-
-// ── Recurring form ─────────────────────────────────────
-const rTitle = ref('')
-const rNotes = ref('')
-const rType = ref<RecurrenceType>('daily')
-const rInterval = ref<number | null>(null)
-const rActive = ref(true)
+const recurringEditRef = ref<InstanceType<typeof RecurringEdit> | null>(null)
 
 // ── NoteCard form ──────────────────────────────────────
 const nTitle = ref('')
@@ -69,16 +61,13 @@ function close() {
 
 function handleDialogClose() {
     taskEditRef.value?.resetForm()
+    recurringEditRef.value?.resetForm()
     ui.resetModal()
 }
 
 function resetForms() {
     taskEditRef.value?.resetForm()
-    rTitle.value = ''
-    rNotes.value = ''
-    rType.value = 'daily'
-    rInterval.value = null
-    rActive.value = true
+    recurringEditRef.value?.resetForm()
     nTitle.value = ''
     nBody.value = ''
     remTitle.value = ''
@@ -93,18 +82,6 @@ function switchTab(tab: CreateModalTab) {
 // ── Submit handlers ────────────────────────────────────
 function handleTaskCreated() {
     ui.onTaskCreated?.()
-    close()
-}
-
-async function submitRecurring() {
-    if (!rTitle.value.trim()) return
-    await recurringStore.create({
-        title: rTitle.value,
-        notes: rNotes.value || null,
-        recurrenceType: rType.value,
-        recurrenceInterval: rType.value === 'interval' ? rInterval.value : null,
-        isActive: rActive.value,
-    })
     close()
 }
 
@@ -175,86 +152,30 @@ const tabs: { id: CreateModalTab; label: string }[] = [
 
             <!-- Recurring tab -->
             <template v-else-if="ui.activeTab === 'recurring'">
-                <div class="create-modal-body">
-                    <div class="create-form-field">
-                        <label class="create-form-label">Title</label>
-                        <input
-                            v-model="rTitle"
-                            class="input input-sm w-full"
-                            placeholder="Task title"
-                            maxlength="200"
-                            autofocus
-                            @keydown.escape="close"
-                        />
-                    </div>
-                    <div class="create-form-field">
-                        <label class="create-form-label">Recurrence</label>
-                        <select v-model="rType" class="select select-sm w-full">
-                            <option value="daily">Every day</option>
-                            <option value="interval">Every X days</option>
-                            <option value="weekly">Every week</option>
-                            <option value="monthly">Every month</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div v-if="rType === 'interval'" class="create-form-field">
-                        <label class="create-form-label">Interval (days)</label>
-                        <input
-                            v-model.number="rInterval"
-                            type="number"
-                            min="1"
-                            max="365"
-                            class="input input-sm w-full"
-                            placeholder="e.g. 3"
-                        />
-                    </div>
-                    <div class="create-form-field">
-                        <label class="create-form-label">Notes</label>
-                        <textarea
-                            v-model="rNotes"
-                            class="textarea textarea-sm w-full resize-none"
-                            placeholder="Optional notes"
-                            rows="2"
-                            maxlength="1000"
-                        />
-                    </div>
-                </div>
-                <div class="create-modal-footer">
-                    <button class="btn btn-sm btn-ghost" @click="close">Cancel</button>
-                    <button class="btn btn-sm btn-primary" :disabled="!rTitle.trim()" @click="submitRecurring">
-                        Create
-                    </button>
-                </div>
+                <RecurringEdit ref="recurringEditRef" @close="close" @created="close" />
             </template>
 
             <!-- NoteCard tab -->
             <template v-else-if="ui.activeTab === 'notecard'">
-                <div class="create-modal-body">
-                    <div class="create-form-field">
-                        <label class="create-form-label">Title</label>
-                        <input
-                            v-model="nTitle"
-                            class="input input-sm w-full"
-                            placeholder="Note title"
-                            maxlength="200"
-                            autofocus
-                            @keydown.escape="close"
-                        />
-                    </div>
-                    <div class="create-form-field">
-                        <label class="create-form-label">Note</label>
-                        <textarea
-                            v-model="nBody"
-                            class="textarea textarea-sm w-full resize-none"
-                            placeholder="What's on your mind?"
-                            rows="5"
-                            maxlength="4000"
-                        />
-                    </div>
+                <div class="px-5 pt-[18px] pb-0 flex flex-col gap-[13px] min-h-[260px]">
+                    <input
+                        v-model="nTitle"
+                        class="task-edit-input rounded-sm w-full text-base-content font-bold py-[10px] px-[13px] text-[18px]"
+                        placeholder="Note title"
+                        maxlength="200"
+                        autofocus
+                        @keydown.escape="close"
+                    />
+                    <textarea
+                        v-model="nBody"
+                        class="task-edit-input rounded-sm w-full text-swoosh-text-muted resize-none leading-relaxed py-[10px] px-[13px] text-[14.5px] flex-1 min-h-[140px]"
+                        placeholder="What's on your mind?"
+                        maxlength="4000"
+                    />
                 </div>
-                <div class="create-modal-footer">
-                    <button class="btn btn-sm btn-ghost" @click="close">Cancel</button>
-                    <button class="btn btn-sm btn-primary" :disabled="!nTitle.trim()" @click="submitNoteCard">
+                <div class="flex items-center justify-end gap-2 border-t border-swoosh mt-[13px] px-5 pt-3 pb-[18px]">
+                    <button class="rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]" @click="close">Cancel</button>
+                    <button class="rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40" :disabled="!nTitle.trim()" @click="submitNoteCard">
                         Create
                     </button>
                 </div>
@@ -262,40 +183,35 @@ const tabs: { id: CreateModalTab; label: string }[] = [
 
             <!-- Reminder tab -->
             <template v-else-if="ui.activeTab === 'reminder'">
-                <div class="create-modal-body">
-                    <div class="create-form-field">
-                        <label class="create-form-label">Title</label>
-                        <input
-                            v-model="remTitle"
-                            class="input input-sm w-full"
-                            placeholder="Remind me to..."
-                            maxlength="200"
-                            autofocus
-                            @keydown.escape="close"
-                        />
+                <div class="px-5 pt-[18px] pb-0 flex flex-col gap-[13px] min-h-[260px]">
+                    <input
+                        v-model="remTitle"
+                        class="task-edit-input rounded-sm w-full text-base-content font-bold py-[10px] px-[13px] text-[18px]"
+                        placeholder="Remind me to..."
+                        maxlength="200"
+                        autofocus
+                        @keydown.escape="close"
+                    />
+                    <div>
+                        <div class="font-bold font-mono uppercase text-swoosh-text-faint text-[11px] tracking-[0.10em] mb-1.5">When</div>
+                        <div class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200">
+                            <input
+                                v-model="remAt"
+                                type="datetime-local"
+                                class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px]"
+                            />
+                        </div>
                     </div>
-                    <div class="create-form-field">
-                        <label class="create-form-label">When</label>
-                        <input
-                            v-model="remAt"
-                            type="datetime-local"
-                            class="input input-sm w-full"
-                        />
-                    </div>
-                    <div class="create-form-field">
-                        <label class="create-form-label">Notes</label>
-                        <textarea
-                            v-model="remNotes"
-                            class="textarea textarea-sm w-full resize-none"
-                            placeholder="Optional notes"
-                            rows="2"
-                            maxlength="1000"
-                        />
-                    </div>
+                    <textarea
+                        v-model="remNotes"
+                        class="task-edit-input rounded-sm w-full text-swoosh-text-muted resize-none leading-relaxed py-[10px] px-[13px] text-[14.5px] min-h-[80px]"
+                        placeholder="Notes (optional)"
+                        maxlength="1000"
+                    />
                 </div>
-                <div class="create-modal-footer">
-                    <button class="btn btn-sm btn-ghost" @click="close">Cancel</button>
-                    <button class="btn btn-sm btn-primary" :disabled="!remTitle.trim() || !remAt" @click="submitReminder">
+                <div class="flex items-center justify-end gap-2 border-t border-swoosh mt-[13px] px-5 pt-3 pb-[18px]">
+                    <button class="rounded-sm border border-swoosh text-swoosh-text-faint text-[14px] transition-colors hover:text-swoosh-text-muted hover:border-swoosh-border-hover px-[14px] py-[7px]" @click="close">Cancel</button>
+                    <button class="rounded-sm border border-swoosh-text-muted bg-transparent text-base-content text-[14px] font-medium transition-colors hover:bg-base-300 px-[18px] py-[7px] disabled:opacity-40" :disabled="!remTitle.trim() || !remAt" @click="submitReminder">
                         Create
                     </button>
                 </div>
@@ -373,32 +289,4 @@ const tabs: { id: CreateModalTab; label: string }[] = [
     color: var(--color-swoosh-text-muted);
 }
 
-.create-modal-body {
-    padding: 20px 20px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.create-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 12px 20px 18px;
-}
-
-.create-form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.create-form-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-swoosh-text-faint);
-}
 </style>
