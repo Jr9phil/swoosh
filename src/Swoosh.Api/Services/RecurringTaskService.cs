@@ -19,6 +19,22 @@ public class RecurringTaskService : IRecurringTaskService
         _crypto = crypto;
     }
 
+    private static bool OccursOnDay(string type, int interval, DateOnly start, DateOnly day)
+    {
+        if (day < start) return false;
+        if (day == start) return true;
+        return type switch
+        {
+            "day"   => (day.DayNumber - start.DayNumber) % interval == 0,
+            "week"  => (day.DayNumber - start.DayNumber) % (7 * interval) == 0,
+            "month" => day.Day == start.Day &&
+                       ((day.Year - start.Year) * 12 + (day.Month - start.Month)) % interval == 0,
+            "year"  => day.Month == start.Month && day.Day == start.Day &&
+                       (day.Year - start.Year) % interval == 0,
+            _       => false
+        };
+    }
+
     // Promotes interval+type to a coarser unit when the division is exact.
     // e.g. 7 days → 1 week, 14 days → 2 weeks, 52 weeks → 1 year, 12 months → 1 year
     private static (string Type, int Interval) Normalize(string type, int interval)
@@ -130,6 +146,42 @@ public class RecurringTaskService : IRecurringTaskService
 
         _db.RecurringTasks.Add(entity);
         await _db.SaveChangesAsync();
+
+        // Spawn a task immediately if today is an occurrence day.
+        if (dto.IsActive)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var start = dto.RecurrenceDate != null && DateOnly.TryParse(dto.RecurrenceDate, out var d) ? d : today;
+            if (OccursOnDay(dto.RecurrenceType, dto.RecurrenceInterval, start, today))
+            {
+                DateTime deadline;
+                if (dto.RecurrenceTime != null && TimeOnly.TryParse(dto.RecurrenceTime, out var t))
+                    deadline = new DateTime(start.Year, start.Month, start.Day, t.Hour, t.Minute, 0, DateTimeKind.Unspecified);
+                else
+                    deadline = new DateTime(start.Year, start.Month, start.Day, 23, 59, 0, DateTimeKind.Unspecified);
+
+                var (encSpawnTitle, spawnKeyVer) = _crypto.Encrypt(dto.Title, userId, salt);
+                _db.Tasks.Add(new Domain.TaskItem
+                {
+                    Id                   = Guid.NewGuid(),
+                    UserId               = userId,
+                    EncryptedTitle       = encSpawnTitle,
+                    EncryptedNotes       = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
+                    EncryptedDeadline    = _crypto.EncryptNullableDateTime(deadline, userId, salt).Ciphertext,
+                    EncryptedCompletedAt = _crypto.EncryptNullableDateTime(null, userId, salt).Ciphertext,
+                    EncryptedPinned      = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
+                    EncryptedPriority    = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext,
+                    EncryptedRating      = _crypto.EncryptInt(0, userId, salt).Ciphertext,
+                    EncryptedIcon        = dto.Icon.HasValue ? _crypto.EncryptNullableInt(dto.Icon.Value, userId, salt).Ciphertext : null,
+                    KeyVersion           = spawnKeyVer,
+                    CreatedAt            = now,
+                    Modified             = now,
+                });
+
+                entity.EncryptedLastSpawnedDate = _crypto.EncryptNullableString(today.ToString("yyyy-MM-dd"), userId, salt).Ciphertext;
+                await _db.SaveChangesAsync();
+            }
+        }
 
         return new RecurringTaskDto
         {

@@ -40,6 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddHostedService<ReencryptionService>();
+builder.Services.AddHostedService<RecurringTaskSpawnService>();
 
 builder.Services.AddCors(options =>
 {

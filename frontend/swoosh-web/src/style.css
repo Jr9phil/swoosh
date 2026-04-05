@@ -208,6 +208,8 @@
     .section-label svg   { width: 11px; height: 11px; flex-shrink: 0; }
     .section-label svg.section-toggle { width: 16px; height: 16px; }
 
+    .section-label.recurring { color: var(--color-primary); opacity: 0.8; cursor: default; }
+    .section-label.recurring .section-count { background: var(--color-primary); }
     .section-label.pinned { color: var(--color-secondary); opacity: 0.8; }
     .section-label.high   { color: var(--color-warning);   opacity: 0.8; }
     .section-label.med    { color: var(--color-info);       opacity: 0.8; }
@@ -245,6 +247,34 @@
     }
     .section-label:hover .section-toggle { opacity: 0.7; }
     .section-label.open  .section-toggle { transform: rotate(90deg); }
+
+    /* ── Recurring today rows ── */
+    .recurring-today-item {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 11px 14px;
+        background: var(--color-base-200);
+        border-bottom: 1px solid var(--color-swoosh-border);
+    }
+    .recurring-today-item:first-child { border-radius: var(--radius-r) var(--radius-r) 0 0; }
+    .recurring-today-item:last-child  { border-radius: 0 0 var(--radius-r) var(--radius-r); border-bottom: none; }
+    .recurring-today-item:only-child  { border-radius: var(--radius-r); border-bottom: none; }
+    .recurring-today-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .recurring-today-title {
+        font-size: 0.875rem; font-weight: 500; color: var(--color-base-content);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .recurring-today-rate {
+        font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-primary);
+    }
+    .recurring-today-time {
+        font-family: var(--font-mono); font-size: 11px; color: var(--color-swoosh-text-faint);
+        flex-shrink: 0;
+    }
+    /* Priority accent */
+    .task-group .recurring-today-item.priority-3 { border-left: 3px solid rgba(224,112,80,0.7); }
+    .task-group .recurring-today-item.priority-2 { border-left: 3px solid rgba(80,160,224,0.7); }
+    .task-group .recurring-today-item.priority-1 { border-left: 3px solid rgba(80,192,128,0.7); }
 
     .section-divider {
         height: 1px; background: var(--color-swoosh-border); margin: 28px 0 0;

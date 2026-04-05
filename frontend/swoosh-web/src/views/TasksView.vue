@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
 import { useUiStore } from '../stores/ui'
+import { useRecurringStore } from '../stores/recurring'
 import { PRIORITIES } from '../types/priority'
 import type { Task } from '../types/task'
 import { useRouter } from 'vue-router'
@@ -14,6 +15,7 @@ import { useTaskDrag } from '../composables/useTaskDrag'
 import { Plus, Pin, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
+const recurringStore = useRecurringStore()
 const auth = useAuthStore()
 const ui = useUiStore()
 const router = useRouter()
@@ -197,10 +199,11 @@ function handleHeaderClick(val: number | string, event: MouseEvent, isCompleted 
   }
 }
 
+
 onMounted(async () => {
   clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
   try {
-    await tasksStore.fetchTasks()
+    await Promise.all([tasksStore.fetchTasks(), recurringStore.fetchAll()])
   } catch {
     auth.logout()
     router.push('/login')

@@ -12,22 +12,13 @@ const editingId = ref<string | null>(null)
 const editForm = ref<CreateRecurringTask>({
     title: '',
     notes: null,
-    recurrenceType: 'daily',
-    recurrenceInterval: null,
+    recurrenceType: 'day',
+    recurrenceInterval: 1,
     isActive: true,
 })
 
-const recurrenceLabels: Record<RecurrenceType, string> = {
-    daily: 'Every day',
-    interval: 'Every X days',
-    weekly: 'Every week',
-    monthly: 'Every month',
-    custom: 'Custom',
-}
-
-function recurrenceDescription(type: RecurrenceType, interval: number | null): string {
-    if (type === 'interval' && interval) return `Every ${interval} day${interval !== 1 ? 's' : ''}`
-    return recurrenceLabels[type]
+function recurrenceDescription(type: RecurrenceType, interval: number): string {
+    return interval === 1 ? `Every ${type}` : `Every ${interval} ${type}s`
 }
 
 function openEdit(id: string) {
@@ -38,7 +29,7 @@ function openEdit(id: string) {
         title: item.title,
         notes: item.notes,
         recurrenceType: item.recurrenceType,
-        recurrenceInterval: item.recurrenceInterval,
+        recurrenceInterval: item.recurrenceInterval ?? 1,
         isActive: item.isActive,
     }
 }
@@ -110,16 +101,15 @@ onMounted(() => store.fetchAll())
                             <input v-model="editForm.title" class="input input-sm w-full" maxlength="200" @keydown.escape="cancelEdit" autofocus />
                         </div>
                         <div class="form-field">
-                            <select v-model="editForm.recurrenceType" class="select select-sm w-full">
-                                <option value="daily">Every day</option>
-                                <option value="interval">Every X days</option>
-                                <option value="weekly">Every week</option>
-                                <option value="monthly">Every month</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        <div v-if="editForm.recurrenceType === 'interval'" class="form-field">
-                            <input v-model.number="editForm.recurrenceInterval" type="number" min="1" max="365" class="input input-sm w-full" placeholder="Days" />
+                            <div class="recurrence-row">
+                                <input v-model.number="editForm.recurrenceInterval" type="number" min="1" max="999" class="input input-sm w-[58px]" />
+                                <select v-model="editForm.recurrenceType" class="select select-sm bg-base-100 w-[90px]">
+                                    <option value="day">{{ editForm.recurrenceInterval === 1 ? 'day' : 'days' }}</option>
+                                    <option value="week">{{ editForm.recurrenceInterval === 1 ? 'week' : 'weeks' }}</option>
+                                    <option value="month">{{ editForm.recurrenceInterval === 1 ? 'month' : 'months' }}</option>
+                                    <option value="year">{{ editForm.recurrenceInterval === 1 ? 'year' : 'years' }}</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button class="btn btn-xs btn-ghost" @click="cancelEdit">Cancel</button>
@@ -368,5 +358,11 @@ onMounted(() => store.fetchAll())
     width: 32px;
     height: 32px;
     opacity: 0.3;
+}
+
+.recurrence-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 </style>

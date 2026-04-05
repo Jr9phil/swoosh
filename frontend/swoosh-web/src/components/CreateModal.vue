@@ -85,6 +85,10 @@ function handleTaskCreated() {
     close()
 }
 
+function handleRecurringCreated() {
+    close()
+}
+
 async function submitNoteCard() {
     if (!nTitle.value.trim()) return
     await noteCardsStore.create({
@@ -152,7 +156,7 @@ const tabs: { id: CreateModalTab; label: string }[] = [
 
             <!-- Recurring tab -->
             <template v-else-if="ui.activeTab === 'recurring'">
-                <RecurringEdit ref="recurringEditRef" @close="close" @created="close" />
+                <RecurringEdit ref="recurringEditRef" @close="close" @created="handleRecurringCreated" />
             </template>
 
             <!-- NoteCard tab -->

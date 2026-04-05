@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Pin, X, Ban, Clock, Calendar } from 'lucide-vue-next'
 import { PRIORITIES } from '../types/priority'
 import { useRecurringStore } from '../stores/recurring'
+import { useTasksStore } from '../stores/tasks'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
@@ -14,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const recurringStore = useRecurringStore()
+const tasksStore = useTasksStore()
 const loading = ref(false)
 const showValidation = ref(false)
 
@@ -21,7 +23,12 @@ const editedTitle    = ref('')
 const editedNotes    = ref('')
 const rInterval      = ref(1)
 const rType          = ref<RecurrenceType>('day')
-const rDate          = ref('')
+function todayString() {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const rDate          = ref(todayString())
 const rTime          = ref('')
 const editedPinned   = ref(false)
 const editedRating   = ref(0)
@@ -54,7 +61,7 @@ function resetForm() {
     editedNotes.value    = ''
     rInterval.value      = 1
     rType.value          = 'day'
-    rDate.value          = ''
+    rDate.value          = todayString()
     rTime.value          = ''
     editedPinned.value   = false
     editedRating.value   = 0
@@ -94,6 +101,7 @@ async function submit() {
             rating:            editedRating.value,
             icon:              selectedIcon.value,
         })
+        await tasksStore.fetchTasks()
         emit('created')
         resetForm()
     } finally {
@@ -137,21 +145,21 @@ defineExpose({ resetForm, isFormBlank })
             <!-- Recurrence + Time -->
             <div>
                 <div class="font-bold font-mono uppercase text-swoosh-text-faint text-[11px] tracking-[0.10em] mb-1.5">Repeat every</div>
-                <div class="flex gap-2 items-center">
+                <div class="flex gap-1.5 items-center">
                     <!-- Interval number -->
-                    <div class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 w-[72px] flex-shrink-0">
+                    <div class="flex rounded-sm overflow-hidden border border-swoosh bg-base-100 transition-colors focus-within:border-swoosh-border-hover focus-within:bg-base-200 w-[58px] flex-shrink-0">
                         <input
                             v-model.number="rInterval"
                             type="number"
                             min="1"
                             max="999"
-                            class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[10px] text-[14px] w-full text-center"
+                            class="flex-1 bg-transparent text-base-content font-mono outline-none py-[10px] px-[8px] text-[14px] w-full text-center"
                         />
                     </div>
                     <!-- Unit dropdown -->
                     <select
                         v-model="rType"
-                        class="rounded-sm border border-swoosh bg-base-100 text-base-content font-mono outline-none py-[10px] px-[10px] text-[14px] appearance-none cursor-pointer w-[90px] flex-shrink-0 transition-colors hover:border-swoosh-border-hover focus:border-swoosh-border-hover focus:bg-base-200"
+                        class="rounded-sm border border-swoosh bg-base-100 text-base-content font-mono outline-none py-[10px] px-[8px] text-[14px] appearance-none cursor-pointer w-[78px] flex-shrink-0 transition-colors hover:border-swoosh-border-hover focus:border-swoosh-border-hover focus:bg-base-200"
                     >
                         <option value="day">{{ rInterval === 1 ? 'day' : 'days' }}</option>
                         <option value="week">{{ rInterval === 1 ? 'week' : 'weeks' }}</option>
@@ -174,15 +182,15 @@ defineExpose({ resetForm, isFormBlank })
                         <input
                             type="date"
                             v-model="rDate"
-                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px]"
+                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[8px] text-[13px]"
                         />
                         <button
                             type="button"
                             @click="rDate = ''"
                             title="Remove date"
-                            class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
+                            class="border-l border-swoosh px-1.5 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
                         >
-                            <X :size="11" />
+                            <X :size="10" />
                         </button>
                     </div>
 
@@ -202,15 +210,15 @@ defineExpose({ resetForm, isFormBlank })
                         <input
                             type="time"
                             v-model="rTime"
-                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[13px] text-[14px]"
+                            class="bg-transparent text-base-content font-mono outline-none py-[10px] px-[8px] text-[13px]"
                         />
                         <button
                             type="button"
                             @click="rTime = ''"
                             title="Remove time"
-                            class="border-l border-swoosh px-2 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
+                            class="border-l border-swoosh px-1.5 text-swoosh-text-faint hover:text-error hover:bg-base-200 transition-colors flex items-center"
                         >
-                            <X :size="11" />
+                            <X :size="10" />
                         </button>
                     </div>
                 </div>
