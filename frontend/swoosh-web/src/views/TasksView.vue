@@ -236,6 +236,11 @@ const focusedTaskId = ref<string | null>(null)
 // Collapses unrelated sections, focuses the header to the task's day, and scrolls to the task.
 // Clicking the same task again restores all sections.
 function handleJumpToTask(task: any) {
+  if (task.isRecurring) {
+    router.push('/recurring')
+    return
+  }
+
   if (focusedTaskId.value === task.id) {
     focusedTaskId.value = null
     Object.keys(priorityExpanded.value).forEach(k => { priorityExpanded.value[k] = true })
