@@ -165,6 +165,7 @@ public class RecurringTaskService : IRecurringTaskService
                 {
                     Id                   = Guid.NewGuid(),
                     UserId               = userId,
+                    RecurringTaskId      = entity.Id,
                     EncryptedTitle       = encSpawnTitle,
                     EncryptedNotes       = _crypto.EncryptNullableString(dto.Notes, userId, salt).Ciphertext,
                     EncryptedDeadline    = _crypto.EncryptNullableDateTime(deadline, userId, salt).Ciphertext,

@@ -192,16 +192,21 @@ function isPastDay(d: Date) {
   return dayStart < today
 }
 
-function isSameDayLocal(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth()    === b.getMonth()    &&
-         a.getDate()     === b.getDate()
-}
-
 function recurringForDay(d: Date): Task[] {
-  if (isSameDayLocal(d, now.value)) return []
+  if (isPastDay(d)) return []
   return recurringStore.items
-    .filter(r => occursOnDay(r, d))
+    .filter(r => {
+      if (!occursOnDay(r, d)) return false
+      // Hide if a real spawned task already exists for this recurring task on this day
+      return !tasksStore.tasks.some(t => {
+        if (t.recurringTaskId !== r.id) return false
+        if (!t.deadline) return false
+        const dl = new Date(t.deadline)
+        return dl.getFullYear() === d.getFullYear() &&
+               dl.getMonth()    === d.getMonth()    &&
+               dl.getDate()     === d.getDate()
+      })
+    })
     .map(r => toTimelineTask(r, d))
 }
 

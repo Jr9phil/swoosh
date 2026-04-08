@@ -60,6 +60,7 @@ public class TaskService : ITaskService
                 {
                     Id = t.Id,
                     ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
                     Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                     Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                     Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -123,6 +124,7 @@ public class TaskService : ITaskService
                 {
                     Id = t.Id,
                     ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
                     Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                     Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                     Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -155,6 +157,7 @@ public class TaskService : ITaskService
             {
                 Id = t.Id,
                 ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                 Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),

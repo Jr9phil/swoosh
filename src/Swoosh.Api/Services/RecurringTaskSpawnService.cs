@@ -138,6 +138,7 @@ public class RecurringTaskSpawnService : BackgroundService
                     {
                         Id                  = Guid.NewGuid(),
                         UserId              = userId,
+                        RecurringTaskId     = r.Id,
                         EncryptedTitle      = encTitle,
                         EncryptedNotes      = crypto.EncryptNullableString(notes, userId, salt).Ciphertext,
                         EncryptedDeadline   = crypto.EncryptNullableDateTime(deadline, userId, salt).Ciphertext,
