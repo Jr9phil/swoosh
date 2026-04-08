@@ -184,16 +184,35 @@ function handleTouchEnd() {
   }
 }
 
+const headerClickTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
 function handleHeaderClick(val: number | string, event: MouseEvent, isCompleted = false) {
   if (isLongPressActive.value) {
     isLongPressActive.value = false
     return
   }
-  if (isCompleted) {
-    toggleCompleted(event)
-  } else {
-    togglePriority(val, event)
+
+  const key = val.toString() + (isCompleted ? '-completed' : '')
+
+  if (event.detail >= 2) {
+    // Double-click: cancel pending single-click and apply shift behaviour
+    const pending = headerClickTimers.get(key)
+    if (pending) {
+      clearTimeout(pending)
+      headerClickTimers.delete(key)
+    }
+    if (isCompleted) toggleCompleted({ shiftKey: true } as MouseEvent)
+    else togglePriority(val, { ...event, shiftKey: true })
+    return
   }
+
+  // Single click: defer so a following double-click can cancel it
+  const timer = setTimeout(() => {
+    headerClickTimers.delete(key)
+    if (isCompleted) toggleCompleted(event)
+    else togglePriority(val, event)
+  }, 220)
+  headerClickTimers.set(key, timer)
 }
 
 
