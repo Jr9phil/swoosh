@@ -67,9 +67,6 @@ const completedTasks = computed(() =>
         .sort((a, b) => new Date(b.completed!).getTime() - new Date(a.completed!).getTime())
 )
 
-const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline, t.timerDuration)).length
-)
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
 const isEverythingCompleted = computed(() => tasksStore.tasks.length > 0 && incompleteTasks.value.length === 0 && pinnedTasks.value.length === 0)
@@ -214,60 +211,39 @@ onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
 })
 
-function jumpToOverdue() {
+const focusedTaskId = ref<string | null>(null)
+
+// Called when a task is clicked in the timeline panel.
+// Collapses unrelated sections, focuses the header to the task's day, and scrolls to the task.
+// Clicking the same task again restores all sections.
+function handleJumpToTask(task: any) {
+  if (focusedTaskId.value === task.id) {
+    focusedTaskId.value = null
+    Object.keys(priorityExpanded.value).forEach(k => { priorityExpanded.value[k] = true })
+    return
+  }
+
+  focusedTaskId.value = task.id
   completedExpanded.value = false
-  Object.keys(priorityExpanded.value).forEach(key => {
-    const tasks = key === 'pinned'
-        ? pinnedTasks.value
-        : incompleteTasks.value.filter(t => t.priority === parseInt(key))
-    if (!hasOverdueInGroup(tasks)) priorityExpanded.value[key] = false
-  })
-  if (hasOverdueInGroup(pinnedTasks.value)) priorityExpanded.value['pinned'] = true
-  tasksByPriority.value.forEach(group => {
-    if (hasOverdueInGroup(group.tasks)) priorityExpanded.value[group.priority.value.toString()] = true
+
+  const key = task.pinned ? 'pinned' : task.priority.toString()
+  const wasCollapsed = !priorityExpanded.value[key]
+
+  // Collapse every section except the one containing this task
+  Object.keys(priorityExpanded.value).forEach(k => {
+    priorityExpanded.value[k] = k === key
   })
 
-  const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline, t.timerDuration))
-  if (firstOverdue) {
-    const targetTask = firstOverdue.parentId
-        ? tasksStore.tasks.find(t => t.id === firstOverdue.parentId)
-        : firstOverdue
-
-    if (!targetTask) return
-
-    const d = new Date(firstOverdue.deadline!)
+  // Focus the timeline header on the task's deadline day
+  if (task.deadline) {
+    const d = new Date(task.deadline)
     const today = new Date()
-    today.setHours(0,0,0,0)
-    d.setHours(0,0,0,0)
+    today.setHours(0, 0, 0, 0)
+    d.setHours(0, 0, 0, 0)
     const offset = Math.round((d.getTime() - today.getTime()) / 86400000)
     imgHeader.value?.focusOffset(offset)
-
-    nextTick(() => {
-      const el = document.getElementById('task-' + targetTask.id)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        el.classList.add('highlight-pulse')
-        setTimeout(() => el.classList.remove('highlight-pulse'), 2000)
-      }
-    })
   }
-}
 
-// Expand the task's section if collapsed, then scroll to it.
-// Called when a task is clicked in the timeline panel.
-function handleJumpToTask(task: any) {
-  if (!task.completed) completedExpanded.value = false
-
-  const key = task.pinned &&
-  !isOverdue(task.deadline, task.timerDuration) &&
-  !isDueToday(task.deadline)
-      ? 'pinned'
-      : task.priority.toString()
-
-  const wasCollapsed = !priorityExpanded.value[key]
-  priorityExpanded.value[key] = true
-
-  // Wait for the expand animation before scrollIntoView
   const delay = wasCollapsed ? 250 : 0
   setTimeout(() => {
     nextTick(() => {
@@ -329,17 +305,7 @@ const skeletonSections = [
 
       <!-- ── Image Header + Timeline ── -->
       <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="ui.triggerCreateModal('task')" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
-
-      <!-- ── Overdue banner ── -->
-      <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">
-        <span class="overdue-banner-dot" v-animate-sync:overdue="'dot'"></span>
-        <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
-        <button class="overdue-banner-action" @click="jumpToOverdue">
-          View
-          <ChevronRight :size="12"/>
-        </button>
-      </div>
-
+      
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">
         <div v-for="(section, si) in skeletonSections" :key="si">
