@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Pin, X, Ban, Clock, Calendar } from 'lucide-vue-next'
 import { PRIORITIES } from '../types/priority'
 import { useRecurringStore } from '../stores/recurring'
@@ -7,12 +7,20 @@ import { useTasksStore } from '../stores/tasks'
 import TaskRating from './TaskRating.vue'
 import TaskIcon from './TaskIcon.vue'
 import { TASK_ICONS } from '../types/icon'
-import type { RecurrenceType } from '../types/recurring'
+import type { RecurrenceType, RecurringTask } from '../types/recurring'
+
+const props = defineProps<{
+    /** When provided, the form operates in edit mode for this task. */
+    task?: RecurringTask
+}>()
 
 const emit = defineEmits<{
     (e: 'close'): void
     (e: 'created'): void
+    (e: 'updated'): void
 }>()
+
+const isEditMode = computed(() => !!props.task)
 
 const recurringStore = useRecurringStore()
 const tasksStore = useTasksStore()
@@ -39,6 +47,21 @@ const hiddenTimeInput = ref<HTMLInputElement | null>(null)
 
 const priorityIndex  = ref(PRIORITIES.findIndex(p => p.value === 0))
 const editedPriority = computed(() => PRIORITIES[priorityIndex.value].value)
+
+// Populate fields from task prop when in edit mode
+watch(() => props.task, (task) => {
+    if (!task) return
+    editedTitle.value   = task.title
+    editedNotes.value   = task.notes ?? ''
+    rInterval.value     = task.recurrenceInterval
+    rType.value         = task.recurrenceType
+    rDate.value         = task.recurrenceDate ?? ''
+    rTime.value         = task.recurrenceTime ?? ''
+    editedPinned.value  = task.pinned
+    editedRating.value  = task.rating
+    selectedIcon.value  = task.icon ?? null
+    priorityIndex.value = PRIORITIES.findIndex(p => p.value === task.priority) ?? 0
+}, { immediate: true })
 
 function cyclePriority() {
     priorityIndex.value = (priorityIndex.value + 1) % PRIORITIES.length
@@ -88,22 +111,28 @@ async function submit() {
     }
     loading.value = true
     try {
-        await recurringStore.create({
-            title:             editedTitle.value.trim(),
-            notes:             editedNotes.value || null,
-            recurrenceType:    rType.value,
+        const payload = {
+            title:              editedTitle.value.trim(),
+            notes:              editedNotes.value || null,
+            recurrenceType:     rType.value,
             recurrenceInterval: Math.max(1, rInterval.value || 1),
-            recurrenceDate:    rDate.value || null,
-            recurrenceTime:    rTime.value || null,
-            isActive:          true,
-            priority:          editedPriority.value,
-            pinned:            editedPinned.value,
-            rating:            editedRating.value,
-            icon:              selectedIcon.value,
-        })
-        await tasksStore.fetchTasks()
-        emit('created')
-        resetForm()
+            recurrenceDate:     rDate.value || null,
+            recurrenceTime:     rTime.value || null,
+            isActive:           props.task?.isActive ?? true,
+            priority:           editedPriority.value,
+            pinned:             editedPinned.value,
+            rating:             editedRating.value,
+            icon:               selectedIcon.value,
+        }
+        if (isEditMode.value && props.task) {
+            await recurringStore.update(props.task.id, payload)
+            emit('updated')
+        } else {
+            await recurringStore.create(payload)
+            await tasksStore.fetchTasks()
+            emit('created')
+            resetForm()
+        }
     } finally {
         loading.value = false
     }
@@ -319,7 +348,7 @@ defineExpose({ resetForm, isFormBlank })
                     :disabled="loading"
                 >
                     <span v-if="loading" class="loading loading-spinner loading-xs"></span>
-                    <span v-else>Add recurring</span>
+                    <span v-else>{{ isEditMode ? 'Save changes' : 'Add recurring' }}</span>
                 </button>
 
                 <!-- Conjoined icon buttons — mobile (380px–sm) -->
@@ -336,7 +365,7 @@ defineExpose({ resetForm, isFormBlank })
                         :disabled="loading"
                     >
                         <span v-if="loading" class="loading loading-spinner loading-xs"></span>
-                        <span v-else class="text-[11px] font-mono">+</span>
+                        <span v-else class="text-[11px] font-mono">{{ isEditMode ? '✓' : '+' }}</span>
                     </button>
                 </div>
 
@@ -351,7 +380,7 @@ defineExpose({ resetForm, isFormBlank })
                     :disabled="loading"
                 >
                     <span v-if="loading" class="loading loading-spinner loading-xs"></span>
-                    <span v-else>Add recurring</span>
+                    <span v-else>{{ isEditMode ? 'Save changes' : 'Add recurring' }}</span>
                 </button>
             </div>
         </div>

@@ -2,45 +2,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRecurringStore } from '../stores/recurring'
 import { useUiStore } from '../stores/ui'
-import { Plus, Pencil, Trash2, CalendarSync, ToggleLeft, ToggleRight } from 'lucide-vue-next'
-import type { RecurrenceType, CreateRecurringTask } from '../types/recurring'
+import { Plus, CalendarSync, Trash2, RefreshCw } from 'lucide-vue-next'
+import RecurringEdit from '../components/RecurringEdit.vue'
+import TaskRating from '../components/TaskRating.vue'
+import TaskIcon from '../components/TaskIcon.vue'
+import type { RecurringTask } from '../types/recurring'
 
 const store = useRecurringStore()
 const ui = useUiStore()
 
 const editingId = ref<string | null>(null)
-const editForm = ref<CreateRecurringTask>({
-    title: '',
-    notes: null,
-    recurrenceType: 'day',
-    recurrenceInterval: 1,
-    isActive: true,
-})
-
-function recurrenceDescription(type: RecurrenceType, interval: number): string {
-    return interval === 1 ? `Every ${type}` : `Every ${interval} ${type}s`
-}
 
 function openEdit(id: string) {
-    const item = store.items.find(r => r.id === id)
-    if (!item) return
     editingId.value = id
-    editForm.value = {
-        title: item.title,
-        notes: item.notes,
-        recurrenceType: item.recurrenceType,
-        recurrenceInterval: item.recurrenceInterval ?? 1,
-        isActive: item.isActive,
-    }
 }
 
 function cancelEdit() {
-    editingId.value = null
-}
-
-async function submitEdit() {
-    if (!editForm.value.title.trim() || !editingId.value) return
-    await store.update(editingId.value, { ...editForm.value })
     editingId.value = null
 }
 
@@ -62,8 +39,30 @@ async function confirmDelete(id: string) {
     }
 }
 
-const active = computed(() => store.items.filter(r => r.isActive))
-const inactive = computed(() => store.items.filter(r => !r.isActive))
+function frequencyLabel(item: RecurringTask): string {
+    const base = item.recurrenceInterval === 1
+        ? `Every ${item.recurrenceType}`
+        : `Every ${item.recurrenceInterval} ${item.recurrenceType}s`
+    if (!item.recurrenceTime) return base
+    const [h, m] = item.recurrenceTime.split(':')
+    const d = new Date()
+    d.setHours(Number(h), Number(m))
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    return `${base} · ${time}`
+}
+
+const FREQUENCY_GROUPS = [
+    { type: 'day',   label: 'Daily' },
+    { type: 'week',  label: 'Weekly' },
+    { type: 'month', label: 'Monthly' },
+    { type: 'year',  label: 'Yearly' },
+] as const
+
+const groups = computed(() =>
+    FREQUENCY_GROUPS
+        .map(g => ({ ...g, items: store.items.filter(r => r.recurrenceType === g.type) }))
+        .filter(g => g.items.length > 0)
+)
 
 onMounted(() => store.fetchAll())
 </script>
@@ -80,8 +79,19 @@ onMounted(() => store.fetchAll())
             </button>
         </div>
 
-        <!-- Loading -->
-        <div v-if="store.loading" class="view-empty">Loading...</div>
+        <!-- Skeleton loader -->
+        <template v-if="store.loading">
+            <p class="recurring-section-label skeleton-label"></p>
+            <div class="recurring-list">
+                <div v-for="i in 3" :key="i" class="recurring-skeleton" :style="{ '--delay': `-${(i - 1) * 150}ms` }">
+                    <div class="flex-1 min-w-0 flex flex-col gap-2">
+                        <div class="h-[14px] rounded-sm shimmer" :style="{ width: i === 1 ? '55%' : i === 2 ? '70%' : '45%' }"></div>
+                        <div class="h-[12px] rounded-full shimmer w-[88px]"></div>
+                    </div>
+                    <div class="shimmer w-[32px] h-[32px] rounded-[6px] flex-shrink-0"></div>
+                </div>
+            </div>
+        </template>
 
         <!-- Empty state -->
         <div v-else-if="!store.items.length" class="view-empty">
@@ -90,78 +100,58 @@ onMounted(() => store.fetchAll())
             <button class="btn btn-sm btn-ghost mt-2" @click="ui.triggerCreateModal('recurring')">Create one</button>
         </div>
 
-        <!-- Active -->
-        <template v-if="active.length">
-            <p class="recurring-section-label">Active</p>
-            <div class="recurring-list">
-                <template v-for="item in active" :key="item.id">
-                    <!-- Inline edit form -->
-                    <div v-if="editingId === item.id" class="recurring-edit-card">
-                        <div class="form-field">
-                            <input v-model="editForm.title" class="input input-sm w-full" maxlength="200" @keydown.escape="cancelEdit" autofocus />
-                        </div>
-                        <div class="form-field">
-                            <div class="recurrence-row">
-                                <input v-model.number="editForm.recurrenceInterval" type="number" min="1" max="999" class="input input-sm w-[58px]" />
-                                <select v-model="editForm.recurrenceType" class="select select-sm bg-base-100 w-[90px]">
-                                    <option value="day">{{ editForm.recurrenceInterval === 1 ? 'day' : 'days' }}</option>
-                                    <option value="week">{{ editForm.recurrenceInterval === 1 ? 'week' : 'weeks' }}</option>
-                                    <option value="month">{{ editForm.recurrenceInterval === 1 ? 'month' : 'months' }}</option>
-                                    <option value="year">{{ editForm.recurrenceInterval === 1 ? 'year' : 'years' }}</option>
-                                </select>
+        <!-- Task list grouped by frequency -->
+        <template v-if="!store.loading && store.items.length">
+            <template v-for="group in groups" :key="group.type">
+                <p class="recurring-section-label">{{ group.label }}</p>
+                <ul class="recurring-list">
+                    <template v-for="item in group.items" :key="item.id">
+                        <!-- Inline edit form -->
+                        <li v-if="editingId === item.id" class="task-item recurring-edit-card">
+                            <RecurringEdit
+                                :task="item"
+                                @close="cancelEdit"
+                                @updated="cancelEdit"
+                            />
+                        </li>
+                        <!-- Normal row -->
+                        <li v-else class="task-item" :class="{ 'recurring-inactive': !item.isActive }">
+                            <div class="task-main-row">
+                                <div class="shrink-0 mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        class="recurring-toggle"
+                                        :checked="item.isActive"
+                                        @change="toggleActive(item.id)"
+                                        title="Toggle active"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0 cursor-text" @click="openEdit(item.id)">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="flex items-center gap-1.5 min-w-0">
+                                            <span class="text-[15.5px] font-bold text-base-content leading-[1.45] break-words">{{ item.title }}</span>
+                                            <TaskIcon v-if="item.icon != null" :value="item.icon" />
+                                        </span>
+                                        <TaskRating :rating="item.rating" :priority="item.priority" :pinned="item.pinned" />
+                                    </div>
+                                    <p v-if="item.notes" class="task-notes text-[13.5px] text-swoosh-text-muted mt-1 leading-[1.5] break-words">{{ item.notes }}</p>
+                                    <div class="badges">
+                                        <span class="badge">
+                                            <RefreshCw :size="11" />
+                                            {{ frequencyLabel(item) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="task-actions shrink-0">
+                                    <button class="icon-action-btn danger" @click.stop="confirmDelete(item.id)" title="Delete">
+                                        <Trash2 class="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-actions">
-                            <button class="btn btn-xs btn-ghost" @click="cancelEdit">Cancel</button>
-                            <button class="btn btn-xs btn-primary" @click="submitEdit" :disabled="!editForm.title.trim()">Save</button>
-                        </div>
-                    </div>
-                    <!-- Normal row -->
-                    <div v-else class="recurring-item">
-                        <div class="recurring-item-main">
-                            <span class="recurring-item-title">{{ item.title }}</span>
-                            <span class="recurring-item-rate">{{ recurrenceDescription(item.recurrenceType, item.recurrenceInterval) }}</span>
-                            <p v-if="item.notes" class="recurring-item-notes">{{ item.notes }}</p>
-                        </div>
-                        <div class="recurring-item-actions">
-                            <button class="icon-action-btn" @click="toggleActive(item.id)" title="Pause">
-                                <ToggleRight class="w-4 h-4 text-success" />
-                            </button>
-                            <button class="icon-action-btn" @click="openEdit(item.id)" title="Edit">
-                                <Pencil class="w-3.5 h-3.5" />
-                            </button>
-                            <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
-                                <Trash2 class="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </template>
-
-        <!-- Inactive -->
-        <template v-if="inactive.length">
-            <p class="recurring-section-label">Paused</p>
-            <div class="recurring-list">
-                <div v-for="item in inactive" :key="item.id" class="recurring-item inactive">
-                    <div class="recurring-item-main">
-                        <span class="recurring-item-title">{{ item.title }}</span>
-                        <span class="recurring-item-rate">{{ recurrenceDescription(item.recurrenceType, item.recurrenceInterval) }}</span>
-                    </div>
-                    <div class="recurring-item-actions">
-                        <button class="icon-action-btn" @click="toggleActive(item.id)" title="Resume">
-                            <ToggleLeft class="w-4 h-4" />
-                        </button>
-                        <button class="icon-action-btn" @click="openEdit(item.id)" title="Edit">
-                            <Pencil class="w-3.5 h-3.5" />
-                        </button>
-                        <button class="icon-action-btn danger" @click="confirmDelete(item.id)" title="Delete">
-                            <Trash2 class="w-3.5 h-3.5" />
-                        </button>
-                    </div>
-                </div>
-
-            </div>
+                        </li>
+                    </template>
+                </ul>
+            </template>
         </template>
     </div>
 </template>
@@ -209,39 +199,7 @@ onMounted(() => store.fetchAll())
     letter-spacing: 0.08em;
 }
 
-.recurring-edit-card {
-    background: var(--color-base-300);
-    border: 1px solid var(--color-swoosh-border-hover);
-    border-radius: var(--radius-r-sm);
-    padding: 12px 14px;
-    margin-bottom: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-swoosh-text-faint);
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding-top: 4px;
-}
-
+/* ── Section labels ── */
 .recurring-section-label {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -249,7 +207,7 @@ onMounted(() => store.fetchAll())
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--color-swoosh-text-faint);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     margin-top: 20px;
 }
 
@@ -257,66 +215,69 @@ onMounted(() => store.fetchAll())
     margin-top: 0;
 }
 
+.skeleton-label {
+    width: 48px;
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.04) 25%,
+        rgba(255,255,255,0.10) 50%,
+        rgba(255,255,255,0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+}
+
+/* ── List container ── */
 .recurring-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    list-style: none;
+    background: var(--color-base-200);
+    border: 1px solid var(--color-swoosh-border);
+    border-radius: var(--radius-r);
+    overflow: visible;
     margin-bottom: 8px;
 }
 
-.recurring-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--color-base-200);
-    border: 1px solid var(--color-swoosh-border);
-    border-radius: var(--radius-r-sm);
-    padding: 12px 14px;
-    transition: background-color 0.15s;
-}
-
-.recurring-item:hover {
-    background: var(--color-base-300);
-}
-
-.recurring-item.inactive {
+.recurring-inactive {
     opacity: 0.5;
 }
 
-.recurring-item-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.recurring-item-title {
-    font-size: 0.875rem;
-    color: var(--color-base-content);
-    font-weight: 500;
-}
-
-.recurring-item-rate {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--color-secondary);
-}
-
-.recurring-item-notes {
-    font-size: 0.75rem;
-    color: var(--color-swoosh-text-muted);
-    margin-top: 2px;
-}
-
-.recurring-item-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+/* ── Toggle ── */
+.recurring-toggle {
+    appearance: none;
+    cursor: pointer;
     flex-shrink: 0;
+    width: 36px;
+    height: 20px;
+    border-radius: 9999px;
+    border: 2px solid var(--color-swoosh-border-hover);
+    background: transparent;
+    position: relative;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.recurring-toggle::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-swoosh-border-hover);
+    top: 50%;
+    left: 2px;
+    transform: translateY(-50%);
+    transition: left 0.2s, background-color 0.2s;
+}
+
+.recurring-toggle:checked {
+    border-color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 18%, transparent);
+}
+
+.recurring-toggle:checked::before {
+    background: var(--color-success);
+    left: calc(100% - 14px);
 }
 
 .icon-action-btn {
@@ -343,6 +304,39 @@ onMounted(() => store.fetchAll())
     color: var(--color-error);
 }
 
+/* ── Skeleton rows ── */
+.recurring-skeleton {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding-inline: 14px;
+    padding-block: 16px;
+    border-bottom: 1px solid var(--color-swoosh-border);
+}
+
+.recurring-skeleton:last-child {
+    border-bottom: none;
+}
+
+/* ── Shimmer animation ── */
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.04) 25%,
+        rgba(255,255,255,0.10) 50%,
+        rgba(255,255,255,0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    animation-delay: var(--delay, 0ms);
+}
+
+@keyframes shimmer {
+    0%   { background-position:  200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Empty state ── */
 .view-empty {
     display: flex;
     flex-direction: column;
@@ -360,9 +354,12 @@ onMounted(() => store.fetchAll())
     opacity: 0.3;
 }
 
-.recurrence-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+/* ── Large screen scaling for skeleton rows ── */
+@media (min-width: 1280px) {
+    .recurring-skeleton { padding-inline: 18px; padding-block: 18px; }
+}
+
+@media (min-width: 1536px) {
+    .recurring-skeleton { padding-inline: 20px; padding-block: 20px; }
 }
 </style>
