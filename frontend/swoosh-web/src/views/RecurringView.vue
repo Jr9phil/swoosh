@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRecurringStore } from '../stores/recurring'
 import { useUiStore } from '../stores/ui'
-import { Plus, CalendarSync, Trash2, RefreshCw } from 'lucide-vue-next'
+import { Plus, CalendarSync, Trash2, RefreshCw, Clock } from 'lucide-vue-next'
 import RecurringEdit from '../components/RecurringEdit.vue'
 import TaskRating from '../components/TaskRating.vue'
 import TaskIcon from '../components/TaskIcon.vue'
@@ -24,13 +24,7 @@ function cancelEdit() {
 async function toggleActive(id: string) {
     const item = store.items.find(r => r.id === id)
     if (!item) return
-    await store.update(id, {
-        title: item.title,
-        notes: item.notes,
-        recurrenceType: item.recurrenceType,
-        recurrenceInterval: item.recurrenceInterval,
-        isActive: !item.isActive,
-    })
+    await store.update(id, { ...item, isActive: !item.isActive })
 }
 
 async function confirmDelete(id: string) {
@@ -43,12 +37,28 @@ function frequencyLabel(item: RecurringTask): string {
     const base = item.recurrenceInterval === 1
         ? `Every ${item.recurrenceType}`
         : `Every ${item.recurrenceInterval} ${item.recurrenceType}s`
-    if (!item.recurrenceTime) return base
-    const [h, m] = item.recurrenceTime.split(':')
+
+    const parts: string[] = [base]
+
+    // Weekly intervals (any multiple of weeks, or days divisible by 7) always
+    // land on the same weekday — show it if we have a start date to derive it from.
+    const alwaysSameWeekday =
+        item.recurrenceType === 'week' ||
+        (item.recurrenceType === 'day' && item.recurrenceInterval % 7 === 0)
+    if (alwaysSameWeekday && item.recurrenceDate) {
+        const [y, mo, d] = item.recurrenceDate.split('-').map(Number)
+        const weekday = new Date(y, mo - 1, d).toLocaleDateString([], { weekday: 'long' })
+        parts.push(weekday)
+    }
+
+    return parts.join(' · ')
+}
+
+function formattedTime(time: string): string {
+    const [h, m] = time.split(':')
     const d = new Date()
     d.setHours(Number(h), Number(m))
-    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-    return `${base} · ${time}`
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
 const FREQUENCY_GROUPS = [
@@ -139,6 +149,10 @@ onMounted(() => store.fetchAll())
                                         <span class="badge">
                                             <RefreshCw :size="11" />
                                             {{ frequencyLabel(item) }}
+                                        </span>
+                                        <span v-if="item.recurrenceTime" class="badge">
+                                            <Clock :size="11" />
+                                            {{ formattedTime(item.recurrenceTime) }}
                                         </span>
                                     </div>
                                 </div>
