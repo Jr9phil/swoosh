@@ -897,6 +897,36 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 }
 
 /* ─────────────────────────────────────────────────────────
+   View header add button (shared across secondary views)
+───────────────────────────────────────────────────────── */
+.view-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding-inline: 15px 17px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--color-swoosh-border-hover);
+    background: transparent;
+    color: var(--color-swoosh-text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+}
+.view-add-btn:hover {
+    border-color: var(--color-swoosh-text-muted);
+    background: var(--color-base-300);
+    color: var(--color-base-content);
+    transform: translateY(-1px);
+}
+.view-add-btn:active { transform: translateY(1px); }
+.view-add-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ─────────────────────────────────────────────────────────
    Empty / all-completed state
 ───────────────────────────────────────────────────────── */
 .empty-state-icon {

@@ -89,7 +89,7 @@ onMounted(() => store.fetchAll())
                 <BellRing class="view-header-icon" />
                 <h1 class="view-title">Reminders</h1>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('reminder')">
+            <button class="view-add-btn" @click="ui.triggerCreateModal('reminder')">
                 <Plus class="w-4 h-4" /> New
             </button>
         </div>
@@ -206,13 +206,6 @@ onMounted(() => store.fetchAll())
     color: var(--color-swoosh-text-muted);
 }
 
-.view-add-btn {
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
 
 .reminder-edit-card {
     background: var(--color-base-300);

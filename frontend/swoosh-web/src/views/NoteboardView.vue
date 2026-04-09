@@ -98,7 +98,7 @@ onMounted(() => store.fetchAll())
                 <Lightbulb class="w-5 h-5 text-swoosh-text-muted" style="color: var(--color-swoosh-text-muted)" />
                 <span class="view-title">Noteboard</span>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('notecard')">
+            <button class="view-add-btn" @click="ui.triggerCreateModal('notecard')">
                 <Plus class="w-4 h-4" /> New card
             </button>
         </div>
@@ -204,13 +204,6 @@ onMounted(() => store.fetchAll())
     color: var(--color-swoosh-text-muted);
 }
 
-.view-add-btn {
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
 
 .noteboard-canvas {
     position: relative;

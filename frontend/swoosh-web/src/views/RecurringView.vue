@@ -84,7 +84,7 @@ onMounted(() => store.fetchAll())
                 <CalendarSync class="view-header-icon" />
                 <h1 class="view-title">Recurring</h1>
             </div>
-            <button class="btn btn-sm btn-ghost view-add-btn" @click="ui.triggerCreateModal('recurring')">
+            <button class="view-add-btn" @click="ui.triggerCreateModal('recurring')">
                 <Plus class="w-4 h-4" /> New
             </button>
         </div>
@@ -203,14 +203,6 @@ onMounted(() => store.fetchAll())
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--color-swoosh-text-muted);
-}
-
-.view-add-btn {
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
 }
 
 /* ── Section labels ── */
