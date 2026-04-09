@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useAuthStore } from './stores/auth'
 import { useTasksStore } from './stores/tasks'
-import { useRouter } from 'vue-router'
+import { useUiStore } from './stores/ui'
+import { useRouter, RouterLink } from 'vue-router'
 import { LogOut, KeyRound, Download, PanelLeft, ChevronUp, SquareCheckBig, Plus, CalendarSync, Lightbulb, BellRing, Archive, ChartColumn, Network } from 'lucide-vue-next'
 import { onMounted, onUnmounted } from 'vue'
+import CreateModal from './components/CreateModal.vue'
 
 const auth = useAuthStore()
 const tasksStore = useTasksStore()
+const ui = useUiStore()
 const router = useRouter()
 
 let scrollTimer: number | null = null
@@ -49,6 +52,26 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll, { capture: true })
   window.removeEventListener('keydown', handleKeydown)
 })
+
+// Navigate to tasks view and close sidebar on mobile
+function goHome() {
+  router.push('/')
+  closeSidebarOnMobile()
+}
+
+// Closes sidebar on mobile after nav
+function closeSidebarOnMobile() {
+  if (window.innerWidth < 1024) {
+    const cb = getSidebarCheckbox()
+    if (cb) cb.checked = false
+  }
+}
+
+// Triggers the create task modal (watched by TasksView)
+function openCreateModal() {
+  ui.triggerCreateModal()
+  closeSidebarOnMobile()
+}
 
 // Logs the user out after confirmation and redirects to the login page
 function logout() {
@@ -128,51 +151,57 @@ async function exportCsv() {
           <ul class="menu w-full grow">
             <li>
               <label for="sidebar" class="hover:cursor-pointer">
-                <span class="sidebar-brand is-drawer-close:hidden">Swoosh</span>
+                <span class="sidebar-brand is-drawer-close:hidden" @click.stop="goHome">Swoosh</span>
                 <PanelLeft class="flex-shrink-0" />
               </label>
             </li>
             <div class="divider" />
-            <li>
-              <label class="btn btn-soft hover:cursor-pointer">
-                <Plus /> <span class="is-drawer-close:hidden">Add</span>
-              </label>
+
+            <!-- Add button: "Add" label + circular plus -->
+            <li class="sidebar-add-item">
+              <button class="sidebar-add-btn hover:cursor-pointer" @click="openCreateModal">
+                <span class="sidebar-add-circle">
+                  <Plus class="w-3.5 h-3.5" />
+                </span>
+                <span class="sidebar-add-label is-drawer-close:hidden">Add</span>
+              </button>
             </li>
+
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <SquareCheckBig /> <span class="is-drawer-close:hidden">Tasks</span>
-              </label>
+              </RouterLink>
             </li>
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/recurring" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <CalendarSync /> <span class="is-drawer-close:hidden">Recurring</span>
-              </label>
+              </RouterLink>
             </li>
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/noteboard" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <Lightbulb /> <span class="is-drawer-close:hidden">Noteboard</span>
-              </label>
+              </RouterLink>
             </li>
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/reminders" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <BellRing /> <span class="is-drawer-close:hidden">Reminders</span>
-              </label>
+              </RouterLink>
             </li>
             <div class="divider" />
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/progress" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <ChartColumn /> <span class="is-drawer-close:hidden">Progress</span>
-              </label>
+              </RouterLink>
             </li>
             <li>
-              <label class="hover:cursor-pointer">
-                <Network /> <span class="is-drawer-close:hidden">Skilltree</span>
-              </label>
+              <RouterLink to="/skilltree" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
+                <Network /> <span class="is-drawer-close:hidden">Skill Tree</span>
+              </RouterLink>
             </li>
             <li>
-              <label class="hover:cursor-pointer">
+              <RouterLink to="/archive" @click="closeSidebarOnMobile" class="hover:cursor-pointer">
                 <Archive /> <span class="is-drawer-close:hidden">Archive</span>
-              </label>
+              </RouterLink>
             </li>
           </ul>
 
@@ -213,7 +242,10 @@ async function exportCsv() {
           </footer>
         </div>
       </div>
-      
+
     </div>
+
+    <!-- Global create modal (always mounted when logged in) -->
+    <CreateModal v-if="auth.token" />
   </div>
 </template>

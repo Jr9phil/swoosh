@@ -2,19 +2,22 @@
 import { ref, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useAuthStore } from '../stores/auth'
+import { useUiStore } from '../stores/ui'
+import { useRecurringStore } from '../stores/recurring'
 import { PRIORITIES } from '../types/priority'
 import type { Task } from '../types/task'
 import { useRouter } from 'vue-router'
-import TaskEdit from '../components/TaskEdit.vue'
 import TaskItem from '../components/TaskItem.vue'
 import TaskSkeleton from '../components/TaskSkeleton.vue'
 import ImgHeader from '../components/ImgHeader.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { useTaskDrag } from '../composables/useTaskDrag'
-import { Plus, Pin, X, ListPlus, CheckCircle, ChevronRight, CheckSquare } from 'lucide-vue-next'
+import { Plus, Pin, ListPlus, CheckCircle, ChevronRight } from 'lucide-vue-next'
 
 const tasksStore = useTasksStore()
+const recurringStore = useRecurringStore()
 const auth = useAuthStore()
+const ui = useUiStore()
 const router = useRouter()
 
 const now = ref(Date.now())
@@ -64,9 +67,6 @@ const completedTasks = computed(() =>
         .sort((a, b) => new Date(b.completed!).getTime() - new Date(a.completed!).getTime())
 )
 
-const overdueCount = computed(() =>
-    tasksStore.tasks.filter(t => !t.completed && isOverdue(t.deadline, t.timerDuration)).length
-)
 
 const isEverythingEmpty = computed(() => tasksStore.tasks.length === 0)
 const isEverythingCompleted = computed(() => tasksStore.tasks.length > 0 && incompleteTasks.value.length === 0 && pinnedTasks.value.length === 0)
@@ -184,22 +184,42 @@ function handleTouchEnd() {
   }
 }
 
+const headerClickTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
 function handleHeaderClick(val: number | string, event: MouseEvent, isCompleted = false) {
   if (isLongPressActive.value) {
     isLongPressActive.value = false
     return
   }
-  if (isCompleted) {
-    toggleCompleted(event)
-  } else {
-    togglePriority(val, event)
+
+  const key = val.toString() + (isCompleted ? '-completed' : '')
+
+  if (event.detail >= 2) {
+    // Double-click: cancel pending single-click and apply shift behaviour
+    const pending = headerClickTimers.get(key)
+    if (pending) {
+      clearTimeout(pending)
+      headerClickTimers.delete(key)
+    }
+    if (isCompleted) toggleCompleted({ shiftKey: true } as MouseEvent)
+    else togglePriority(val, { ...event, shiftKey: true })
+    return
   }
+
+  // Single click: defer so a following double-click can cancel it
+  const timer = setTimeout(() => {
+    headerClickTimers.delete(key)
+    if (isCompleted) toggleCompleted(event)
+    else togglePriority(val, event)
+  }, 220)
+  headerClickTimers.set(key, timer)
 }
+
 
 onMounted(async () => {
   clockInterval = setInterval(() => { now.value = Date.now() }, 1000)
   try {
-    await tasksStore.fetchTasks()
+    await Promise.all([tasksStore.fetchTasks(), recurringStore.fetchAll()])
   } catch {
     auth.logout()
     router.push('/login')
@@ -210,60 +230,44 @@ onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
 })
 
-function jumpToOverdue() {
+const focusedTaskId = ref<string | null>(null)
+
+// Called when a task is clicked in the timeline panel.
+// Collapses unrelated sections, focuses the header to the task's day, and scrolls to the task.
+// Clicking the same task again restores all sections.
+function handleJumpToTask(task: any) {
+  if (task.isRecurring) {
+    router.push('/recurring')
+    return
+  }
+
+  if (focusedTaskId.value === task.id) {
+    focusedTaskId.value = null
+    Object.keys(priorityExpanded.value).forEach(k => { priorityExpanded.value[k] = true })
+    return
+  }
+
+  focusedTaskId.value = task.id
   completedExpanded.value = false
-  Object.keys(priorityExpanded.value).forEach(key => {
-    const tasks = key === 'pinned'
-        ? pinnedTasks.value
-        : incompleteTasks.value.filter(t => t.priority === parseInt(key))
-    if (!hasOverdueInGroup(tasks)) priorityExpanded.value[key] = false
-  })
-  if (hasOverdueInGroup(pinnedTasks.value)) priorityExpanded.value['pinned'] = true
-  tasksByPriority.value.forEach(group => {
-    if (hasOverdueInGroup(group.tasks)) priorityExpanded.value[group.priority.value.toString()] = true
+
+  const key = task.pinned ? 'pinned' : task.priority.toString()
+  const wasCollapsed = !priorityExpanded.value[key]
+
+  // Collapse every section except the one containing this task
+  Object.keys(priorityExpanded.value).forEach(k => {
+    priorityExpanded.value[k] = k === key
   })
 
-  const firstOverdue = tasksStore.tasks.find(t => !t.completed && isOverdue(t.deadline, t.timerDuration))
-  if (firstOverdue) {
-    const targetTask = firstOverdue.parentId
-        ? tasksStore.tasks.find(t => t.id === firstOverdue.parentId)
-        : firstOverdue
-
-    if (!targetTask) return
-
-    const d = new Date(firstOverdue.deadline!)
+  // Focus the timeline header on the task's deadline day
+  if (task.deadline) {
+    const d = new Date(task.deadline)
     const today = new Date()
-    today.setHours(0,0,0,0)
-    d.setHours(0,0,0,0)
+    today.setHours(0, 0, 0, 0)
+    d.setHours(0, 0, 0, 0)
     const offset = Math.round((d.getTime() - today.getTime()) / 86400000)
     imgHeader.value?.focusOffset(offset)
-
-    nextTick(() => {
-      const el = document.getElementById('task-' + targetTask.id)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        el.classList.add('highlight-pulse')
-        setTimeout(() => el.classList.remove('highlight-pulse'), 2000)
-      }
-    })
   }
-}
 
-// Expand the task's section if collapsed, then scroll to it.
-// Called when a task is clicked in the timeline panel.
-function handleJumpToTask(task: any) {
-  if (!task.completed) completedExpanded.value = false
-
-  const key = task.pinned &&
-  !isOverdue(task.deadline, task.timerDuration) &&
-  !isDueToday(task.deadline)
-      ? 'pinned'
-      : task.priority.toString()
-
-  const wasCollapsed = !priorityExpanded.value[key]
-  priorityExpanded.value[key] = true
-
-  // Wait for the expand animation before scrollIntoView
   const delay = wasCollapsed ? 250 : 0
   setTimeout(() => {
     nextTick(() => {
@@ -276,36 +280,14 @@ function handleJumpToTask(task: any) {
     })
   }, delay)
 }
-const createTaskEdit = ref<any>(null)
-const separatingSubtask = ref<Task | null>(null)
-const taskWasCreated = ref(false)
-
-function handleModalClose() {
-  createTaskEdit.value?.resetForm()
-  separatingSubtask.value = null
-  taskWasCreated.value = false
-}
-function handleTaskCreated() {
-  if (separatingSubtask.value) {
-    tasksStore.deleteTask(separatingSubtask.value.id)
-  }
-  taskWasCreated.value = true
-  closeModal()
-}
-function openModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.showModal() }
-function closeModal() { (document.getElementById('create_modal') as HTMLDialogElement)?.close() }
-
 function handleCreateTaskForDate(date: string) {
-  openModal()
-  nextTick(() => { createTaskEdit.value?.setDate(date) })
+  ui.triggerCreateModal('task', { date })
 }
 
 function openSeparateTask(task: Task, priority?: number) {
-  separatingSubtask.value = task
-  taskWasCreated.value = false
-  openModal()
-  nextTick(() => {
-    createTaskEdit.value?.prefill(task.title, task.notes ?? null, task.deadline ?? null, priority)
+  ui.triggerCreateModal('task', {
+    prefill: { title: task.title, notes: task.notes, deadline: task.deadline, priority },
+    onCreated: () => tasksStore.deleteTask(task.id),
   })
 }
 
@@ -346,18 +328,8 @@ const skeletonSections = [
     <div class="w-full max-w-[540px] xl:max-w-[700px] 2xl:max-w-[840px]">
 
       <!-- ── Image Header + Timeline ── -->
-      <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="openModal" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
-
-      <!-- ── Overdue banner ── -->
-      <div v-if="overdueCount > 0" class="overdue-banner" id="overdue-banner" v-animate-sync:overdue="'banner'">
-        <span class="overdue-banner-dot" v-animate-sync:overdue="'dot'"></span>
-        <span class="overdue-banner-text">{{ overdueCount }} overdue task{{ overdueCount !== 1 ? 's' : '' }}</span>
-        <button class="overdue-banner-action" @click="jumpToOverdue">
-          View
-          <ChevronRight :size="12"/>
-        </button>
-      </div>
-
+      <ImgHeader ref="imgHeader" :loading="tasksStore.loading" @open-modal="ui.triggerCreateModal('task')" @jump-to-task="handleJumpToTask" @create-task-for-date="handleCreateTaskForDate" />
+      
       <!-- ── Loading State ── -->
       <div v-if="tasksStore.loading" class="space-y-8">
         <div v-for="(section, si) in skeletonSections" :key="si">
@@ -393,7 +365,7 @@ const skeletonSections = [
           </div>
           <h3 class="empty-state-title">No tasks yet</h3>
           <p class="empty-state-text">Create a new task to get started</p>
-          <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="openModal"><Plus /> Add a task</button>
+          <button class="btn bg-base-300 border-[1.5px] border-swoosh-border-hover rounded-sm text-base-content cursor-pointer mt-4" @click="ui.triggerCreateModal('task')"><Plus /> Add a task</button>
         </div>
 
         <!-- ── All tasks completed ── -->
@@ -530,29 +502,6 @@ const skeletonSections = [
 
     </div>
 
-    <!-- ── Create Task Modal ── -->
-    <dialog id="create_modal" class="modal bg-black/60" @close="handleModalClose">
-      <div class="modal-box bg-base-200 border border-swoosh-border-hover p-0 max-w-[520px] xl:max-w-[640px] rounded-[10px] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_24px_64px_rgba(0,0,0,0.8)]">
-        <!-- Modal header -->
-        <div class="flex items-center justify-between px-5 pt-4 pb-[14px] border-b border-swoosh bg-base-300 rounded-t-[10px]">
-          <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase text-swoosh-text-muted">
-            <CheckSquare :size="13" stroke-width="2" />
-            New Task
-          </div>
-          <button
-              @click="closeModal"
-              class="w-7 h-7 flex items-center justify-center rounded-[6px] text-swoosh-text-faint hover:text-swoosh-text-muted transition-colors"
-          >
-            <X :size="15" stroke-width="2" />
-          </button>
-        </div>
-        <!-- No padding wrapper — TaskEdit owns body + footer padding in create mode -->
-        <TaskEdit ref="createTaskEdit" @close="closeModal" @created="handleTaskCreated" />
-      </div>
-      <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
   </main>
 </template>
 

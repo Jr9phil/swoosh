@@ -208,6 +208,8 @@
     .section-label svg   { width: 11px; height: 11px; flex-shrink: 0; }
     .section-label svg.section-toggle { width: 16px; height: 16px; }
 
+    .section-label.recurring { color: var(--color-primary); opacity: 0.8; cursor: default; }
+    .section-label.recurring .section-count { background: var(--color-primary); }
     .section-label.pinned { color: var(--color-secondary); opacity: 0.8; }
     .section-label.high   { color: var(--color-warning);   opacity: 0.8; }
     .section-label.med    { color: var(--color-info);       opacity: 0.8; }
@@ -245,6 +247,34 @@
     }
     .section-label:hover .section-toggle { opacity: 0.7; }
     .section-label.open  .section-toggle { transform: rotate(90deg); }
+
+    /* ── Recurring today rows ── */
+    .recurring-today-item {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 11px 14px;
+        background: var(--color-base-200);
+        border-bottom: 1px solid var(--color-swoosh-border);
+    }
+    .recurring-today-item:first-child { border-radius: var(--radius-r) var(--radius-r) 0 0; }
+    .recurring-today-item:last-child  { border-radius: 0 0 var(--radius-r) var(--radius-r); border-bottom: none; }
+    .recurring-today-item:only-child  { border-radius: var(--radius-r); border-bottom: none; }
+    .recurring-today-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .recurring-today-title {
+        font-size: 0.875rem; font-weight: 500; color: var(--color-base-content);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .recurring-today-rate {
+        font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-primary);
+    }
+    .recurring-today-time {
+        font-family: var(--font-mono); font-size: 11px; color: var(--color-swoosh-text-faint);
+        flex-shrink: 0;
+    }
+    /* Priority accent */
+    .task-group .recurring-today-item.priority-3 { border-left: 3px solid rgba(224,112,80,0.7); }
+    .task-group .recurring-today-item.priority-2 { border-left: 3px solid rgba(80,160,224,0.7); }
+    .task-group .recurring-today-item.priority-1 { border-left: 3px solid rgba(80,192,128,0.7); }
 
     .section-divider {
         height: 1px; background: var(--color-swoosh-border); margin: 28px 0 0;
@@ -501,6 +531,12 @@
     color: var(--color-base-content);
     flex: 1;
     opacity: 0.85;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.sidebar-brand:hover {
+    opacity: 1;
 }
 
 /* Sidebar toggle header */
@@ -651,6 +687,80 @@
     margin-inline: 0;
 }
 
+/* Active route link in sidebar */
+.drawer-side .menu li > a.router-link-active,
+.drawer-side .menu li > a.router-link-exact-active {
+    background-color: var(--color-base-300);
+    color: #ffffff;
+}
+
+.drawer-side .menu li > a.router-link-active svg,
+.drawer-side .menu li > a.router-link-exact-active svg {
+    opacity: 1;
+}
+
+/* Add button */
+.sidebar-add-item {
+    margin-bottom: 4px;
+}
+
+.sidebar-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: calc(100% - 16px);
+    margin-inline: 8px;
+    margin-block: 2px;
+    padding-block: 10px;
+    padding-inline: 10px;
+    border-radius: var(--radius-r-sm);
+    background: none;
+    border: none;
+    color: var(--color-swoosh-text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.sidebar-add-btn:hover {
+    background-color: var(--color-base-300);
+    color: var(--color-base-content);
+}
+
+.sidebar-add-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-add-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    flex-shrink: 0;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.sidebar-add-btn:hover .sidebar-add-circle {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #fff;
+}
+
+/* Center Add button when collapsed */
+.drawer-toggle:not(:checked) ~ .drawer-side .sidebar-add-btn {
+    justify-content: center;
+    padding-inline: 0;
+    margin-inline: 0;
+    width: 100%;
+}
+
 /* ─────────────────────────────────────────────────────────
    Rating diamonds
 ───────────────────────────────────────────────────────── */
@@ -785,6 +895,36 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
     letter-spacing: 0.14em;
     margin-top: 5px;
 }
+
+/* ─────────────────────────────────────────────────────────
+   View header add button (shared across secondary views)
+───────────────────────────────────────────────────────── */
+.view-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding-inline: 15px 17px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--color-swoosh-border-hover);
+    background: transparent;
+    color: var(--color-swoosh-text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+}
+.view-add-btn:hover {
+    border-color: var(--color-swoosh-text-muted);
+    background: var(--color-base-300);
+    color: var(--color-base-content);
+    transform: translateY(-1px);
+}
+.view-add-btn:active { transform: translateY(1px); }
+.view-add-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* ─────────────────────────────────────────────────────────
    Empty / all-completed state

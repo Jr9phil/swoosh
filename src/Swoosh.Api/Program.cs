@@ -17,6 +17,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IRecurringTaskService, RecurringTaskService>();
+builder.Services.AddScoped<INoteCardService, NoteCardService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -37,6 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddHostedService<ReencryptionService>();
+builder.Services.AddHostedService<RecurringTaskSpawnService>();
 
 builder.Services.AddCors(options =>
 {

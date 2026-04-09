@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Swoosh.Api.Data;
@@ -11,9 +12,11 @@ using Swoosh.Api.Data;
 namespace Swoosh.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405021147_AddRecurringTaskDateAndTime")]
+    partial class AddRecurringTaskDateAndTime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,9 +83,6 @@ namespace Swoosh.Api.Migrations
 
                     b.Property<string>("EncryptedIsActive")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EncryptedLastSpawnedDate")
                         .HasColumnType("text");
 
                     b.Property<string>("EncryptedNotes")
@@ -220,9 +220,6 @@ namespace Swoosh.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("RecurringTaskId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")

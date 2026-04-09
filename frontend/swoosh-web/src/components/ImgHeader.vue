@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTasksStore } from '../stores/tasks'
+import { useRecurringStore } from '../stores/recurring'
 import type { Task } from '../types/task'
+import { occursOnDay, toTimelineTask } from '../utils/recurring'
 import { X, Menu } from 'lucide-vue-next'
 import sundaySvg    from '../assets/sunday.svg'
 import mondaySvg    from '../assets/monday.svg'
@@ -34,6 +36,7 @@ const emit = defineEmits<{
 }>()
 
 const tasksStore = useTasksStore()
+const recurringStore = useRecurringStore()
 
 // ── Header / planet state ─────────────────────────────────────────────────
 
@@ -189,6 +192,24 @@ function isPastDay(d: Date) {
   return dayStart < today
 }
 
+function recurringForDay(d: Date): Task[] {
+  if (isPastDay(d)) return []
+  return recurringStore.items
+    .filter(r => {
+      if (!occursOnDay(r, d)) return false
+      // Hide if a real spawned task already exists for this recurring task on this day
+      return !tasksStore.tasks.some(t => {
+        if (t.recurringTaskId !== r.id) return false
+        if (!t.deadline) return false
+        const dl = new Date(t.deadline)
+        return dl.getFullYear() === d.getFullYear() &&
+               dl.getMonth()    === d.getMonth()    &&
+               dl.getDate()     === d.getDate()
+      })
+    })
+    .map(r => toTimelineTask(r, d))
+}
+
 const weekDays = computed(() => {
   const days = []
   for (let i = 0; i < 7; i++) {
@@ -198,7 +219,10 @@ const weekDays = computed(() => {
 
     const isToday = isSameDay(d, now.value)
     const isPast = isPastDay(d)
-    const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+    const incompleteTasks = [
+      ...tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d)),
+      ...recurringForDay(d),
+    ]
     const completedTasks = (isPast || isToday)
       ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
       : []
@@ -246,7 +270,10 @@ const selectedDay = computed(() => {
   const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
 
   const isPast = isPastDay(d)
-  const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+  const incompleteTasks = [
+    ...tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d)),
+    ...recurringForDay(d),
+  ]
   const completedTasks = (isPast || isToday)
     ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
     : []
@@ -336,6 +363,7 @@ function formatTime(deadline: string | null | undefined) {
 }
 
 function getDotClass(task: Task) {
+  if (task.isRecurring) return 'recurring'
   if (task.pinned) return 'pinned'
   if (task.priority === 3) return 'high'
   if (task.priority === 2) return 'med'
@@ -1124,7 +1152,8 @@ defineExpose({ resetTimeline, focusOffset })
 .day-panel-dot.high   { background: var(--color-warning); }
 .day-panel-dot.med    { background: var(--color-info); }
 .day-panel-dot.low    { background: var(--color-success); }
-.day-panel-dot.pinned { background: var(--color-secondary); }
+.day-panel-dot.pinned    { background: var(--color-secondary); }
+.day-panel-dot.recurring { background: var(--color-primary); border-radius: 2px; }
 
 .day-panel-task.overdue .day-panel-name { color: var(--color-error); }
 .day-panel-task.overdue .day-panel-time { color: var(--color-error); opacity: 0.7; }

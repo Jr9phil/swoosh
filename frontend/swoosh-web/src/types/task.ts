@@ -12,6 +12,8 @@ export interface Task {
     timerDuration?: number | null
     createdAt: string
     modified: string
+    recurringTaskId?: string | null
+    isRecurring?: boolean
 }
 
 export interface CreateTask {
