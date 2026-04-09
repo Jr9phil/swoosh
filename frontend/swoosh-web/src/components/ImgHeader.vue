@@ -243,6 +243,7 @@ const weekDays = computed(() => {
 
     const count = tasksForDay.length
     const hasOverdue = incompleteTasks.some(t => isTaskOverdue(t))
+    const allRecurring = !isToday && !isPast && count > 0 && incompleteTasks.every(t => t.isRecurring)
 
     days.push({
       date: d,
@@ -252,6 +253,7 @@ const weekDays = computed(() => {
       allCompleted,
       taskCount: count,
       hasOverdue,
+      allRecurring,
       dayOffset,
       tasks: tasksForDay
     })
@@ -735,7 +737,8 @@ defineExpose({ resetTimeline, focusOffset })
                 :class="{
                   'overdue-count':  day.hasOverdue,
                   'today-count':    day.isToday && !day.hasOverdue && !day.allCompleted,
-                  'completed':      day.allCompleted
+                  'completed':      day.allCompleted,
+                  'all-recurring':  day.allRecurring && !day.hasOverdue
                 }"
                 v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday && !day.allCompleted ? { group: 'today', type: 'border' } : null)"
               >{{ day.taskCount }}</div>
@@ -1071,6 +1074,7 @@ defineExpose({ resetTimeline, focusOffset })
   background: color-mix(in srgb, var(--color-error) 12%, transparent);
 }
 .day-count.no-tasks { color: rgba(255,255,255,0.18); font-size: 8px; }
+.day-count.all-recurring { opacity: 0.75; }
 .day-cell.past .day-count.has-tasks,
 .day-count.completed {
   background: rgba(255,255,255,0.12);
