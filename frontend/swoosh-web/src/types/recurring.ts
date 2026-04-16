@@ -9,6 +9,7 @@ export interface RecurringTask {
     recurrenceDate: string | null
     recurrenceTime: string | null
     isActive: boolean
+    showInTimeline: boolean
     priority: number
     pinned: boolean
     rating: number
@@ -25,6 +26,7 @@ export interface CreateRecurringTask {
     recurrenceDate?: string | null
     recurrenceTime?: string | null
     isActive: boolean
+    showInTimeline?: boolean
     priority?: number
     pinned?: boolean
     rating?: number

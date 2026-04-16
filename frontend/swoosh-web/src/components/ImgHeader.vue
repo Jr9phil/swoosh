@@ -196,6 +196,7 @@ function recurringForDay(d: Date): Task[] {
   if (isPastDay(d)) return []
   return recurringStore.items
     .filter(r => {
+      if (!r.showInTimeline) return false
       if (!occursOnDay(r, d)) return false
       // Hide if a real spawned task already exists for this recurring task on this day
       return !tasksStore.tasks.some(t => {
