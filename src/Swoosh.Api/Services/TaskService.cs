@@ -60,6 +60,7 @@ public class TaskService : ITaskService
                 {
                     Id = t.Id,
                     ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
                     Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                     Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                     Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
@@ -79,6 +80,12 @@ public class TaskService : ITaskService
             }
         }
 
+        // Exclude completed tasks older than 30 days (those belong in the archive).
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        result = result
+            .Where(t => !(t.Completed.HasValue && t.Completed.Value < thirtyDaysAgo))
+            .ToList();
+
         // Subtask priority is inferred from the parent at read time.
         var parentPriorities = result
             .Where(t => t.ParentId == null)
@@ -93,6 +100,62 @@ public class TaskService : ITaskService
         return result;
     }
 
+    /// Fetches completed tasks older than 30 days for the archive view, paginated.
+    public async Task<PagedResult<TaskDto>> GetArchivedAsync(Guid userId, int page, int pageSize)
+    {
+        var salt = await GetUserSalt(userId);
+
+        var tasks = await _db.Tasks
+            .Where(t => t.UserId == userId && t.ParentId == null)
+            .OrderByDescending(t => t.Modified)
+            .ToListAsync();
+
+        var result = new List<TaskDto>();
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+
+        foreach (var t in tasks)
+        {
+            try
+            {
+                var completed = _crypto.DecryptNullableDateTime(t.EncryptedCompletedAt, userId, t.KeyVersion, salt);
+                if (!completed.HasValue || completed.Value >= thirtyDaysAgo) continue;
+
+                result.Add(new TaskDto
+                {
+                    Id = t.Id,
+                    ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
+                    Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
+                    Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
+                    Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),
+                    Completed = completed,
+                    Pinned = _crypto.DecryptBool(t.EncryptedPinned, userId, t.KeyVersion, salt),
+                    Priority = _crypto.DecryptInt(t.EncryptedPriority, userId, t.KeyVersion, salt),
+                    Rating = t.EncryptedRating != null ? _crypto.DecryptInt(t.EncryptedRating, userId, t.KeyVersion, salt) : 0,
+                    Icon = t.EncryptedIcon != null ? _crypto.DecryptNullableInt(t.EncryptedIcon, userId, t.KeyVersion, salt) : null,
+                    TimerDuration = t.EncryptedTimerDuration != null ? _crypto.DecryptNullableInt(t.EncryptedTimerDuration, userId, t.KeyVersion, salt) : null,
+                    CreatedAt = t.CreatedAt,
+                    Modified = t.Modified
+                });
+            }
+            catch (CryptographicException ex)
+            {
+                Console.WriteLine($"Failed to decrypt archived task {t.Id}: {ex.Message}");
+            }
+        }
+
+        var totalCount = result.Count;
+        var items = result.Skip((page - 1) * pageSize).Take(pageSize);
+
+        return new PagedResult<TaskDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
     /// Retrieves a specific task by ID for a user and decrypts its fields.
     public async Task<TaskDto?> GetByIdAsync(Guid userId, Guid taskId)
     {
@@ -103,6 +166,7 @@ public class TaskService : ITaskService
             {
                 Id = t.Id,
                 ParentId = t.ParentId,
+                    RecurringTaskId = t.RecurringTaskId,
                 Title = _crypto.Decrypt(t.EncryptedTitle, userId, t.KeyVersion, salt),
                 Notes = _crypto.DecryptNullableString(t.EncryptedNotes, userId, t.KeyVersion, salt),
                 Deadline = _crypto.DecryptNullableDateTime(t.EncryptedDeadline, userId, t.KeyVersion, salt),

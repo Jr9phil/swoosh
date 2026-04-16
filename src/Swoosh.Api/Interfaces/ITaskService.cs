@@ -5,6 +5,7 @@ namespace Swoosh.Api.Interfaces;
 public interface ITaskService
 {
     Task<IEnumerable<TaskDto>> GetAllAsync(Guid userId);
+    Task<PagedResult<TaskDto>> GetArchivedAsync(Guid userId, int page, int pageSize);
     Task<TaskDto?> GetByIdAsync(Guid userId, Guid taskId);
     Task<TaskDto> CreateAsync(Guid userId, CreateTaskDto dto);
     Task<SubtaskDto> CreateSubtaskAsync(Guid userId, Guid parentTaskId, CreateSubtaskDto dto);

@@ -2,11 +2,21 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Swoosh.Api.Dtos;
 
+public class PagedResult<T>
+{
+    public IEnumerable<T> Items { get; set; } = [];
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 1;
+}
+
 public class TaskDto
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid? ParentId { get; set; }
+    public Guid? RecurringTaskId { get; set; }
 
     public string Title { get; set; } = string.Empty;
     public string? Notes { get; set; }

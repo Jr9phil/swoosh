@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTasksStore } from '../stores/tasks'
+import { useRecurringStore } from '../stores/recurring'
 import type { Task } from '../types/task'
+import { occursOnDay, toTimelineTask } from '../utils/recurring'
 import { X, Menu } from 'lucide-vue-next'
 import sundaySvg    from '../assets/sunday.svg'
 import mondaySvg    from '../assets/monday.svg'
@@ -34,6 +36,7 @@ const emit = defineEmits<{
 }>()
 
 const tasksStore = useTasksStore()
+const recurringStore = useRecurringStore()
 
 // ── Header / planet state ─────────────────────────────────────────────────
 
@@ -189,6 +192,25 @@ function isPastDay(d: Date) {
   return dayStart < today
 }
 
+function recurringForDay(d: Date): Task[] {
+  if (isPastDay(d)) return []
+  return recurringStore.items
+    .filter(r => {
+      if (!r.showInTimeline) return false
+      if (!occursOnDay(r, d)) return false
+      // Hide if a real spawned task already exists for this recurring task on this day
+      return !tasksStore.tasks.some(t => {
+        if (t.recurringTaskId !== r.id) return false
+        if (!t.deadline) return false
+        const dl = new Date(t.deadline)
+        return dl.getFullYear() === d.getFullYear() &&
+               dl.getMonth()    === d.getMonth()    &&
+               dl.getDate()     === d.getDate()
+      })
+    })
+    .map(r => toTimelineTask(r, d))
+}
+
 const weekDays = computed(() => {
   const days = []
   for (let i = 0; i < 7; i++) {
@@ -198,7 +220,10 @@ const weekDays = computed(() => {
 
     const isToday = isSameDay(d, now.value)
     const isPast = isPastDay(d)
-    const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+    const incompleteTasks = [
+      ...tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d)),
+      ...recurringForDay(d),
+    ]
     const completedTasks = (isPast || isToday)
       ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
       : []
@@ -219,6 +244,7 @@ const weekDays = computed(() => {
 
     const count = tasksForDay.length
     const hasOverdue = incompleteTasks.some(t => isTaskOverdue(t))
+    const allRecurring = !isToday && !isPast && count > 0 && incompleteTasks.every(t => t.isRecurring)
 
     days.push({
       date: d,
@@ -228,6 +254,7 @@ const weekDays = computed(() => {
       allCompleted,
       taskCount: count,
       hasOverdue,
+      allRecurring,
       dayOffset,
       tasks: tasksForDay
     })
@@ -246,7 +273,10 @@ const selectedDay = computed(() => {
   const label = `${isToday ? 'Today' : dayName} · ${monthName} ${d.getDate()}`
 
   const isPast = isPastDay(d)
-  const incompleteTasks = tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d))
+  const incompleteTasks = [
+    ...tasksStore.tasks.filter(t => !t.completed && t.deadline && isSameDay(new Date(t.deadline), d)),
+    ...recurringForDay(d),
+  ]
   const completedTasks = (isPast || isToday)
     ? tasksStore.tasks.filter(t => t.completed && isSameDay(new Date(t.completed), d))
     : []
@@ -336,6 +366,7 @@ function formatTime(deadline: string | null | undefined) {
 }
 
 function getDotClass(task: Task) {
+  if (task.isRecurring) return 'recurring'
   if (task.pinned) return 'pinned'
   if (task.priority === 3) return 'high'
   if (task.priority === 2) return 'med'
@@ -707,7 +738,8 @@ defineExpose({ resetTimeline, focusOffset })
                 :class="{
                   'overdue-count':  day.hasOverdue,
                   'today-count':    day.isToday && !day.hasOverdue && !day.allCompleted,
-                  'completed':      day.allCompleted
+                  'completed':      day.allCompleted,
+                  'all-recurring':  day.allRecurring && !day.hasOverdue
                 }"
                 v-animate-sync="day.hasOverdue ? { group: 'overdue', type: 'count' } : (day.isToday && !day.allCompleted ? { group: 'today', type: 'border' } : null)"
               >{{ day.taskCount }}</div>
@@ -870,12 +902,6 @@ defineExpose({ resetTimeline, focusOffset })
   pointer-events: none;
 }
 
-/* On mobile the hamburger occupies the top-left slot; push add button and badge right */
-@media (max-width: 1023px) {
-  .header-add-btn,
-  .header-day-badge { left: 60px; }
-}
-
 /* ── Relative day badge (top-left) ── */
 .header-day-badge {
   position: absolute; top: 14px; left: 16px; z-index: 3;
@@ -890,6 +916,12 @@ defineExpose({ resetTimeline, focusOffset })
   pointer-events: none;
 }
 .header-day-badge.visible { opacity: 1; }
+
+/* On mobile the hamburger occupies the top-left slot; push add button and badge right */
+@media (max-width: 1023px) {
+  .header-add-btn,
+  .header-day-badge { left: 60px; }
+}
 
 /* ── Date display (top-right) ── */
 .header-date {
@@ -1043,6 +1075,7 @@ defineExpose({ resetTimeline, focusOffset })
   background: color-mix(in srgb, var(--color-error) 12%, transparent);
 }
 .day-count.no-tasks { color: rgba(255,255,255,0.18); font-size: 8px; }
+.day-count.all-recurring { opacity: 0.75; }
 .day-cell.past .day-count.has-tasks,
 .day-count.completed {
   background: rgba(255,255,255,0.12);
@@ -1124,7 +1157,8 @@ defineExpose({ resetTimeline, focusOffset })
 .day-panel-dot.high   { background: var(--color-warning); }
 .day-panel-dot.med    { background: var(--color-info); }
 .day-panel-dot.low    { background: var(--color-success); }
-.day-panel-dot.pinned { background: var(--color-secondary); }
+.day-panel-dot.pinned    { background: var(--color-secondary); }
+.day-panel-dot.recurring { background: var(--color-primary); border-radius: 2px; }
 
 .day-panel-task.overdue .day-panel-name { color: var(--color-error); }
 .day-panel-task.overdue .day-panel-time { color: var(--color-error); opacity: 0.7; }
