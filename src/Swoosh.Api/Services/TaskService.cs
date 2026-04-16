@@ -100,8 +100,8 @@ public class TaskService : ITaskService
         return result;
     }
 
-    /// Fetches completed tasks older than 30 days for the archive view.
-    public async Task<IEnumerable<TaskDto>> GetArchivedAsync(Guid userId)
+    /// Fetches completed tasks older than 30 days for the archive view, paginated.
+    public async Task<PagedResult<TaskDto>> GetArchivedAsync(Guid userId, int page, int pageSize)
     {
         var salt = await GetUserSalt(userId);
 
@@ -144,7 +144,16 @@ public class TaskService : ITaskService
             }
         }
 
-        return result;
+        var totalCount = result.Count;
+        var items = result.Skip((page - 1) * pageSize).Take(pageSize);
+
+        return new PagedResult<TaskDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     /// Retrieves a specific task by ID for a user and decrypts its fields.

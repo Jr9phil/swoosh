@@ -27,13 +27,16 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
 
-    // GET: api/tasks/archive
+    // GET: api/tasks/archive?page=1&pageSize=25
     [HttpGet("archive")]
-    public async Task<IActionResult> GetArchived()
+    public async Task<IActionResult> GetArchived([FromQuery] int page = 1, [FromQuery] int pageSize = 25)
     {
+        if (page < 1) page = 1;
+        if (pageSize < 1 || pageSize > 100) pageSize = 25;
+
         var userId = UserContext.GetUserId(User);
-        var tasks = await _tasks.GetArchivedAsync(userId);
-        return Ok(tasks);
+        var result = await _tasks.GetArchivedAsync(userId, page, pageSize);
+        return Ok(result);
     }
 
     // GET: api/tasks/{id}
