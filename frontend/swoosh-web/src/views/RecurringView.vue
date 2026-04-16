@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRecurringStore } from '../stores/recurring'
 import { useUiStore } from '../stores/ui'
-import { Plus, CalendarSync, Trash2, RefreshCw, Clock } from 'lucide-vue-next'
+import { Plus, CalendarSync, Trash2, RefreshCw, Clock, Menu } from 'lucide-vue-next'
 import RecurringEdit from '../components/RecurringEdit.vue'
 import TaskRating from '../components/TaskRating.vue'
 import TaskIcon from '../components/TaskIcon.vue'
@@ -81,6 +81,9 @@ onMounted(() => store.fetchAll())
     <div class="recurring-view">
         <div class="view-header">
             <div class="view-header-left">
+                <label for="sidebar" class="page-menu-btn" aria-label="Open sidebar">
+                    <Menu :size="15" :stroke-width="2" />
+                </label>
                 <CalendarSync class="view-header-icon" />
                 <h1 class="view-title">Recurring</h1>
             </div>

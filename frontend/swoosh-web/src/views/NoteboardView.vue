@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useNoteCardsStore } from '../stores/notecards'
 import { useTasksStore } from '../stores/tasks'
 import { useUiStore } from '../stores/ui'
-import { Plus, Trash2, X, Check, ArrowUpRight, Lightbulb } from 'lucide-vue-next'
+import { Plus, Trash2, X, Check, ArrowUpRight, Lightbulb, Menu } from 'lucide-vue-next'
 import type { NoteCard } from '../types/notecard'
 
 const store = useNoteCardsStore()
@@ -95,6 +95,9 @@ onMounted(() => store.fetchAll())
         <!-- Toolbar -->
         <div class="noteboard-toolbar">
             <div class="view-header-left">
+                <label for="sidebar" class="page-menu-btn" aria-label="Open sidebar">
+                    <Menu :size="15" :stroke-width="2" />
+                </label>
                 <Lightbulb class="w-5 h-5 text-swoosh-text-muted" style="color: var(--color-swoosh-text-muted)" />
                 <span class="view-title">Noteboard</span>
             </div>

@@ -901,12 +901,6 @@ defineExpose({ resetTimeline, focusOffset })
   pointer-events: none;
 }
 
-/* On mobile the hamburger occupies the top-left slot; push add button and badge right */
-@media (max-width: 1023px) {
-  .header-add-btn,
-  .header-day-badge { left: 60px; }
-}
-
 /* ── Relative day badge (top-left) ── */
 .header-day-badge {
   position: absolute; top: 14px; left: 16px; z-index: 3;
@@ -921,6 +915,12 @@ defineExpose({ resetTimeline, focusOffset })
   pointer-events: none;
 }
 .header-day-badge.visible { opacity: 1; }
+
+/* On mobile the hamburger occupies the top-left slot; push add button and badge right */
+@media (max-width: 1023px) {
+  .header-add-btn,
+  .header-day-badge { left: 60px; }
+}
 
 /* ── Date display (top-right) ── */
 .header-date {
