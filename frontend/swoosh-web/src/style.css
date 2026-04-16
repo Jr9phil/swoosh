@@ -897,6 +897,32 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 }
 
 /* ─────────────────────────────────────────────────────────
+   Mobile sidebar hamburger (secondary views)
+───────────────────────────────────────────────────────── */
+.page-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    border: 1.5px solid var(--color-swoosh-border-hover);
+    background: transparent;
+    color: var(--color-swoosh-text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.page-menu-btn:hover {
+    border-color: var(--color-swoosh-text-muted);
+    background: var(--color-base-300);
+    color: var(--color-base-content);
+}
+@media (min-width: 1024px) {
+    .page-menu-btn { display: none; }
+}
+
+/* ─────────────────────────────────────────────────────────
    View header add button (shared across secondary views)
 ───────────────────────────────────────────────────────── */
 .view-add-btn {

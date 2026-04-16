@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRemindersStore } from '../stores/reminders'
 import { useUiStore } from '../stores/ui'
-import { Plus, Trash2, BellRing, Check, Pencil } from 'lucide-vue-next'
+import { Plus, Trash2, BellRing, Check, Pencil, Menu } from 'lucide-vue-next'
 
 const store = useRemindersStore()
 const ui = useUiStore()
@@ -86,6 +86,9 @@ onMounted(() => store.fetchAll())
     <div class="reminders-view">
         <div class="view-header">
             <div class="view-header-left">
+                <label for="sidebar" class="page-menu-btn" aria-label="Open sidebar">
+                    <Menu :size="15" :stroke-width="2" />
+                </label>
                 <BellRing class="view-header-icon" />
                 <h1 class="view-title">Reminders</h1>
             </div>

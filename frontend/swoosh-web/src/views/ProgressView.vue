@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { ChartColumn } from 'lucide-vue-next'
+import { ChartColumn, Menu } from 'lucide-vue-next'
 </script>
 
 <template>
     <div class="placeholder-view">
+        <label for="sidebar" class="page-menu-btn placeholder-menu-btn" aria-label="Open sidebar">
+            <Menu :size="15" :stroke-width="2" />
+        </label>
         <ChartColumn class="placeholder-icon" />
         <h1 class="placeholder-title">Progress</h1>
         <p class="placeholder-subtitle">Coming soon.</p>
@@ -12,6 +15,7 @@ import { ChartColumn } from 'lucide-vue-next'
 
 <style scoped>
 .placeholder-view {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,6 +24,12 @@ import { ChartColumn } from 'lucide-vue-next'
     min-height: 60vh;
     gap: 12px;
     color: var(--color-swoosh-text-faint);
+}
+
+.placeholder-menu-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
 }
 
 .placeholder-icon {

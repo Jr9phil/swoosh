@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Archive } from 'lucide-vue-next'
+import { Archive, Menu } from 'lucide-vue-next'
 import api from '../api/client'
 import type { Task } from '../types/task'
 
@@ -28,6 +28,9 @@ onMounted(async () => {
     <div class="archive-view">
         <div class="view-header">
             <div class="view-header-left">
+                <label for="sidebar" class="page-menu-btn" aria-label="Open sidebar">
+                    <Menu :size="15" :stroke-width="2" />
+                </label>
                 <Archive class="view-header-icon" />
                 <h1 class="view-title">Archive</h1>
             </div>
