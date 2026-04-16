@@ -75,6 +75,9 @@ public class RecurringTaskService : IRecurringTaskService
                 ? _crypto.DecryptNullableString(r.EncryptedTime, userId, r.KeyVersion, salt)
                 : null,
             IsActive = _crypto.DecryptBool(r.EncryptedIsActive, userId, r.KeyVersion, salt),
+            ShowInTimeline = r.EncryptedShowInTimeline != null
+                ? _crypto.DecryptBool(r.EncryptedShowInTimeline, userId, r.KeyVersion, salt)
+                : true,
             Priority = r.EncryptedPriority != null ? _crypto.DecryptInt(r.EncryptedPriority, userId, r.KeyVersion, salt) : 0,
             Pinned = r.EncryptedPinned != null && _crypto.DecryptBool(r.EncryptedPinned, userId, r.KeyVersion, salt),
             Rating = r.EncryptedRating != null ? _crypto.DecryptInt(r.EncryptedRating, userId, r.KeyVersion, salt) : 0,
@@ -135,6 +138,7 @@ public class RecurringTaskService : IRecurringTaskService
                 ? _crypto.EncryptNullableString(dto.RecurrenceTime, userId, salt).Ciphertext
                 : null,
             EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext,
+            EncryptedShowInTimeline = _crypto.EncryptBool(dto.ShowInTimeline, userId, salt).Ciphertext,
             EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext,
             EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext,
             EncryptedRating = _crypto.EncryptInt(dto.Rating, userId, salt).Ciphertext,
@@ -194,6 +198,7 @@ public class RecurringTaskService : IRecurringTaskService
             RecurrenceDate = dto.RecurrenceDate,
             RecurrenceTime = dto.RecurrenceTime,
             IsActive = dto.IsActive,
+            ShowInTimeline = dto.ShowInTimeline,
             Priority = dto.Priority,
             Pinned = dto.Pinned,
             Rating = dto.Rating,
@@ -225,6 +230,7 @@ public class RecurringTaskService : IRecurringTaskService
             ? _crypto.EncryptNullableString(dto.RecurrenceTime, userId, salt).Ciphertext
             : null;
         entity.EncryptedIsActive = _crypto.EncryptBool(dto.IsActive, userId, salt).Ciphertext;
+        entity.EncryptedShowInTimeline = _crypto.EncryptBool(dto.ShowInTimeline, userId, salt).Ciphertext;
         entity.EncryptedPriority = _crypto.EncryptInt(dto.Priority, userId, salt).Ciphertext;
         entity.EncryptedPinned = _crypto.EncryptBool(dto.Pinned, userId, salt).Ciphertext;
         entity.EncryptedRating = _crypto.EncryptInt(dto.Rating, userId, salt).Ciphertext;

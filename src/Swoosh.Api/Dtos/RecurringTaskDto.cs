@@ -12,6 +12,7 @@ public class RecurringTaskDto
     public string? RecurrenceDate { get; set; }
     public string? RecurrenceTime { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool ShowInTimeline { get; set; } = true;
     public int Priority { get; set; }
     public bool Pinned { get; set; }
     public int Rating { get; set; }
@@ -43,6 +44,8 @@ public class CreateRecurringTaskDto
     public string? RecurrenceTime { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public bool ShowInTimeline { get; set; } = true;
 
     [Range(0, 3)]
     public int Priority { get; set; } = 0;
@@ -78,6 +81,8 @@ public class UpdateRecurringTaskDto
     public string? RecurrenceTime { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public bool ShowInTimeline { get; set; } = true;
 
     [Range(0, 3)]
     public int Priority { get; set; } = 0;

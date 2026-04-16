@@ -18,6 +18,7 @@ public class RecurringTask
     public string? EncryptedDate { get; set; }               // nullable YYYY-MM-DD string
     public string? EncryptedTime { get; set; }               // nullable HH:mm string
     public string? EncryptedLastSpawnedDate { get; set; }   // nullable YYYY-MM-DD, tracks last spawn
+    public string? EncryptedShowInTimeline { get; set; }   // nullable bool (null treated as true)
 
     public int KeyVersion { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

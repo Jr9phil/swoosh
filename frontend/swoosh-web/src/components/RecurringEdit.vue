@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Pin, X, Ban, Clock, Calendar } from 'lucide-vue-next'
+import { Pin, X, Ban, Clock, Calendar, Eye, EyeOff } from 'lucide-vue-next'
 import { PRIORITIES } from '../types/priority'
 import { useRecurringStore } from '../stores/recurring'
 import { useTasksStore } from '../stores/tasks'
@@ -38,7 +38,8 @@ function todayString() {
 
 const rDate          = ref(todayString())
 const rTime          = ref('')
-const editedPinned   = ref(false)
+const editedPinned       = ref(false)
+const editedShowInTimeline = ref(true)
 const editedRating   = ref(0)
 const selectedIcon   = ref<number | null>(null)
 const showIconPicker = ref(false)
@@ -57,8 +58,9 @@ watch(() => props.task, (task) => {
     rType.value         = task.recurrenceType
     rDate.value         = task.recurrenceDate ?? ''
     rTime.value         = task.recurrenceTime ?? ''
-    editedPinned.value  = task.pinned
-    editedRating.value  = task.rating
+    editedPinned.value          = task.pinned
+    editedShowInTimeline.value  = task.showInTimeline
+    editedRating.value          = task.rating
     selectedIcon.value  = task.icon ?? null
     priorityIndex.value = PRIORITIES.findIndex(p => p.value === task.priority) ?? 0
 }, { immediate: true })
@@ -86,8 +88,9 @@ function resetForm() {
     rType.value          = 'day'
     rDate.value          = todayString()
     rTime.value          = ''
-    editedPinned.value   = false
-    editedRating.value   = 0
+    editedPinned.value          = false
+    editedShowInTimeline.value  = true
+    editedRating.value          = 0
     selectedIcon.value   = null
     showIconPicker.value = false
     priorityIndex.value  = PRIORITIES.findIndex(p => p.value === 0)
@@ -119,6 +122,7 @@ async function submit() {
             recurrenceDate:     rDate.value || null,
             recurrenceTime:     rTime.value || null,
             isActive:           props.task?.isActive ?? true,
+            showInTimeline:     editedShowInTimeline.value,
             priority:           editedPriority.value,
             pinned:             editedPinned.value,
             rating:             editedRating.value,
@@ -264,7 +268,7 @@ defineExpose({ resetForm, isFormBlank })
                     type="button"
                     @click="cyclePriority"
                     title="Priority level"
-                    class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors"
+                    class="flex items-center gap-1 py-[5px] pl-2 pr-[10px] rounded-sm border text-[13px] font-mono transition-colors cursor-pointer"
                     :class="PRIORITIES[priorityIndex].value === 0
                         ? 'border-swoosh text-swoosh-text-faint hover:text-swoosh-text-muted hover:border-swoosh-border-hover'
                         : PRIORITIES[priorityIndex].textClass + ' border-current/25'"
@@ -278,12 +282,26 @@ defineExpose({ resetForm, isFormBlank })
                     type="button"
                     @click="editedPinned = !editedPinned"
                     :title="editedPinned ? 'Unpin' : 'Pin'"
-                    class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
+                    class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors cursor-pointer"
                     :class="editedPinned
                         ? 'text-secondary border-secondary/25'
                         : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
                 >
                     <Pin :size="14" :fill="editedPinned ? 'currentColor' : 'none'" />
+                </button>
+
+                <!-- Show in Timeline Toggle -->
+                <button
+                    type="button"
+                    @click="editedShowInTimeline = !editedShowInTimeline"
+                    :title="editedShowInTimeline ? 'Hide from timeline' : 'Show in timeline'"
+                    class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors cursor-pointer"
+                    :class="editedShowInTimeline
+                        ? 'text-primary border-primary/25'
+                        : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
+                >
+                    <Eye v-if="editedShowInTimeline" :size="14" />
+                    <EyeOff v-else :size="14" />
                 </button>
 
                 <!-- Icon Picker -->
@@ -292,7 +310,7 @@ defineExpose({ resetForm, isFormBlank })
                         type="button"
                         @click="showIconPicker = !showIconPicker"
                         title="Select icon"
-                        class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors"
+                        class="w-8 h-8 flex items-center justify-center rounded-sm border transition-colors cursor-pointer"
                         :class="selectedIcon !== null
                             ? 'border-current/25 ' + TASK_ICONS.find(i => i.value === selectedIcon)?.color
                             : 'text-swoosh-text-faint border-swoosh hover:text-swoosh-text-muted hover:border-swoosh-border-hover'"
