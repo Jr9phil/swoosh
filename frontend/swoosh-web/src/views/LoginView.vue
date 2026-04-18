@@ -65,11 +65,6 @@ function focusPassword() {
   <main class="flex-1 flex justify-center items-center px-5 py-10">
     <div class="w-full max-w-[340px]">
       <header class="mb-7 text-center">
-        <div class="auth-deco-row">
-          <span class="auth-deco-line"></span>
-          <span class="auth-deco-diamond">◆</span>
-          <span class="auth-deco-line"></span>
-        </div>
         <h1 class="auth-page-title">Swoosh</h1>
         <p class="auth-page-subtitle">Reprogram your brain</p>
       </header>
