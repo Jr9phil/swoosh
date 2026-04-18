@@ -278,17 +278,6 @@
 
     .section-divider {
         height: 1px; background: var(--color-swoosh-border); margin: 28px 0 0;
-        position: relative;
-    }
-    /* Art deco diamond ornament */
-    .section-divider::after {
-        content: '◆';
-        position: absolute; left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 8px; color: var(--color-swoosh-text-faint);
-        background: var(--color-base-100);
-        padding: 0 8px;
-        opacity: 0.5;
     }
 
     /* ── Task groups — each priority level gets a coloured left accent ── */
@@ -863,22 +852,6 @@ dialog.modal .rdiamond { width: 10px; height: 10px; }
 /* ─────────────────────────────────────────────────────────
    Auth page headers
 ───────────────────────────────────────────────────────── */
-.auth-deco-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.auth-deco-line {
-    flex: 1;
-    height: 1px;
-    background: var(--color-swoosh-border);
-}
-.auth-deco-diamond {
-    font-size: 8px;
-    color: var(--color-secondary);
-    opacity: 0.75;
-}
 .auth-page-title {
     font-family: var(--font-mono);
     font-size: 18px;
